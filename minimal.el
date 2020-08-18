@@ -16,7 +16,12 @@
 ;; Doom UI
 ;;
 (use-package all-the-icons)            
-(use-package doom-themes :config (load-theme 'doom-one t)(setq mode-line-format nil))
+
+(use-package doom-themes
+  :config
+  (when (display-graphic-p)
+    (load-theme 'doom-one t)(setq mode-line-format nil)))
+
 (use-package doom-modeline
   :init
   (setq doom-modeline-buffer-file-name-style 'truncate-upto-project
@@ -25,7 +30,12 @@
         doom-modeline-major-mode-color-icon t
         doom-modeline-lsp t
         doom-modeline-column-zero-based t)
-  :config (doom-modeline-mode))
+  :config
+  (when (display-graphic-p) (doom-modeline-mode)))
+
+(use-package hide-mode-line
+  :config
+  (when (not (display-graphic-p)) (global-hide-mode-line-mode)))
 
 ;;
 ;; Buffers

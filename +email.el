@@ -1,7 +1,10 @@
 ;;; ~/.config/emacs/+email.el -*- lexical-binding: t; -*-
 
+;; We also need to jump into the mu4e folder and run `make`
+
 (use-package mu4e
-  :straight (mu4e :type git :host github :repo "djcb/mu")
+  ;;:straight (mu4e :type git :host github :repo "djcb/mu" :branch "release/1.4.x" :files (:defaults "mu4e/*.el"))
+  :straight (mu4e :type git :host github :repo "djcb/mu" :branch "master" :files (:defaults "mu4e/*.el"))
   :bind (("C-c a m m" . mu4e)
          ("C-c a m n" . mu4e-compose-new)
          ("C-c a m u" . iocanel/mu4e-view-unread))
@@ -58,12 +61,12 @@
                      (mu4e-sent-messages-behavior      . delete)
                      (mu4e-compose-signature           .  t))))))
 
-(use-package org-mu4e
-  :straight (org-mu4e :type git :host github :repo "djcb/mu")
-  :config
-  (setq org-mu4e-link-query-in-headers-mode nil))
+;; (use-package org-mu4e
+;;   :straight (org-mu4e :type git :host github :repo "djcb/mu")
+;;   :config
+;;   (setq org-mu4e-link-query-in-headers-mode nil))
 
-(use-package evil-mu4e)
+;(require 'evil-mu4e)
 
 ;; Mu4e cusotmization
 (setq doom-modeline-mu4e t)
@@ -160,8 +163,8 @@
   (mu4e-headers-search
    (mu4e-bookmark-query (car (remove-if-not (lambda (s) (equal (mu4e-bookmark-name s) "Unread messages")) (mu4e-bookmarks))))))
 
-;(define-key evil-normal-state-map (kbd "SPC a m u") #'iocanel/mu4e-view-unread)
-;(global-set-key (kbd "C-c a m u") #'iocanel/mu4e-view-unread)
+(define-key evil-normal-state-map (kbd "SPC a m u") #'iocanel/mu4e-view-unread)
+(global-set-key (kbd "C-c a m u") #'iocanel/mu4e-view-unread)
 
 ;;
 ;; Advices

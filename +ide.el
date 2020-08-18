@@ -16,10 +16,9 @@
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
 (use-package lsp-mode
-  :defer t
   :config (setq lsp-enable-file-watchers nil)
   :bind (("C-c l s" . lsp)
-         ("C-c l a" . lsp-ui-sideline-apply-code-actions)))
+         ("C-c l a" . lsp-execute-code-action)))
 
 (use-package lsp-ui
   :defer t
@@ -28,18 +27,26 @@
   (setq lsp-ui-sideline-show-hover nil
         lsp-ui-doc-enable nil))
 
-(use-package company-lsp)
 
 (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 
+(use-package company-lsp)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list
   :init
   (lsp-treemacs-sync-mode 1))
 
+(defvar java-home "/home/iocanel/sdk/candidates/java/current")
+(defvar m2-home "/home/iocanel/sdk/candidates/maven/current")
+
 (use-package lsp-java
   :defer t
   :init
-  (setq lsp-java-vmargs '("-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" "-Xverify:none")
+  (setenv "JAVA_HOME" java-home)
+  (setenv "M2_HOME" m2-home)
+  (setenv "PATH" (format "/bin:/usr/bin:/usr/local/bin:%s/bin:%s/bin:%s/bin" (expand-file-name "~")  java-home m2-home))
+  (setq
+        lsp-java-vmargs '("-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" "-Xverify:none" "-jar")
+        lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
         lsp-java-save-action-organize-imports nil
         lsp-java-maven-download-sources t
         lsp-java-autobuild-enabled nil
@@ -58,12 +65,13 @@
          ("C-c j g e" . lsp-java-generate-equals-and-hash-code)
          ("C-c j u" . lsp-java-update-project-configuration)))
 
+(evil-leader/set-key "m" #'idee-maven-hydra/body)
+
 (use-package dap-mode
   :after lsp-mode
   :config
   (dap-mode t)
   (dap-ui-mode t)
-
   :bind (("C-c j r t c" . dap-java-run-test-class)
          ("C-c j r t m" . dap-java-run-test-method)
          ("C-c j d t c" . dap-java-debug-test-class)
@@ -149,20 +157,58 @@
 
 (use-package idee
   :straight (idee :host github :repo "iocanel/idee")
-  :bind (("C-c t" . 'idee-treemacs-hydra/body)))
+  :config (idee-init)
+  :bind (("C-c i" . 'idee-hydra/body)
+         ("C-c p" . 'idee-project-hydra/body)
+         ("C-c f" . 'idee-file-hydra/body)
+         ("C-c t" . 'idee-treemacs-hydra/body)))
 
-(use-package idee-java :straight (idee :host github :repo "iocanel/idee"))
+(use-package idee-java :straight (idee :host github :repo "iocanel/idee")
+  :config (idee-java-init)
+  :bind (("C-c m" . 'idee-maven-hydra/body)))
+
 (use-package idee-kubernetes :straight (idee :host github :repo "iocanel/idee"))
-(use-package idee-docker :straight (idee :host github :repo "iocanel/idee"))
 
-(run-with-idle-timer 1 nil #'idee-init)
-(run-with-idle-timer 1 nil #'idee-lsp-init)
-(run-with-idle-timer 1 nil #'idee-java-init)
+(use-package idee-docker :straight (idee :host github :repo "iocanel/idee")
+  :bind (:map dockerfile-mode-map 
+         ("C-c C-b" . 'idee-docker-build)
+         ("C-c C-k" . 'idee-docker-kill)
+         ("C-c C-r" . 'idee-docker-run-dockerfile)
+         ("C-c C-p" . 'idee-docker-push-dockerfile)))
+
 
 ;;
 ;; IDEE optional packages
 ;;
 (use-package ag)
 (use-package helm-ag
-  :defer t
-  :bind (("C-c p g" . helm-do-ag-project-root)))
+  :bind (("C-c g" . helm-do-ag-project-root)))
+
+
+;;
+;; Demo aid
+;;
+(add-to-list 'idee-project-root-markers "pom.xml")
+(add-to-list 'display-buffer-alist
+  (cons "\\*Async Shell Command\\*.*" (cons #'display-buffer-no-window nil)))
+
+(defun inhibit-sentinel-messages (fun &rest args)
+  "Inhibit messages in all sentinels started by fun."
+  (cl-letf* ((old-set-process-sentinel (symbol-function 'set-process-sentinel))
+         ((symbol-function 'set-process-sentinel)
+          (lambda (process sentinel)
+        (funcall
+         old-set-process-sentinel
+         process
+         `(lambda (&rest args)
+            (let ((inhibit-message t))
+              (apply (quote ,sentinel) args)))))))
+        (apply fun args)))
+
+(defun properties-save-hook ()
+  (when (eq major-mode 'conf-javaprop-mode)
+    (let ((module-root (idee-project-root-dir buffer-file-name))
+          (output-buffer (generate-new-buffer "*Async Maven Build*")))
+      (inhibit-sentinel-messages #'async-shell-command (format "cd %s && mvn package" module-root)))))
+
+(add-hook 'after-save-hook #'properties-save-hook)

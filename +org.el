@@ -206,7 +206,8 @@
 ;; Org Babel
 ;;
 (with-eval-after-load 'org
-  (org-babel-do-load-languages 'org-babel-load-languages '((ruby . t)
+  (org-babel-do-load-languages 'org-babel-load-languages '((shell .t)
+                                                           (ruby . t)
                                                            (java . t)
                                                            (plantuml . t))))
 ;;

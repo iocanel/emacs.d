@@ -3,9 +3,13 @@
   :config
   (setq eshell-buffer-maximum-lines 2048
         eshell-history-size 100000
-        eshell-banner-message "")
-  :hook ((eshell-post-command . iocanel/eshell-compilation-mode)
+        eshell-banner-message ""
+        eshell-path-env (getenv "PATH"))
+  :hook ((eshell-pre-command . (lambda ()
+                                  (iocanel/eshell-compilation-mode)
+                                  (setq eshell-path-env (getenv "PATH"))))
          (eshell-mode-hook . (lambda()
+                               (setq eshell-path-env (getenv "PATH"))
                                (eshell/alias "cls" "iocanel/eshell-clear")
                                (eshell/alias "clear" "iocanel/eshell-clear")
                                (eshell/alias "d" "dired $1")
@@ -17,7 +21,6 @@
                                (eshell/alias "gds" "magit-diff-staged")
                                (eshell/alias "ll" "ls -AlohG --color=always $*")
                                (eshell/alias "ls" "TERM=ansi ls --color=always $*")
-                               (eshell/alias "mci" "mvn clean install")
                                (eshell/alias "vi" "find-file-silent $1")
                                (eshell/alias "kc" "kubectl $*")))))
 
