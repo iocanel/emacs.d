@@ -59,7 +59,51 @@
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           .  t))))))
+                     (mu4e-compose-signature           .  t)))))
+  (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
+  (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
+
+  (setq mu4e-headers-results-limit 1000000)
+  ;; Why would I want to leave my message open after I've sent it?
+  (setq message-kill-buffer-on-exit t)
+  ;; Don't ask for a 'context' upon opening mu4e
+  (setq mu4e-context-policy 'pick-first)
+  ;; Don't ask to quit... why is this the default?
+  (setq mu4e-confirm-quit nil)
+  (setq mu4e-headers-visible-lines 25)
+  ;; convert org mode to HTML automatically
+ 
+  ;; enable inline images
+  (setq mu4e-view-show-images t)
+  (setq org-mu4e-convert-to-html t)
+  (add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+  :hook ((mu4e-view-mode . (lambda () (mu4e-mark-region-code) (smiley-buffer)))
+         (mu4e-compose-mode . (lambda ()
+                                (no-auto-fill)
+                                (set-fill-column 72)
+                                (auto-fill-mode 0)
+                                (visual-fill-column-mode)
+                                (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+                                (visual-line-mode))))
+  :bind (:map mu4e-view-mode-map
+              ("C-<tab>" . mu4e-view-headers-next-unread)
+              ("C-t" . iocanel/mark-thread-as-read)
+              :map mu4e-headers-mode-map
+              ("C-<tab>" . mu4e-headers-next-unread)
+              ("C-t" . iocanel/mark-thread-as-read))
+  )
+
+;;
+;; Key bindings
+;;
+;; (define-key mu4e-view-mode-map (kbd "C-<tab>") #'mu4e-view-headers-next-unread)
+;; (define-key mu4e-headers-mode-map (kbd "C-<tab>") #'mu4e-headers-next-unread)
+
+
+;;(define-key mu4e-view-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
+;;(define-key mu4e-headers-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
+
+
 
 ;; (use-package org-mu4e
 ;;   :straight (org-mu4e :type git :host github :repo "djcb/mu")
@@ -71,46 +115,16 @@
 ;; Mu4e cusotmization
 (setq doom-modeline-mu4e t)
 
-(set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
-(set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
-(add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
-(setq mu4e-headers-results-limit 1000000)
-;; Why would I want to leave my message open after I've sent it?
-(setq message-kill-buffer-on-exit t)
-;; Don't ask for a 'context' upon opening mu4e
-(setq mu4e-context-policy 'pick-first)
-;; Don't ask to quit... why is this the default?
-(setq mu4e-confirm-quit nil)
-(setq mu4e-headers-visible-lines 25)
-;; convert org mode to HTML automatically
-(setq org-mu4e-convert-to-html t)
 
 (defalias 'org-mail 'org-mu4e-compose-org-mode)
 
-(add-hook 'mu4e-view-mode-hook 'mu4e-mark-region-code)
-                ;;; Show Smileys
-(add-hook 'mu4e-view-mode-hook 'smiley-buffer)
-
-;; enable inline images
-(setq mu4e-view-show-images t)
-;; use imagemagick, if available
+; use imagemagick, if available
 (when (fboundp 'imagemagick-register-types)
   (imagemagick-register-types))
-
-(add-hook 'mu4e-compose-mode-hook
-          (lambda ()
-            (set-fill-column 72)
-            (auto-fill-mode 0)
-            (visual-fill-column-mode)
-            (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-            (visual-line-mode)))
 
 (defun no-auto-fill ()
   "Turn off auto-fill-mode."
   (auto-fill-mode -1))
-
-(add-hook 'mu4e-compose-mode-hook #'no-auto-fill)
-(add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
 
 ;; Mu4e Bookmarks
 (setq mu4e-bookmarks
@@ -134,12 +148,6 @@
 (setq message-kill-buffer-on-exit t)
 
 ;;
-;; Key bindings
-;;
-(define-key mu4e-view-mode-map (kbd "C-<tab>") #'mu4e-view-headers-next-unread)
-(define-key mu4e-headers-mode-map (kbd "C-<tab>") #'mu4e-headers-next-unread)
-
-;;
 ;; Functions
 ;;
 
@@ -151,9 +159,6 @@
     (select-window (get-buffer-window "*mu4e-headers*"))
     (recenter)
     (mu4e-headers-mark-thread t '(read))))
-
-(define-key mu4e-view-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
-(define-key mu4e-headers-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
 
 ;;;###autoload
 (defun iocanel/mu4e-view-unread()
