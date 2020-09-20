@@ -7,3 +7,5 @@
          ("C-x C-f" . helm-find-files)
          ("M-y" . helm-show-kill-ring)))
 
+
+(use-package helm-projectile)

@@ -63,6 +63,7 @@
   (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
+  (setq mu4e-update-interval 60)
   (setq mu4e-headers-results-limit 1000000)
   ;; Why would I want to leave my message open after I've sent it?
   (setq message-kill-buffer-on-exit t)
@@ -93,22 +94,6 @@
               ("C-t" . iocanel/mark-thread-as-read))
   )
 
-;;
-;; Key bindings
-;;
-;; (define-key mu4e-view-mode-map (kbd "C-<tab>") #'mu4e-view-headers-next-unread)
-;; (define-key mu4e-headers-mode-map (kbd "C-<tab>") #'mu4e-headers-next-unread)
-
-
-;;(define-key mu4e-view-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
-;;(define-key mu4e-headers-mode-map (kbd "C-t") #'iocanel/mark-thread-as-read)
-
-
-
-;; (use-package org-mu4e
-;;   :straight (org-mu4e :type git :host github :repo "djcb/mu")
-;;   :config
-;;   (setq org-mu4e-link-query-in-headers-mode nil))
 
 ;(require 'evil-mu4e)
 
@@ -167,6 +152,13 @@
   (require 'mu4e)
   (mu4e-headers-search
    (mu4e-bookmark-query (car (remove-if-not (lambda (s) (equal (mu4e-bookmark-name s) "Unread messages")) (mu4e-bookmarks))))))
+
+;;;###autoload
+(defun iocanel/get-mu4e-incoming-count ()
+  "Count the number of unread messages."
+  (let* ((query "flag:unread AND NOT flag:trashed AND NOT maildir:\"/Archived\"")
+         (command (format "mu find '%s' 2>/dev/null | wc -l" query)))
+    (string-trim (shell-command-to-string command))))
 
 (define-key evil-normal-state-map (kbd "SPC a m u") #'iocanel/mu4e-view-unread)
 (global-set-key (kbd "C-c a m u") #'iocanel/mu4e-view-unread)

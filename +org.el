@@ -4,6 +4,8 @@
 ;; Org Mode
 ;;
 
+(use-package gnuplot)
+
 ;;;###autoload
 (defun iocanel/org-drill ()
   "Require, configure and call org-drill."
@@ -15,69 +17,69 @@
   (org-save-all-org-buffers))
 
 (use-package org-drill
-   :init (setq org-drill-scope 'directory))
+  :init (setq org-drill-scope 'directory))
 
-  (add-to-list 'org-modules 'org-habit t)
-  (setq-default org-display-custom-times nil)
-  (setq org-use-tag-inheritance nil)
-  (setq org-agenda-tag-filter-preset '("-drill"))
-  (setq org-agenda-files (directory-files-recursively "~/Documents/org" "\.org$"))
-  (setq org-stuck-projects '("+project" ("TODO" "NEXT" "NEXTACTION") nil ""))
-  (setq org-tag-alist '((:startgroup . nil)
-                        ("project" . ?p) ("area" . ?a) ("resource" . ?r)
-                        (:endgroup . nil)
-                        (:startgroup . nil)
-                        ("@work" . ?w) ("@home" . ?h)
-                        (:endgroup . nil)
-                        ("@laptop" . ?l)))
+(add-to-list 'org-modules 'org-habit t)
+(setq-default org-display-custom-times nil)
+(setq org-use-tag-inheritance nil)
+(setq org-agenda-tag-filter-preset '("-drill"))
+(setq org-agenda-files (directory-files-recursively "~/Documents/org" "\.org$"))
+(setq org-stuck-projects '("+project" ("TODO" "NEXT" "NEXTACTION") nil ""))
+(setq org-tag-alist '((:startgroup . nil)
+                      ("project" . ?p) ("area" . ?a) ("resource" . ?r)
+                      (:endgroup . nil)
+                      (:startgroup . nil)
+                      ("@work" . ?w) ("@home" . ?h)
+                      (:endgroup . nil)
+                      ("@laptop" . ?l)))
 
-  (setq org-capture-templates
-        '(
-          ("c" "Calendar")
-          ("cw" "Work Event" entry (file  "~/Documents/org/calendars/work.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
-          ("cp" "Personal Event" entry (file  "~/Documents/org/calendars/personal.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+(setq org-capture-templates
+      '(
+        ("c" "Calendar")
+        ("cw" "Work Event" entry (file  "~/Documents/org/calendars/work.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+        ("cp" "Personal Event" entry (file  "~/Documents/org/calendars/personal.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
 
-          ("i" "Inbox")
-          ("iw" "Work Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
-          ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+        ("i" "Inbox")
+        ("iw" "Work Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+        ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
 
-          ("p" "Project" entry (file+headline "~/Documents/org/roam/projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
-          ("b" "BJJ")
-          ("bm" "Moves" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
-          ("bs" "Submission" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
-          ("bc" "Choke" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
-          ("bw" "Sweeps" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
-          ("be" "Escapes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
-          ("bt" "Takedowns" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
-          ("bp" "Passes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
-          ("bf" "FAQ" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
+        ("p" "Project" entry (file+headline "~/Documents/org/roam/projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
+        ("b" "BJJ")
+        ("bm" "Moves" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
+        ("bs" "Submission" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
+        ("bc" "Choke" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
+        ("bw" "Sweeps" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
+        ("be" "Escapes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
+        ("bt" "Takedowns" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
+        ("bp" "Passes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
+        ("bf" "FAQ" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
 
-          ("h" "Habit" entry (file+olp "~/Documents/org/roam/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
+        ("h" "Habit" entry (file+olp "~/Documents/org/roam/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
 
-          ("f" "Flashcards")
-          ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
-          ("fS" "Stories"  entry (file+headline "~/Documents/org/flashcards/stories.org" "Stories") "* Story :drill:\n %t\n %^{The story}\n")
-          ("fe" "Emacs")
-          ("fef" "Emacs facts"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("feq" "Emacs questions"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fh" "History")
-          ("fhf" "History facts"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("fhq" "History questions"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fm" "Maths")
-          ("fmf" "Math facts"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("fmq" "Math questions"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fc" "Computer Science")
-          ("fcf" "Computer Science facts"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("fcq" "Computer Science questions"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fs" "Sports")
-          ("fsf" "Sports facts"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("fsq" "Sports questions"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fn" "Nutrition")
-          ("ft" "Trading")
-          ("ftf" "Trading facts"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Fact :drill:\n %t\n %^{The fact}\n")
-          ("ftq" "Trading questions"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-          ("fl" "Languages")
-          ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
+        ("f" "Flashcards")
+        ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
+        ("fS" "Stories"  entry (file+headline "~/Documents/org/flashcards/stories.org" "Stories") "* Story :drill:\n %t\n %^{The story}\n")
+        ("fe" "Emacs")
+        ("fef" "Emacs facts"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("feq" "Emacs questions"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fh" "History")
+        ("fhf" "History facts"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("fhq" "History questions"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fm" "Maths")
+        ("fmf" "Math facts"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("fmq" "Math questions"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fc" "Computer Science")
+        ("fcf" "Computer Science facts"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("fcq" "Computer Science questions"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fs" "Sports")
+        ("fsf" "Sports facts"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("fsq" "Sports questions"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fn" "Nutrition")
+        ("ft" "Trading")
+        ("ftf" "Trading facts"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Fact :drill:\n %t\n %^{The fact}\n")
+        ("ftq" "Trading questions"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+        ("fl" "Languages")
+        ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
 
 ;; Org roam
 (use-package org-roam
@@ -140,7 +142,7 @@
   (org-present-show-cursor)
   (turn-off-hide-mode-line-mode)
   (org-present-read-write))
-  
+
 (use-package org-present
   :defer t
   :config
@@ -174,10 +176,10 @@
 (defun iocanel/org-get-property (file name tag property)
   "Extract the PROPERTY for NAME tagged with TAG in org FILE."
   (cdr (assoc property (car (org-ql-query
-  :select #'org-entry-properties
-  :from file
-  :where `(and (tags ,tag)
-               (equal ,name (org-get-heading t t))))))))
+                             :select #'org-entry-properties
+                             :from file
+                             :where `(and (tags ,tag)
+                                          (equal ,name (org-get-heading t t))))))))
 
 ;;
 ;; Blog
@@ -193,7 +195,7 @@
 ;;
 ;; Literate capture configuration
 ;;
-(defvar org-capture-babel-list '("~/Documents/org/roam/nutrition.org") "List of literate capture org files.")
+(defvar org-capture-babel-list '("~/Documents/org/roam/nutrition.org" "~/Documents/org/roam/weight.org") "List of literate capture org files.")
 
 (defun iocanel/load-capture-babel-async (orig-fun &rest args)
   "Load org files right before calling org capture."
@@ -209,9 +211,35 @@
   (org-babel-do-load-languages 'org-babel-load-languages '((shell .t)
                                                            (ruby . t)
                                                            (java . t)
-                                                           (plantuml . t))))
+                                                           (plantuml . t)))
+  (org-babel-load-file  "~/Documents/org/roam/habits.org"))
+
 ;;
 ;; Bindings
 ;;
 
 (global-set-key (kbd "C-c C-c") #'org-capture)
+
+;;
+;; Window manager integraion
+;;
+
+;; Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
+
+(defadvice org-switch-to-buffer-other-window
+    (after supress-window-splitting activate)
+  "Delete the extra window if we're in a capture frame"
+  (if (equal "org-capture" (frame-parameter nil 'name))
+      (delete-other-windows)))
+
+(defadvice org-capture-finalize
+    (after delete-capture-frame activate)
+  "Advise capture-finalize to close the frame"
+  (when (and (equal "org-capture" (frame-parameter nil 'name))
+             (not (eq this-command 'org-capture-refile)))
+    (delete-frame)))
+
+(defadvice org-capture-refile
+    (after delete-capture-frame activate)
+  "Advise org-refile to close the frame"
+  (delete-frame))
