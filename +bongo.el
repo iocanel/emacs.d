@@ -1,7 +1,8 @@
 (use-package bongo
   :config
-  (setq bongo-enabled-backends '(mplayer)
-        bongo-backend-matchers '((mplayer (local-file "file:" "http:" "https:" "ftp") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")))
+  (setq bongo-enabled-backends '(mplayer mpv)
+        bongo-backend-matchers '((mplayer (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")
+                                 (mpv ("https:") . "youtube")))
   (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
   :custom
   (bongo-default-directory "~/Documents/music")
@@ -23,7 +24,6 @@
   "Apply MAPPINGS to the SOURCE string"
   (let ((result source))
     (dolist (mapping mappings)
-      (message "Mapping: %s" mapping)
       (let ((key (car mapping))
             (value (cdr mapping)))
         (setq result (replace-regexp-in-string (regexp-quote key) value result))))
@@ -36,7 +36,8 @@
     (bongo-playlist)
     (goto-char (point-max))
     (bongo-insert-file filename)
-    (backward-char)
+    (goto-char (point-max))
+    (search-backward filename)
     (when (not (bongo-playing-p)) (bongo-start/stop))))
 
 ;;;###autoload

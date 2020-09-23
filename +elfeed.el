@@ -1,4 +1,5 @@
 (defvar elfeed-external-mode-map (make-sparse-keymap))
+(defvar elfeed-youtube-dl-enabled t "Download videos using youtube-dl and play them as loca files, instead of streaming them")
 (define-minor-mode elfeed-external-mode "A minor mode to add external modes `showing` elfeed entry content"
   (use-local-map elfeed-external-mode-map))
 
@@ -18,12 +19,18 @@
               ("Q" . iocanel/elfeed-save-and-quit)
               ("r" . iocanel/elfeed-mark-as-read)
               ("R" . iocanel/elfeed-mark-all-as-read)
+           :map elfeed-show-mode-map
+              ("C-<tab>" . iocanel/elfeed-external-next-entry)
            :map elfeed-external-mode-map
            ("C-<tab>" . iocanel/elfeed-external-next-entry)))
 
 (use-package elfeed-org
   :custom (rmh-elfeed-org-files '("~/Documents/org/roam/blogs.org"))
   :config (elfeed-org))
+
+;;
+;; External mode functions
+;;
 
 ;;;###autoload
 (defun iocanel/elfeed-external-buffer-p (buf)
@@ -33,7 +40,7 @@
 
 ;;;###autoload
 (defun iocanel/elfeed-external-buffer-list ()
-  "List all buffers that have teh elfeed-external-mode enabled."
+  "List all buffers that have the elfeed-external-mode enabled."
   (seq-filter (lambda (b) (iocanel/elfeed-external-buffer-p b)) (buffer-list)))
 
 ;;;###autoload
@@ -50,6 +57,31 @@
   (interactive)
   "List all buffers that have teh elfeed-external-mode enabled."
   (mapcar (lambda (b) (delete-window (get-buffer-window b))) (iocanel/elfeed-external-buffer-list)))
+
+;;;###autoload
+(defun iocanel/elfeed-show-buffer-list ()
+  "List all buffers that have teh elfeed-show-mode enabled."
+  (seq-filter (lambda (b) (iocanel/elfeed-show-buffer-p b)) (buffer-list)))
+
+;;;###autoload
+(defun iocanel/elfeed-delete-show-windows ()
+  (interactive)
+  "List all buffers that have the elfeed-show-mode enabled."
+  (mapcar (lambda (b) (delete-window (get-buffer-window b))) (iocanel/elfeed-show-buffer-list)))
+
+;;;###autoload
+(defun iocanel/mark-current-as-read ()
+  (interactive)
+  "Mark current entry as read."
+  (let ((current (elfeed-search-selected :ignore-region)))
+    (elfeed-untag current 'unread)
+    (elfeed-search-update-entry current)))
+
+(defun iocanel/elfeed-show-buffer-p (buf)
+  "Returns non-nil if BUF has enabled the elfeed-external-mode."
+  (with-current-buffer buf
+    (and (boundp 'elfeed-external-mode) elfeed-show-mode)))
+
 
 ;;;###autoload
 (defun iocanel/elfeed-jump-to-search(&optional visited)
@@ -69,12 +101,24 @@
                (iocanel/elfeed-jump-to-search (add-to-list 'visited name))))))) 
 
 ;;;###autoload
-(defun iocanel/elfeed-external-next-entry (&optional visited)
+(defun iocanel/elfeed-delete-non-search-windows ()
   (interactive)
-  "Closes external elfeed windows and moves to next entry."
+  "Delete all elfeed non search buffers."
+  ;; External
   (condition-case nil
       (iocanel/elfeed-delete-external-windows)
     (error nil))
+
+  ;; Show
+  (condition-case nil
+      (iocanel/elfeed-delete-show-windows)
+    (error nil)))
+
+;;;###autoload
+(defun iocanel/elfeed-external-next-entry (&optional visited)
+  (interactive)
+  "Closes external elfeed windows and moves to next entry."
+  (iocanel/elfeed-delete-non-search-windows)
   (iocanel/elfeed-jump-to-search)
   (let ((current (elfeed-search-selected :ignore-region)))
     (elfeed-untag current 'unread)
@@ -121,12 +165,13 @@ the cursor by ARG lines."
 ;;
 (defadvice elfeed-search-show-entry (around elfeed-search-show-entry-around activate)
   "Open entries in a new buffer below."
+  (iocanel/mark-current-as-read)
+  (iocanel/elfeed-delete-show-windows)
   (split-and-follow-vertically)
   ad-do-it)
 
 (defadvice elfeed-kill-buffer (around elfeed-kill-buffer-around activate)
   "Open entries in a new buffer below."
-  (message "Is external mode:%s" (iocanel/elfeed-current-buffer-external))
   (if (or (derived-mode-p 'elfeed-show-mode) (iocanel/elfeed-current-buffer-external))
       (progn
         ad-do-it
@@ -179,6 +224,7 @@ the cursor by ARG lines."
   "Download the youtube video from URL to a temporary file and return the path to it."
   (let* ((video-id (substring url (length youtube-watch-url-prefix) (length url)))
          (path (concat youtube-downlod-path video-id ".avi")))
+    (message "Downloading video into: %s" path)
     (shell-command (format "youtube-dl \"%s\" -o %s" url path))
     path))
   
@@ -207,29 +253,40 @@ the cursor by ARG lines."
 (defun iocanel/elfeed-open-in-youtube(entry)
   (interactive (list (elfeed-search-selected :ignore-region)))
   (require 'elfeed-show)
+  (iocanel/mark-current-as-read)
+  (iocanel/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let* ((link (elfeed-entry-link entry))
-           (download-path (youtube-get link)))
+           (download-path (if elfeed-youtube-dl-enabled (youtube-get link) (iocanel/bongo-enqueue-file link))))
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
-      (iocanel/bongo-enqueue-file (concat "file://" download-path)))))
+      (iocanel/bongo-enqueue-file (concat "file://" download-path))
+      (elfeed-external-mode 1))))
 
 ;;;###autoload
 (defun iocanel/elfeed-open-in-bongo (entry)
   "Display the currently selected item in eww."
   (interactive (list (elfeed-search-selected :ignore-region)))
   (require 'elfeed-show)
+  (iocanel/mark-current-as-read)
+  (iocanel/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
-      (bongo-library)
+      ;; Let's delete any open windows
+      (condition-case nil
+          (iocanel/elfeed-delete-external-windows)
+        (iocanel/elfeed-delete-show-windows)
+        (error nil))
       (iocanel/elfeed-enqueue-media-url entry)
-      (elfeed-external-mode))))
+      (elfeed-external-mode 1))))
 
 ;;;###autoload
 (defun iocanel/elfeed-open-in-eww (entry)
   "Display the currently selected item in eww."
   (interactive (list (elfeed-search-selected :ignore-region)))
   (require 'elfeed-show)
+  (iocanel/mark-current-as-read)
+  (iocanel/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
