@@ -11,7 +11,7 @@
                            "~/.config/emacs/snippets"
                            "~/.config/emacs/templates")
         yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
-        yas-prompt-functions '(yas-ido-prompt))
+        yas-prompt-functions '(yas-completing-prompt))
   :config (yas-reload-all)
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
@@ -35,6 +35,11 @@
   :init
   (lsp-treemacs-sync-mode 1))
 
+
+;;
+;; Java
+;;
+
 (defvar java-home "/home/iocanel/sdk/candidates/java/current")
 (defvar m2-home "/home/iocanel/sdk/candidates/maven/current")
 
@@ -45,13 +50,13 @@
   (setenv "M2_HOME" m2-home)
   (setenv "PATH" (format "/bin:/usr/bin:/usr/local/bin:%s/bin:%s/bin:%s/bin" (expand-file-name "~")  java-home m2-home))
   (setq
-        lsp-java-vmargs '("-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" "-Xverify:none" "-jar")
+        lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx4G" "-Xms1024m" "-Xverify:none" "-jar")
         lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
         lsp-java-save-action-organize-imports nil
         lsp-java-maven-download-sources t
         lsp-java-autobuild-enabled nil
         lsp-java-import-gradle-enabled nil
-        lsp-inhibit-message t
+        lsp-inhibit-message nil
         lsp-java-format-on-type-enabled nil
         lsp-java-completion-guess-arguments t
         lsp-java-completion-overwrite nil
@@ -76,6 +81,7 @@
          ("C-c j r t m" . dap-java-run-test-method)
          ("C-c j d t c" . dap-java-debug-test-class)
          ("C-c j d t m" . dap-java-debug-test-method)))
+
 
 ;;
 ;; Clojure
@@ -142,7 +148,51 @@
     (backward-char)
     (while (> (point) up-to)
       (paredit-delete-indentation))))
+
+
+;;
+;; Golang
+;;
  
+
+(use-package go-mode
+  :defer t
+  :hook ((go-mode . lsp)
+         (before-save . gofmt-before-save)))
+;;
+;; Haskell
+;;
+
+(use-package haskell-mode
+  :commands haskell-mode
+  :bind
+  (:map haskell-mode-map
+        ("C-c h" . haskell-hoogle)))
+
+ (use-package hindent
+  :disabled t
+  :after haskell-mode
+  :bind (:map hindent-mode-map
+              ("C-c d" . hindent-reformat-decl))
+
+  (use-package ghc
+  :after haskell-mode
+  :disabled t
+  :config
+  (progn
+    (setq ghc-debug t)
+    (add-hook 'haskell-mode-hook 'ghc-init)))
+  :config
+  (progn
+    (setq hindent-style nil)
+    (add-hook 'haskell-mode-hook 'hindent-mode)))
+
+(use-package company-ghc
+  :disabled t
+  :demand t
+  :config
+  (add-to-list 'company-backends '(company-ghc :with company-dabbrev-code)))
+
 ;;
 ;; IDEE
 ;;
@@ -163,9 +213,15 @@
          ("C-c f" . 'idee-file-hydra/body)
          ("C-c t" . 'idee-treemacs-hydra/body)))
 
+(use-package idee-lsp :straight (idee :host github :repo "iocanel/idee")
+  :config
+  (idee-lsp-init))
+
 (use-package idee-java :straight (idee :host github :repo "iocanel/idee")
-  :config (idee-java-init)
-  :bind (("C-c m" . 'idee-maven-hydra/body)))
+  :config
+  (idee-java-init))
+
+(use-package idee-dap :straight (idee :host github :repo "iocanel/idee"))
 
 (use-package idee-kubernetes :straight (idee :host github :repo "iocanel/idee"))
 
@@ -185,15 +241,40 @@
   :bind (("C-c g" . helm-do-ag-project-root)))
 
 
+;; Maven configuration
+(define-derived-mode maven-pom-mode nxml-mode "maven-pom-mode" "Major mode for editting Maven pom files")
+(add-to-list 'auto-mode-alist '("pom\\.xml\\'" . maven-pom-mode))
+(add-to-list 'idee-module-root-markers "pom.xml")
+;; Populate maven known group ids
+(add-to-list 'idee-maven-known-group-ids "io.dekorate")
+(add-to-list 'idee-maven-known-group-ids "io.fabric8")
+(add-to-list 'idee-maven-known-group-ids "io.quarkus")
+(add-to-list 'idee-maven-known-group-ids "io.sundr")
+(add-to-list 'idee-maven-known-group-ids "org.springframework")
+(add-to-list 'idee-maven-known-group-ids "org.junit")
+
+;;
+;; Web
+;;
+(defun iocanel/open-in-browser()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (browse-url (concat "file://" filename))))
+
+
+;;
+;; Yas Snippets
+;;
+(yas-reload-all)
+
 ;;
 ;; Demo aid
 ;;
-(add-to-list 'idee-project-root-markers "pom.xml")
 (add-to-list 'display-buffer-alist
   (cons "\\*Async Shell Command\\*.*" (cons #'display-buffer-no-window nil)))
 
 (defun inhibit-sentinel-messages (fun &rest args)
-  "Inhibit messages in all sentinels started by fun."
+  "Inhibit messages in all sentinels started by FUN."
   (cl-letf* ((old-set-process-sentinel (symbol-function 'set-process-sentinel))
          ((symbol-function 'set-process-sentinel)
           (lambda (process sentinel)
@@ -206,6 +287,7 @@
         (apply fun args)))
 
 (defun properties-save-hook ()
+  "Aynchronously rebuild the project whenever properties chagne."
   (when (eq major-mode 'conf-javaprop-mode)
     (let ((module-root (idee-project-root-dir buffer-file-name))
           (output-buffer (generate-new-buffer "*Async Maven Build*")))

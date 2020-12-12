@@ -1,0 +1,95 @@
+* UML
+** PlantUML
+*** Package
+    #+begin_src emacs-lisp
+      (use-package plantuml-mode
+        :commands plantuml-download-jar
+        :init
+        (add-to-list 'org-src-lang-modes '("plantuml" . plantuml)
+                     (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
+                           org-plantuml-jar-path plantuml-jar-path)))
+
+      (use-package flycheck-plantuml
+        :after plantuml-mode
+        :config (flycheck-plantuml-setup))
+    #+end_src
+
+*** Snippets
+    This section contains snippets to ease the development of planuml diagrams.
+
+**** Start
+     #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/start
+       # -*- mode: snippet -*-
+       # name: start
+       # key: start 
+       # --
+       @startuml
+       start
+       $0
+       end
+       @enduml
+     #+end_src
+
+**** Conditionals
+***** If then else
+      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/ite
+        # -*- mode: snippet -*-
+        # name: if then else
+        # key: ite
+        # --
+        if ($1) then (yes)
+        $0
+        else
+        endif
+      #+end_src
+
+**** Notes
+***** Left
+      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/ln
+        # -*- mode: snippet -*-
+        # name: left note
+        # key: ln 
+        # --
+        note left
+        $0
+        end note
+      #+end_src
+
+    
+***** Right
+      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/rn
+        # -*- mode: snippet -*-
+        # name: right note
+        # key: rn 
+        # --
+        note right
+        $0
+        end note
+      #+end_src
+
+**** Splits
+
+***** Single split
+      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/split
+        # -*- mode: snippet -*-
+        # name: split
+        # key: split 
+        # --
+        split
+        -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
+        $0
+        split again
+        -[#${3:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$4;
+        end split
+      #+end_src
+
+***** Split again
+      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/split
+        # -*- mode: snippet -*-
+        # name: split again
+        # key: sa
+        # --
+        split again
+        -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
+        $0
+      #+end_src

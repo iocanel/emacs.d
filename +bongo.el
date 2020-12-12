@@ -37,8 +37,13 @@
     (goto-char (point-max))
     (bongo-insert-file filename)
     (goto-char (point-max))
-    (search-backward filename)
-    (when (not (bongo-playing-p)) (bongo-start/stop))))
+    (search-backward filename)))
+
+;;;###autoload
+(defun iocanel/bongo-enqueue-file-and-play (filename &rest ignored)
+  "Enqueue media from FILENAME to playlist."
+    (iocanel/bongo-enqueue-file filename)
+    (when (not (bongo-playing-p)) (bongo-start/stop)))
 
 ;;;###autoload
 (defun iocanel/bongo-play-file (filename &rest ignored)
@@ -63,7 +68,32 @@
         (seq-filter 'iocanel/bluetooth-device-connected-p device-ids)
       device-ids)))
 
+;;
+;; Capturing
+;;
+(defun bongo-currently-playing-elapsed-time()
+  (interactive)
+  "Log the elapsed time"
+  (format "%s" (bongo-elapsed-time)))
 
+(defun bongo-currently-playing-url ()
+  (interactive)
+  "Return the file name of the file currently playing."
+  (with-bongo-playlist-buffer
+    (cdr (assoc 'file-name (cdr bongo-player)))))
+
+(defun bongo-play-org-entry-at-poing ()
+  (interactive)
+  "Play the play the media file at point."
+  (let* ((p (point))
+         (url  (org-entry-get nil "URL"))
+         (time (org-entry-get nil "ELAPSED")))
+    (with-bongo-playlist-buffer
+      (bongo-insert-uri url)
+      (bongo-previous-object)
+      (bongo-play)
+      (when (stringp time) (bongo-seek-to (string-to-number time))))))
+ 
 ;;
 ;; Advices
 ;;

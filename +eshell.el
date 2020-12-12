@@ -6,10 +6,11 @@
         eshell-banner-message ""
         eshell-path-env (getenv "PATH"))
   :hook ((eshell-pre-command . (lambda ()
-                                  (iocanel/eshell-compilation-mode)
+                                  (iocanel/eshell-refresh-compilation-mode)
                                   (setq eshell-path-env (getenv "PATH"))))
-         (eshell-mode-hook . (lambda()
+         (eshell-mode . (lambda()
                                (setq eshell-path-env (getenv "PATH"))
+                               (eshell/alias "mvn" "~/bin/mvnnotify $*")
                                (eshell/alias "cls" "iocanel/eshell-clear")
                                (eshell/alias "clear" "iocanel/eshell-clear")
                                (eshell/alias "d" "dired $1")
@@ -24,15 +25,17 @@
                                (eshell/alias "vi" "find-file-silent $1")
                                (eshell/alias "kc" "kubectl $*")))))
 
+;;;###autoload
 (defun iocanel/eshell-clear ()
-  (interactive)
   "Clear the eshell buffer."
+  (interactive)
   (let ((inhibit-read-only t))
     (erase-buffer)))
 ;;    (eshell-send-input nil nil nil)))
 
-(defun iocanel/eshell-compilation-mode () 
-  "Enable compilation mode"
+;;;###autoload
+(defun iocanel/eshell-refresh-compilation-mode () 
+  "Re-enable compilation mode"
   (interactive)
   ;; compilation shell mode doesn't work properly so it needs a nudge every now and then
   (compilation-shell-minor-mode -1)

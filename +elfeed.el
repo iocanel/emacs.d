@@ -1,7 +1,6 @@
 (defvar elfeed-external-mode-map (make-sparse-keymap))
 (defvar elfeed-youtube-dl-enabled t "Download videos using youtube-dl and play them as loca files, instead of streaming them")
-(define-minor-mode elfeed-external-mode "A minor mode to add external modes `showing` elfeed entry content"
-  (use-local-map elfeed-external-mode-map))
+(define-minor-mode elfeed-external-mode "A minor mode to add external modes `showing` elfeed entry content" (use-local-map elfeed-external-mode-map))
 
 (use-package elfeed
   :config
@@ -10,8 +9,9 @@
   :bind (:map elfeed-search-mode-map
               ("j" . next-line)
               ("k" . previous-line)
-              ("e" . iocanel/elfeed-open-in-eww)
               ("b" . iocanel/elfeed-open-in-bongo)
+              ("e" . iocanel/elfeed-open-in-eww)
+              ("x" . iocanel/elfeed-open-in-xwidget-webkit-browser)
               ("y" . iocanel/elfeed-open-in-youtube)
               ("d" . iocanel/elfeed-open-in-dwim)
               ("C-<tab>" . iocanel/elfeed-external-next-entry)
@@ -21,6 +21,11 @@
               ("R" . iocanel/elfeed-mark-all-as-read)
            :map elfeed-show-mode-map
               ("C-<tab>" . iocanel/elfeed-external-next-entry)
+              ("b" . iocanel/elfeed-show-in-bongo)
+              ("e" . iocanel/elfeed-show-in-eww)
+              ("x" . iocanel/elfeed-show-in-xwidget-webkit-browser)
+              ("y" . iocanel/elfeed-show-in-youtube)
+              ("d" . iocanel/elfeed-show-dwim)
            :map elfeed-external-mode-map
            ("C-<tab>" . iocanel/elfeed-external-next-entry)))
 
@@ -75,12 +80,13 @@
   "Mark current entry as read."
   (let ((current (elfeed-search-selected :ignore-region)))
     (elfeed-untag current 'unread)
-    (elfeed-search-update-entry current)))
+    (elfeed-search-update-entry current)
+    (elfeed-db-save-safe)))
 
 (defun iocanel/elfeed-show-buffer-p (buf)
   "Returns non-nil if BUF has enabled the elfeed-external-mode."
   (with-current-buffer buf
-    (and (boundp 'elfeed-external-mode) elfeed-show-mode)))
+    (and (boundp 'elfeed-show-mode) elfeed-show-mode)))
 
 
 ;;;###autoload
@@ -220,12 +226,16 @@ the cursor by ARG lines."
   "Predicate that checks if URL points to youtube."
   (if (stringp url) (string-prefix-p youtube-watch-url-prefix url) nil))
 
-(defun youtube-get (url)
+(defun youtube-get (url &optional callback)
   "Download the youtube video from URL to a temporary file and return the path to it."
   (let* ((video-id (substring url (length youtube-watch-url-prefix) (length url)))
-         (path (concat youtube-downlod-path video-id ".avi")))
-    (message "Downloading video into: %s" path)
-    (shell-command (format "youtube-dl \"%s\" -o %s" url path))
+         (path (concat youtube-downlod-path video-id ".avi"))
+         (output-buffer (generate-new-buffer (format elfeed-youtube-dl-buffer-format video-id)))
+         (proc (progn
+                 (message "Downloading video into: %s" path)
+                 (async-shell-command (format "youtube-dl \"%s\" -o %s" url path) output-buffer)
+                 (get-buffer-process output-buffer))))
+         (when callback (set-process-sentinel  proc callback))
     path))
   
 ;;;###autoload
@@ -237,8 +247,8 @@ the cursor by ARG lines."
     (let ((link (elfeed-entry-link entry))
           (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
       (cond
-       ((url-mp3-p link) (iocanel/bongo-enqueue-file (normalize-mp3-url link)))
-       ((url-mp3-p enclosure) (iocanel/bongo-enqueue-file (normalize-mp3-url enclosure)))))))
+       ((url-mp3-p link) (iocanel/bongo-enqueue-file-and-play (normalize-mp3-url link)))
+       ((url-mp3-p enclosure) (iocanel/bongo-enqueue-file-and-play (normalize-mp3-url enclosure)))))))
 
 ;;;###autoload
 (defun iocanel/elfeed-open-in-dwim (entry)
@@ -250,17 +260,55 @@ the cursor by ARG lines."
    (t (iocanel/elfeed-open-in-eww entry))))
 
 ;;;###autoload
+(defun iocanel/elfeed-show-dwim ()
+  "Open feed in the most fitting mode."
+  (interactive)
+  (cond
+   ((entry-mp3-p elfeed-show-entry) (iocanel/elfeed-open-in-bongo elfeed-show-entry))
+   ((entry-youtube-p elfeed-show-entry) (iocanel/elfeed-open-in-youtube elfeed-show-entry))
+   (t (iocanel/elfeed-open-in-eww elfeed-show-entry))))
+
+
+(defvar elfeed-youtube-dl-buffer-format "*Async youtube-dl: %s*")
+;; We need to make sure that the youtbue-dl buffer stays burried!
+(add-to-list 'display-buffer-alist (cons "\\*Async youtube-dl: .*\\*" (cons #'display-buffer-no-window nil)))
+
+
+;;;###autoload
 (defun iocanel/elfeed-open-in-youtube(entry)
+  "Display the currently selected item in youtube."
   (interactive (list (elfeed-search-selected :ignore-region)))
   (require 'elfeed-show)
   (iocanel/mark-current-as-read)
   (iocanel/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
-    (let* ((link (elfeed-entry-link entry))
-           (download-path (if elfeed-youtube-dl-enabled (youtube-get link) (iocanel/bongo-enqueue-file link))))
+    (let* ((url (elfeed-entry-link entry))
+           (video-id (substring url (length youtube-watch-url-prefix) (length url)))
+           (path (concat youtube-downlod-path video-id ".avi"))
+           (download-path (if elfeed-youtube-dl-enabled (youtube-get url #'iocanel/elfeed-start-bongo-callback) (iocanel/bongo-enqueue-file link))))
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
-      (iocanel/bongo-enqueue-file (concat "file://" download-path))
+      (iocanel/bongo-enqueue-file-and-play (concat "file://" download-path))
       (elfeed-external-mode 1))))
+
+
+(defun iocanel/elfeed-start-bongo-callback (process signal)
+"Callback to be called when a youtube video gets downloaded."
+(when (memq (process-status process) '(exit signal))
+  (message "Video finished!")
+  (when (not (bongo-playing-p)) (bongo-start/stop)))
+  (shell-command-sentinel process signal))
+
+;;;###autoload
+(defun iocanel/elfeed-show-in-youtube ()
+  "Display the currently shown item in youtube."
+  (interactive)
+  (require 'elfeed-show)
+  (when (elfeed-entry-p elfeed-show-entry)
+    (let* ((link (elfeed-entry-link elfeed-show-entry))
+           (download-path (if elfeed-youtube-dl-enabled (youtube-get link) (iocanel/bongo-enqueue-file link))))
+      (iocanel/bongo-enqueue-file-and-play (concat "file://" download-path))
+      (elfeed-external-mode 1))))
+
 
 ;;;###autoload
 (defun iocanel/elfeed-open-in-bongo (entry)
@@ -272,12 +320,17 @@ the cursor by ARG lines."
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
-      ;; Let's delete any open windows
-      (condition-case nil
-          (iocanel/elfeed-delete-external-windows)
-        (iocanel/elfeed-delete-show-windows)
-        (error nil))
       (iocanel/elfeed-enqueue-media-url entry)
+      (elfeed-external-mode 1))))
+
+;;;###autoload
+(defun iocanel/elfeed-show-in-bongo ()
+  "Display the currently shown item in eww."
+  (interactive)
+  (require 'elfeed-show)
+  (when (elfeed-entry-p elfeed-show-entry)
+    (let ((link (elfeed-entry-link elfeed-show-entry)))
+      (iocanel/elfeed-enqueue-media-url elfeed-show-entry)
       (elfeed-external-mode 1))))
 
 ;;;###autoload
@@ -292,3 +345,37 @@ the cursor by ARG lines."
       (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
       (eww link)
       (elfeed-external-mode))))
+
+;;;###autoload
+(defun iocanel/elfeed-show-in-eww ()
+  "Display the currently shown item in xwidget-webkit-browser."
+  (interactive)
+  (require 'elfeed-show)
+  (when (elfeed-entry-p elfeed-show-entry)
+    (let ((link (elfeed-entry-link elfeed-show-entry)))
+      (eww link)
+      (elfeed-external-mode))))
+
+;;;###autoload
+(defun iocanel/elfeed-open-in-xwidget-webkit-browser (entry)
+  "Display the currently selected item in xwidget-webkit-browser."
+  (interactive (list (elfeed-search-selected :ignore-region)))
+  (require 'elfeed-show)
+  (iocanel/mark-current-as-read)
+  (iocanel/elfeed-delete-non-search-windows)
+  (when (elfeed-entry-p entry)
+    (let ((link (elfeed-entry-link entry)))
+      (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
+      (xwidget-webkit-browse-url link)
+      (elfeed-external-mode))))
+
+;;;###autoload
+(defun iocanel/elfeed-show-in-xwidget-webkit-browser ()
+  "Display the currently shown item in xwidget-webkit-browser."
+  (interactive)
+  (require 'elfeed-show)
+  (when (elfeed-entry-p elfeed-show-entry)
+    (let ((link (elfeed-entry-link elfeed-show-entry)))
+      (xwidget-webkit-browse-url link)
+      (elfeed-external-mode))))
+

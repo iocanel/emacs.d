@@ -7,20 +7,20 @@
 (defun desktop-mode()
   "Modify theme for latpop use"
   (interactive)
-  (set-face-attribute 'default nil :height 100)
-  (set-face-attribute 'treemacs-root-face nil :height 115))
+  (set-face-attribute 'default nil :height 130)
+  (set-face-attribute 'treemacs-root-face nil :height 130))
 
 (defun comf-mode()
   "Modify theme for comfortable use"
   (interactive)
-  (set-face-attribute 'default nil :height 130)
-  (set-face-attribute 'treemacs-root-face nil :height 130))
+  (set-face-attribute 'default nil :height 150)
+  (set-face-attribute 'treemacs-root-face nil :height 160))
 
 (defun presenetation-mode()
   "Modify theme for presentations use"
   (interactive)
-  (set-face-attribute 'default nil :height 150)
-  (set-face-attribute 'treemacs-root-face nil :height 160))
+  (set-face-attribute 'default nil :height 250)
+  (set-face-attribute 'treemacs-root-face nil :height 260))
 
 (defun asciinema-mode()
   "Modify theme for asciinema use"
@@ -33,4 +33,4 @@
   (setq inhibit-message t)
   (setq-default inhibit-message t))
 
-(presenetation-mode)
+(comf-mode)

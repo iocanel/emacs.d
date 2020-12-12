@@ -4,20 +4,42 @@
 (setq inhibit-message t)
 (setq inhibit-startup-message t)
 (set-face-attribute 'default nil :height 150)
-(setq visible-bell 1)
+
+;;
+;; Bell
+;;
+
+(setq visible-bell nil)
+(setq ring-bell-function 'silent)
+
+;;
+;; Auto revert
+;;                                        
+(global-auto-revert-mode 1)
 
 ;;
 ;; Garbage collection
 ;;
-(defvar orig-gc-cons-threshold gc-cons-threshold "Original gc cons threshold")
-(defvar orig-gc-cons-percentage gc-cons-percentage "Original gc cons percentage")
 
+(setq garbage-collection-messages t)
 ;;;###autoload
 (defun iocanel/gc-restore-settings()
   "Restore gc settings."
   (message "Restoring garbage collection settings to their original values.")
-  (setq gc-cons-threshold orig-gc-cons-threshold)
-  (setq gc-cons-percentage orig-gc-cons-percentage))
+  (setq gc-cons-threshold gc-cons-threshold)
+  (setq gc-cons-percentage 0.05))
+
+
+;;;###autoload
+(defun iocanel/minibuffer-gc-setup-hook ()
+  (setq gc-cons-threshold most-positive-fixnum))
+
+;;;###autoload
+(defun iocanel/minibuffer-gc-exit-hook ()
+  (setq gc-cons-threshold orig-gc-cons-threshold))
+
+(add-hook 'minibuffer-setup-hook #'iocanel/minibuffer-gc-setup-hook)
+(add-hook 'minibuffer-exit-hook #'iocanel/minibuffer-gc-exit-hook)
 
 ;;
 ;;
@@ -53,12 +75,12 @@
         doom-modeline-major-mode-icon t
         doom-modeline-major-mode-color-icon t
         doom-modeline-lsp t
-        doom-modeline-column-zero-based t
-        doom-modeline-percent-position '(-3 "%c"))
+        doom-modeline-column-zero-based t)
   :config
   (when
       (display-graphic-p)
-    (doom-modeline-mode)))
+    (doom-modeline-mode)
+    (column-number-mode)))
 
 (use-package hide-mode-line
   :config
@@ -80,6 +102,28 @@
 ;;
 (setq dired-dwim-target t)
 
+(use-package dired-narrow
+  :bind (:map dired-mode-map 
+              ("C-c C-n" . dired-narrow)
+              ("C-c C-f" . dired-narrow-fuzzy)
+              ("C-c C-N" . dired-narrow-regexp)))
+
+(use-package dired-subtree
+    :bind (:map dired-mode-map 
+                ("<tab>" . dired-subtree-toggle)
+                ("<backtab>" . dired-subtree-cycle)))
+
+;;;###autoload
+(defun iocanel/dired-expand-all ()
+  (interactive)
+  "Expand all subtrees in the dired buffer."
+  (let ((has-more t))
+    (while has-more
+      (condition-case ex
+          (progn
+            (dired-next-dirline 1)
+            (dired-subtree-toggle))
+        ('error (setq has-more nil))))))
 ;;
 ;; Editor
 ;;
@@ -140,16 +184,20 @@
 (run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+ide.el")))
 (run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+org.el")))
 (run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+email.el")))
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+uml.el")))
 (run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+latex.el")))
 (run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+screens.el")))
 (run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+elfeed.el")))
 (run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+bongo.el")))
 
-(run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/finalize.el")))
+;; Org files
+(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/.config/emacs/+uml.org")))
+(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
+
+;; Finalize
+(run-with-idle-timer 3 nil (lambda () (load-file "~/.config/emacs/finalize.el")))
 
 ;; Tune garbage collect
-(run-with-idle-timer 2 nil (lambda () (iocanel/gc-restore-settings)))
+(run-with-idle-timer 3 nil (lambda () (iocanel/gc-restore-settings)))
 (add-hook 'focus-out-hook 'garbage-collect)
 
 ;; (use-package explain-pause-mode
