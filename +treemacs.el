@@ -1,5 +1,5 @@
 (use-package treemacs
-  :defer 1
+  :defer t
   :bind ("M-0" . 'treemacs-select-window)
   :hook (treemacs-mode . (lambda () (setq mode-line-format nil)))
   :config

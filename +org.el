@@ -16,14 +16,20 @@
   (org-drill)
   (org-save-all-org-buffers))
 
+(defun iocanel/org-drill-buffer ()
+  "Require, configure and call org-drill."
+  (interactive)
+  (require 'org-drill)
+  (setq org-drill-scope 'file)
+  (org-drill)
+  (org-save-all-org-buffers))
+
 (use-package org-drill
   :init (setq org-drill-scope 'directory))
 
 (add-to-list 'org-modules 'org-habit t)
 (setq-default org-display-custom-times nil)
 (setq org-use-tag-inheritance nil)
-(setq org-agenda-tag-filter-preset '("-drill"))
-(setq org-agenda-files (directory-files-recursively "~/Documents/org" "\.org$"))
 (setq org-stuck-projects '("+project" ("TODO" "NEXT" "NEXTACTION") nil ""))
 (setq org-tag-alist '((:startgroup . nil)
                       ("project" . ?p) ("area" . ?a) ("resource" . ?r)
@@ -32,6 +38,24 @@
                       ("@work" . ?w) ("@home" . ?h)
                       (:endgroup . nil)
                       ("@laptop" . ?l)))
+
+;; Agenda
+(setq org-agenda-scheduled-leaders '("" ""))
+(setq org-agenda-tag-filter-preset '("-drill"))
+(setq org-agenda-start-day "+0") 
+(setq org-agenda-start-on-weekday nil)
+(setq org-agenda-span 2)
+(setq org-agenda-files (directory-files-recursively "~/Documents/org" "\.org$"))
+
+
+(use-package org-super-agenda
+  :defer t
+  :config
+  (setq org-super-agenda-groups '((:name "Events" :time-grid t :todo "TODAY")
+                                  (:name "Habbits" :tag "habit" :todo "TODAY")
+                                  (:name "Due" :deadline past)
+                                  (:name "Github issues" :tag "github")))
+  :hook (org-agenda-mode . org-super-agenda-mode))
 
 (setq org-capture-templates
       '(
@@ -93,13 +117,14 @@
   :hook (org-mode-hook. org-roam-mode))
 
 ;; Google Calendar
-(defun iocanel/org-gcal-init ()
+(use-package org-gcal
+  :defer 3
+  :init
   (setq org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/client-id"))
         org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/secret"))
         org-gcal-file-alist '(("iocanel@gmail.com" .  "~/Documents/org/calendars/personal.org")
                               ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org"))))
 
-(run-with-idle-timer 3 nil (lambda () (iocanel/org-gcal-init)))
 
 ;; Org Table Aggregate
 (use-package orgtbl-aggregate)
@@ -118,9 +143,12 @@
 
 (use-package org-bullets
   :hook (org-mode . (lambda () (org-bullets-mode 1))))
+
 ;;
 ;; Org-present
 ;;
+
+(defvar iocanel/fringe-mode fringe-mode)
 
 ;;;###autoload
 (defun iocanel/org-present-start ()
@@ -128,9 +156,10 @@
   "Setup screen for org present."
   (org-bullets-mode 1)
   (org-present-big)
-  (org-display-inline-images)
   (org-present-hide-cursor)
   (turn-on-hide-mode-line-mode)
+  ;; Center the text
+  (set-fringe-mode (/ (- (frame-pixel-width) (* 90 (frame-char-width))) 2))
   (org-present-read-only))
 
 ;;;###autoload
@@ -138,15 +167,16 @@
   (interactive)
   "Exit org-present."
   (org-present-small)
-  (org-remove-inline-images)
   (org-present-show-cursor)
   (turn-off-hide-mode-line-mode)
-  (org-present-read-write))
+  (org-present-read-write)
+  (set-fringe-mode iocanel/fringe-mode))
 
 (use-package org-present
   :defer t
   :config
-  (setq org-present-text-scale 3)
+  (setq org-present-text-scale 3
+        org-present-run-after-navigate-functions  '(org-display-inline-images))
   :bind (("C-c a p" . org-present)
          :map org-present-mode-keymap
          ("C-q" . org-present-quit)
@@ -156,6 +186,8 @@
          (org-present-mode-quit . iocanel/org-present-stop)))
 
 (use-package hide-mode-line :defer t)
+
+(use-package org-ql)
 ;;
 ;; Org Functions
 ;;
@@ -181,16 +213,44 @@
                              :where `(and (tags ,tag)
                                           (equal ,name (org-get-heading t t))))))))
 
+
 ;;
 ;; Blog
 ;;
-(defun iocanel/org2blog-init ()
-  (setq org2blog/wp-use-sourcecode-shortcode t)
-  (setq org2blog/wp-blog-alist
+
+(use-package org2blog
+  :defer t
+  :config
+  (setq org2blog/wp-use-sourcecode-shortcode t
+        org2blog/wp-blog-alist
         `(("iocanel.com"
            :url "https://iocanel.com/xmlrpc.php"
            :username "iocanel@gmail.com"
-           :password ,(replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/iocanel.com/iocanel@gmail.com"))))))
+           :password ,(replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/iocanel.com/iocanel@gmail.com")))))
+  :commands (org2blog-user-interface
+             org2blog-buffer-new
+             org2blog-buffer-post-publish
+             org2blog-buffer-page-publish
+             org2blog/wp-login
+             org2blog/wp-loggout
+             org2blog/wp-show-post-in-browser))
+
+;;
+;; Github Issues
+;;
+
+(use-package org-github-issues :straight (org-github-issues :host github :repo "iensu/org-github-issues")
+  :defer t 
+  :config
+  (setq
+        iocanel/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrp-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")
+        gh-user "iocanel"
+        org-github-issues-org-file "~/Documents/org/roam/github.org"
+        org-github-issues-tags '("github" "triage")
+        org-github-issues-auto-schedule "+0d"
+        org-github-issues-filter-by-assignee t
+        org-github-issues-headline-prefix t)
+  (mapcar (lambda (r) (run-with-idle-timer 36000 t (lambda () (org-github-issues-sync-issues r)))) iocanel/github-repositories))
 
 ;;
 ;; Literate capture configuration
@@ -211,9 +271,20 @@
   (org-babel-do-load-languages 'org-babel-load-languages '((shell .t)
                                                            (ruby . t)
                                                            (java . t)
-                                                           (plantuml . t)))
-  (org-babel-load-file  "~/Documents/org/roam/habits.org"))
+                                                           (plantuml . t))))
+;;
+;; Refile
+;;
 
+(setq org-refile-targets
+      '(
+        ("~/Documents/org/roam/bjj/BJJ.org" :maxlevel . 10)
+
+        ;; P.A.R.A
+        ("~/Documents/org/roam/projects.org" :maxlevel . 10)
+        ("~/Documents/org/roam/areas.org" :maxlevel . 10)
+        ("~/Documents/org/roam/resources.org" :maxlevel . 10)
+        ("~/Documents/org/roam/archives.org" :maxlevel . 10)))
 
 ;;
 ;; Agenda
@@ -238,12 +309,23 @@
             (with-temp-file "~/.agenda" (insert result)))))
       (set-window-configuration wins))))
 
+
 ;;
 ;; Bindings
 ;;
 
 (global-set-key (kbd "C-c C-c") #'org-capture)
 
+
+;;
+;; Imgflip
+;;
+
+(use-package imgflip.el :straight (imgflip.el :host github :repo "iocanel/imgflip.el")
+  :custom (imgflip-download-dir "~/.imgflip")
+  :config
+  (setq imgflip-username "iocanel"
+        imgflip-password (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/imgflip/iocanel/password"))))
 
 ;;
 ;; Inline animated gif

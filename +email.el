@@ -33,7 +33,7 @@
                      (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
 
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/bin/msmtp")
+                     (sendmail-program                 . "/usr/local/bin/msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
@@ -55,7 +55,7 @@
                      (mu4e-sent-folder                 . "/ikanello@gmail.com/Sent")
                      (user-full-name                   . "Ioannis Canellos")
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/bin/msmtp")
+                     (sendmail-program                 . "/usr/local/bin/msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)

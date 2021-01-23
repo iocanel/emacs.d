@@ -22,6 +22,7 @@
 ;;
 
 (setq garbage-collection-messages t)
+
 ;;;###autoload
 (defun iocanel/gc-restore-settings()
   "Restore gc settings."
@@ -31,15 +32,17 @@
 
 
 ;;;###autoload
-(defun iocanel/minibuffer-gc-setup-hook ()
+(defun iocanel/gc-maximize-threshold ()
+  "Maximize the gc threshold."
   (setq gc-cons-threshold most-positive-fixnum))
 
 ;;;###autoload
-(defun iocanel/minibuffer-gc-exit-hook ()
+(defun iocanel/gc-restore-threshold ()
+  "Restore the original gc threshold."
   (setq gc-cons-threshold orig-gc-cons-threshold))
 
-(add-hook 'minibuffer-setup-hook #'iocanel/minibuffer-gc-setup-hook)
-(add-hook 'minibuffer-exit-hook #'iocanel/minibuffer-gc-exit-hook)
+(add-hook 'minibuffer-setup-hook #'iocanel/gc-maximize-threshold)
+(add-hook 'minibuffer-exit-hook #'iocanel/gc-restore-threshold)
 
 ;;
 ;;
@@ -57,11 +60,12 @@
 
 ;; Eval Path
 (setq max-lisp-eval-depth 10000)
+(setq max-specpdl-size 25000)
 
 ;;
 ;; Doom UI
 ;;
-(use-package all-the-icons)            
+(use-package all-the-icons :defer t)            
 
 (use-package doom-themes
   :config
@@ -171,7 +175,6 @@
 
 (load-file "~/.config/emacs/+autosave.el")
 (load-file "~/.config/emacs/+evil.el")
-(load-file "~/.config/emacs/+ivy.el")
 (load-file "~/.config/emacs/+completion.el")
 (load-file "~/.config/emacs/+treemacs.el")
 (load-file "~/.config/emacs/+projectile.el")
@@ -191,8 +194,13 @@
 
 ;; Org files
 (run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/.config/emacs/+uml.org")))
-(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
+(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/.config/emacs/+jira.org")))
 
+(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/habits.org")))
+(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/nutrition.org")))
+(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
+
+ 
 ;; Finalize
 (run-with-idle-timer 3 nil (lambda () (load-file "~/.config/emacs/finalize.el")))
 
@@ -200,5 +208,4 @@
 (run-with-idle-timer 3 nil (lambda () (iocanel/gc-restore-settings)))
 (add-hook 'focus-out-hook 'garbage-collect)
 
-;; (use-package explain-pause-mode
-;;   :config (explain-pause-mode))
+;(use-package explain-pause-mode :config (explain-pause-mode))

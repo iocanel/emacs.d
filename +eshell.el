@@ -5,6 +5,9 @@
         eshell-history-size 100000
         eshell-banner-message ""
         eshell-path-env (getenv "PATH"))
+  :bind (:map eshell-command-mode-map
+              ("M-w" . 'iocanel/eshell-open-eww)
+              ("M-x" . 'iocanel/eshell-open-xwidget-webkit))
   :hook ((eshell-pre-command . (lambda ()
                                   (iocanel/eshell-refresh-compilation-mode)
                                   (setq eshell-path-env (getenv "PATH"))))
@@ -42,4 +45,27 @@
   (compilation-shell-minor-mode 1))
 
 
+;;;###autoload
+(defun iocanel/eshell-open-eww ()
+  (interactive)
+  "Start eww from the current ehsell buffer."
+  (let* ((port (iocanel/find-web-port))
+         (url (format "http://localhost:%s" port)))
+    (eww url)))
 
+;;;###autoload
+(defun iocanel/eshell-open-xwidget-webkit ()
+  (interactive)
+  "Start eww from the current ehsell buffer."
+  (let* ((port (iocanel/find-web-port))
+         (url (format "http://localhost:%s" port)))
+      (xwidget-webkit-browse-url url)))
+
+;;;###autoload
+(defun iocanel/find-web-port ()
+  "Find the web port in the current buffer, or return 8080 if none is found."
+  (save-excursion
+    (goto-char (point-max))
+    (if (re-search-backward "port.* \\([0-9]+\\)" nil t)
+        (match-string 1)
+      8080)))

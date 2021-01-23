@@ -16,8 +16,8 @@
 ;;          ("C-c m u n" . mc/unmark-next-like-this)
 ;;          ("C-c m u p" . mc/unmark-previous-like-this)))
 
-(use-package ace-mc
-  :bind ("C-c m f" . ace-mc))
+(use-package ace-mc)
+;  :bind ("C-c m f" . ace-mc))
   
 (use-package avy
   :defer t
@@ -37,7 +37,6 @@
 (use-package smex :defer t)
 
 (use-package ivy
-  :after flx
   :init
   (setq ivy-use-virtual-buffers t
         ivy-re-builders-alist '((swiper . regexp-quote)
@@ -56,6 +55,28 @@
   :init 
   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
   (ivy-posframe-mode 1))
+
+;; Causing issues with grep
+;; (use-package helm-posframe
+;;   :custom (helm-posframe-poshandler #'posframe-poshandler-window-center)
+;;   :init 
+;;   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+;;   (helm-posframe-enable))
+
+(defun error-filter (list)
+  "Stip dublicates from the list.
+   Credits: https://stackoverflow.com/questions/3815467/stripping-duplicate-elements-in-a-list-of-strings-in-elisp."
+  (let ((new-list nil))
+    (while list
+      (let  ((current (car list)))
+        (when (and current
+                   (not (member current new-list))
+                   (string-match-p (regexp-quote "ERROR") current))
+          (setq new-list (cons current new-list))))
+        (setq list (cdr list)))
+    (nreverse new-list)))
+
+(advice-add 'counsel-compilation-errors-cands :filter-return #'error-filter)
 
 ;;
 ;; Swiper
@@ -112,27 +133,11 @@
   :defer t 
   :bind ("C-o" . 'clm/toogle-command-log-buffer))
 
-;;; The following is based on Protesilaos Stavrou configuration: https://gitlab.com/protesilaos/dotfiles/-/blob/master/emacs/.emacs.d/emacs-init.org
-(defvar iocanel/window-configuration nil "Current window configuration.")
-(defvar iocanel/treemacs-visible nil "Is treemacs visible.")
+;;
+;; Hydra posframe
+;;
 
-(define-minor-mode window-single-mode
-  "Toggle between multiple windows and single window. This is the equivalent of maximising a window."
-  :lighter " [M]"
-  :global nil
-  (if (not (and (boundp 'window-single-mode) window-single-mode)) ;; If we have window-single-mode
-      (when iocanel/window-configuration                          ;; And and exisitng configuration
-        (progn                                                    ;; Restore ...
-          (set-window-configuration iocanel/window-configuration)
-          (when (and
-                 (equal 'visible iocanel/treemacs-visible)
-                 (not (equal 'visible (treemacs-current-visibility)))) (treemacs))))
-    ;; Focus
-    (progn
-      (setq iocanel/window-configuration (current-window-configuration))
-      (setq iocanel/treemacs-visible (treemacs-current-visibility))
-      (delete-other-windows)))
-  (setq iocanel/treemacs-visible (treemacs-current-visibility)))
-      
-
-(global-set-key (kbd "M-m") 'window-single-mode)
+(use-package hydra-posframe
+  :straight (hydra-posframe :host github :repo "Ladicle/hydra-posframe")
+  :config
+  (hydra-posframe-mode 1))

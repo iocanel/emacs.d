@@ -11,9 +11,12 @@
         projectile-sort-order 'recentf
         projectile-switch-project-action 'projectile-dired)
   (projectile-global-mode)
-  :bind (("C-x b" . projectile-switch-to-buffer)
-         ("C-c p o" . projectile-switch-project)
-         ("C-c p a" . projectile-add-known-project)
-         ("C-c p r" . projectile-remove-known-project)
-         ("C-c p f" . projectile-find-file)
-         ("C-c p g" . projectile-grep)))
+  :bind (("C-x b" . projectile-switch-to-buffer)))
+
+;;
+;; These will probably need to go
+;; ("C-c p o" . projectile-switch-project)
+;; ("C-c p a" . projectile-add-known-project)
+;; ("C-c p r" . projectile-remove-known-project)
+;; ("C-c p f" . projectile-find-file)
+;; ("C-c p g" . projectile-grep)))

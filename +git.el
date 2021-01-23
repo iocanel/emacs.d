@@ -1,4 +1,8 @@
-(use-package magit
+(add-to-list 'straight-x-pinned-packages '("magit" . "21454777281247d97814ce5fb64f4afe39fab5da"))
+(add-to-list 'straight-x-pinned-packages '("forge" . "e340c2be2aa5337c8c4c81cd6eab87961c6848b6"))
+(add-to-list 'straight-x-pinned-packages '("github-review" . "db723740e02348c0760407e532ad667ef89210ec"))
+
+(use-package magit 
   :defer t
   :config
   (setq ediff-multiframe nil)
@@ -25,7 +29,9 @@
          ("M-c" . git-timemachine-show-current-revision)))
 
 
-(use-package forge)
+(use-package forge
+  :bind (("C-x g i c" . forge-create-issue)
+         ("C-x g p c" . forge-create-pullreq)))
 
 (use-package github-review
  :bind (("C-x g r" . github-review-forge-pr-at-point)

@@ -16,8 +16,9 @@
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
 (use-package lsp-mode
-  :config (setq lsp-enable-file-watchers nil)
-  :bind (("C-c l s" . lsp)
+  :config (setq lsp-enable-file-watchers nil
+                lsp-idle-del 1)
+  :bind (("C-c l m" . lsp)
          ("C-c l a" . lsp-execute-code-action)))
 
 (use-package lsp-ui
@@ -28,7 +29,9 @@
         lsp-ui-doc-enable nil))
 
 
-(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+(use-package helm-lsp
+  :custom (helm-lsp-treemacs-icons nil)
+  :bind ("C-c l s" . helm-lsp-workspace-symbol))
 
 (use-package company-lsp)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list
@@ -193,6 +196,10 @@
   :config
   (add-to-list 'company-backends '(company-ghc :with company-dabbrev-code)))
 
+(use-package flycheck
+  :defer t
+  :hook (java-mode . flycheck-mode))
+
 ;;
 ;; IDEE
 ;;
@@ -205,13 +212,27 @@
 (use-package demo-it :defer t)
 (use-package async-await :defer t)
 
+;;
+;; IDEE optional packages
+;;
+(use-package ag)
+(use-package helm-ag :bind (("C-c g" . helm-do-ag-project-root)))
+(use-package polymode)
+
+
 (use-package idee
   :straight (idee :host github :repo "iocanel/idee")
   :config (idee-init)
   :bind (("C-c i" . 'idee-hydra/body)
          ("C-c p" . 'idee-project-hydra/body)
          ("C-c f" . 'idee-file-hydra/body)
-         ("C-c t" . 'idee-treemacs-hydra/body)))
+         ("C-c t" . 'idee-treemacs-hydra/body)
+         ("M-m" . 'idee-focus-mode)))
+
+
+(use-package idee-counsel
+  :straight (idee-counsel :host github :repo "iocanel/idee")
+  :bind (("M-e" .  'idee-shell-show-errors)))
 
 (use-package idee-lsp :straight (idee :host github :repo "iocanel/idee")
   :config
@@ -227,18 +248,10 @@
 
 (use-package idee-docker :straight (idee :host github :repo "iocanel/idee")
   :bind (:map dockerfile-mode-map 
-         ("C-c C-b" . 'idee-docker-build)
-         ("C-c C-k" . 'idee-docker-kill)
-         ("C-c C-r" . 'idee-docker-run-dockerfile)
-         ("C-c C-p" . 'idee-docker-push-dockerfile)))
-
-
-;;
-;; IDEE optional packages
-;;
-(use-package ag)
-(use-package helm-ag
-  :bind (("C-c g" . helm-do-ag-project-root)))
+         ("C-c d b" . 'idee-docker-build)
+         ("C-c d k" . 'idee-docker-kill)
+         ("C-c d r" . 'idee-docker-run-dockerfile)
+         ("C-c d p" . 'idee-docker-push-dockerfile)))
 
 
 ;; Maven configuration
@@ -267,6 +280,14 @@
 ;;
 (yas-reload-all)
 
+
+;;
+;; Skip confirmation when killing project buffers (from EmacsWiki)
+;;
+(defadvice projectile-kill-buffers (around auto-confirm compile activate)
+      (flet ((yes-or-no-p (&rest args) t)
+             (y-or-n-p (&rest args) t))
+        ad-do-it))
 ;;
 ;; Demo aid
 ;;
