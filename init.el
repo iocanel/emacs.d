@@ -39,20 +39,11 @@
 (use-package esup)
 
 ;; Load the literate configuration
-(load-file (expand-file-name "~/.config/emacs/minimal.el"))
-
-;; Load configuration
-;; (load-file (expand-file-name "~/.config/emacs/modules/core.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/evil.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/editor.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/ui.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/term.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/vcs.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/lang/java.el"))
-;; (load-file (expand-file-name "~/.config/emacs/modules/lang/go.el"))
-
-;; Load quickmarks
-;; (load-file (expand-file-name "~/.config/emacs/quickmarks.el"))
+(defvar ic/emacs-cfg-dir nil "The cfg directory of my emacs configuration.")
+(let* ((init-file (file-truename (cond (load-in-progress load-file-name) ((and (boundp 'byte-compile-current-file) byte-compile-current-file) byte-compile-current-file) (:else (buffer-file-name)))))
+       (config-dir (file-name-directory (directory-file-name init-file))))
+  (setq ic/emacs-cfg-dir config-dir)
+  (load-file (concat config-dir "minimal.el")))
 
 ;;
 ;; Generated Stuff

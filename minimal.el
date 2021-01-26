@@ -173,36 +173,39 @@
 ;; Additional files
 ;;
 
-(load-file "~/.config/emacs/+autosave.el")
-(load-file "~/.config/emacs/+evil.el")
-(load-file "~/.config/emacs/+completion.el")
-(load-file "~/.config/emacs/+treemacs.el")
-(load-file "~/.config/emacs/+projectile.el")
-(load-file "~/.config/emacs/+helm.el")
-(load-file "~/.config/emacs/+git.el")
-(load-file "~/.config/emacs/+eshell.el")
+(setq ic/emacs-cfg-dir (file-name-directory (directory-file-name (file-truename (cond (load-in-progress load-file-name) ((and (boundp 'byte-compile-current-file) byte-compile-current-file) byte-compile-current-file) (:else (buffer-file-name)))))))
+
+(load-file (concat ic/emacs-cfg-dir "+autosave.el"))
+(load-file (concat ic/emacs-cfg-dir "+evil.el"))
+(load-file (concat ic/emacs-cfg-dir "+completion.el"))
+(load-file (concat ic/emacs-cfg-dir "+treemacs.el"))
+(load-file (concat ic/emacs-cfg-dir "+projectile.el"))
+(load-file (concat ic/emacs-cfg-dir "+helm.el"))
+(load-file (concat ic/emacs-cfg-dir "+git.el"))
+(load-file (concat ic/emacs-cfg-dir "+eshell.el"))
 
  ;; Async
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+editor.el")))
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+ide.el")))
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+org.el")))
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+email.el")))
-(run-with-idle-timer 1 nil (lambda () (load-file "~/.config/emacs/+latex.el")))
-(run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+screens.el")))
-(run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+elfeed.el")))
-(run-with-idle-timer 2 nil (lambda () (load-file "~/.config/emacs/+bongo.el")))
+(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+latex.el"))))
+(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+email.el"))))
+(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+org.el"))))
+(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+ide.el"))))
+(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+editor.el"))))
+
+(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+screens.el"))))
+(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+elfeed.el"))))
+(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+bongo.el"))))
 
 ;; Org files
-(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/.config/emacs/+uml.org")))
-(run-with-idle-timer 1 nil (lambda () (org-babel-load-file "~/.config/emacs/+jira.org")))
+(run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+uml.org"))))
+(run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+jira.org"))))
 
-(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/habits.org")))
-(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/nutrition.org")))
-(run-with-idle-timer 5 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/habits.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/nutrition.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
 
  
 ;; Finalize
-(run-with-idle-timer 3 nil (lambda () (load-file "~/.config/emacs/finalize.el")))
+(run-with-idle-timer 5 nil (lambda () (load-file (concat ic/emacs-cfg-dir "finalize.el"))))
 
 ;; Tune garbage collect
 (run-with-idle-timer 3 nil (lambda () (iocanel/gc-restore-settings)))
