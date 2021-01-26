@@ -230,8 +230,7 @@
          ("M-m" . 'idee-focus-mode)))
 
 
-(use-package idee-counsel
-  :straight (idee-counsel :host github :repo "iocanel/idee")
+(use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
   :bind (("M-e" .  'idee-shell-show-errors)))
 
 (use-package idee-lsp :straight (idee :host github :repo "iocanel/idee")
