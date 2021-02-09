@@ -238,19 +238,26 @@
 ;;
 ;; Github Issues
 ;;
+(defvar ic/github-repositories nil "The repositories that are watched by org-github-issues")
 
 (use-package org-github-issues :straight (org-github-issues :host github :repo "iensu/org-github-issues")
   :defer t 
   :config
   (setq
-        iocanel/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrp-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")
+        ic/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrop-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")
         gh-user "iocanel"
         org-github-issues-org-file "~/Documents/org/roam/github.org"
         org-github-issues-tags '("github" "triage")
         org-github-issues-auto-schedule "+0d"
         org-github-issues-filter-by-assignee t
         org-github-issues-headline-prefix t)
-  (mapcar (lambda (r) (run-with-idle-timer 36000 t (lambda () (org-github-issues-sync-issues r)))) iocanel/github-repositories))
+  (run-with-idle-timer 36000 t #'ic/github-issues-sync-all))
+
+;;;###autoload
+(defun ic/github-issues-sync-all  ()
+  "Sync all github repository issues."
+  (interactive)
+  (mapcar (lambda (r) (org-github-issues-sync-issues r)) ic/github-repositories))
 
 ;;
 ;; Literate capture configuration
