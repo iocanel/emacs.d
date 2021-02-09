@@ -7,10 +7,10 @@
   :config
   (setq ediff-multiframe nil)
   (setq-default ediff-window-setup-function 'ediff-setup-windows-plain)
-  :bind (("C-x g s" . magit-status)
-         :map magit-file-mode-map
-              ("C-x g" . nil) ;; Let`s unset current binding for magit-status
-              ("C-x g s" . magit-status)))
+  :bind (("C-x g s" . magit-status)))
+;; :map magit-file-mode-map
+;;      ("C-x g" . nil) ;; Let`s unset current binding for magit-status
+;;      ("C-x g s" . magit-status)))
 
 (use-package evil-magit
   :after magit)
