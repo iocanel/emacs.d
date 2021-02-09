@@ -14,7 +14,7 @@
   (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
   :custom
   (bongo-default-directory "~/Documents/music")
-  (bongo-mplayer-extra-arguments '("-af" "scaletempo"))
+  (bongo-mplayer-extra-arguments '("-af" "scaletempo" "-vf" "scale"))
   :bind (:map bongo-mode-map
               ("C-x i" . bongo-insert-file)
               ("C-x I" . bongo-insert-special)
