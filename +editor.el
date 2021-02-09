@@ -100,7 +100,7 @@
 (defun iocanel/swiper-isearch-with-selection (&optional start end)
   "Swiper variation that uses selected text as initial input."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
-  (if (use-region-p)
+  (if (and (use-region-p) start end)
       (swiper (buffer-substring start end))
     (iocanel/swiper-isearch))
   (keyboard-escape-quit))
@@ -109,7 +109,7 @@
 (defun iocanel/swiper-isearch-with-selection-fuzzy (&optional start end)
   "Swiper variation that uses selected text as initial input."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
-  (if (use-region-p)
+  (if (and (use-region-p) start end)
       (swiper (buffer-substring start end))
     (iocanel/swiper-isearch-fuzzy))
   (keyboard-escape-quit))
