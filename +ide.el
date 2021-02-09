@@ -229,6 +229,47 @@
          ("C-c t" . 'idee-treemacs-hydra/body)
          ("M-m" . 'idee-focus-mode)))
 
+;;;###autoload
+(defun ic/show-open-project-issues (root)
+  "Show all the project issues currently assigned to me."
+  (let* ((project (projectile-ensure-project root))
+         (project-name (projectile-project-name project)))
+    (org-ql-search "~/Documents/org/roam/github.org"
+      `(and (property "GH_URL")
+            (string-match (regexp-quote ,project-name) (org-entry-get (point) "GH_URL")))
+      :title (format "Github issues for %s" project-name))
+    (goto-char (point-min))
+    (org-agenda-next-line)))
+
+
+;;;###autoload
+(defun ic/show-open-workspace-issues (workspace)
+  "Show all the workspace issues currently assigned to me."
+  (let* ((name (treemacs-project->name workspace))
+         (projects (treemacs-workspace->projects workspace))
+         (project-names (mapcar (lambda (p) (treemacs-project->name p)) projects))
+         (main-project (car project-names)))
+    (when main-project 
+      (org-ql-search "~/Documents/org/roam/github.org"
+        `(and (property "GH_URL")
+              (or (string-match (regexp-quote ,main-project) (org-entry-get (point) "GH_URL"))
+                  (seq-filter (lambda (p) (string-match (regexp-quote p) (org-entry-get (point) "GH_URL"))) project-names)))
+        :title (format "Github issues for %s" name))
+      (goto-char (point-min))
+      (org-agenda-next-line))))
+
+;;;###autoload
+(defun ic/kill-github-issues-and-window (&optional kill window)
+  "Kill the github issues window and buffer.  Return t if grep window was found."
+  (let* ((buffer (current-buffer)))
+    (if (string-match "Github issues for" (buffer-name buffer))
+        (progn
+          (kill-buffer-and-window)
+          (idee-refresh-view)
+          t)
+        nil)))
+
+(add-to-list 'idee-kill-buffer-and-window-function-list #'ic/kill-github-issues-and-window)
 
 (use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
   :bind (("M-e" .  'idee-shell-show-errors)))
@@ -265,6 +306,11 @@
 (add-to-list 'idee-maven-known-group-ids "org.springframework")
 (add-to-list 'idee-maven-known-group-ids "org.junit")
 
+
+;;
+;; Advices
+;;
+(advice-add 'idee-treemacs-open-project-workspace :after (lambda (w) (ic/show-open-workspace-issues w)))
 ;;
 ;; Web
 ;;
