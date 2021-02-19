@@ -168,7 +168,7 @@ the cursor by ARG lines."
   "Open entries in a new buffer below."
   (ic/mark-current-as-read)
   (ic/elfeed-delete-show-windows)
-  (split-and-follow-vertically)
+  (ic/split-and-follow-vertically)
   ad-do-it)
 
 (defadvice kill-current-buffer (around elfeed-on-kill-buffer activate)
@@ -286,7 +286,7 @@ the cursor by ARG lines."
   (ic/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
-      (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
+      (when (derived-mode-p 'elfeed-search-mode) (ic/split-and-follow-vertically))
       (ic/elfeed-enqueue-media-url entry)
       (ic/elfeed-external-mode 1))))
 
@@ -309,7 +309,7 @@ the cursor by ARG lines."
   (ic/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
-      (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
+      (when (derived-mode-p 'elfeed-search-mode) (ic/split-and-follow-vertically))
       (eww link)
       (rename-buffer (format "*elfeed eww %s*" link))
       (ic/elfeed-external-mode))))
@@ -334,7 +334,7 @@ the cursor by ARG lines."
   (ic/elfeed-delete-non-search-windows)
   (when (elfeed-entry-p entry)
     (let ((link (elfeed-entry-link entry)))
-      (when (derived-mode-p 'elfeed-search-mode) (split-and-follow-vertically))
+      (when (derived-mode-p 'elfeed-search-mode) (ic/split-and-follow-vertically))
       (xwidget-webkit-browse-url link)
       (ic/elfeed-external-mode))))
 
