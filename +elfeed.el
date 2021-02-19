@@ -171,13 +171,22 @@ the cursor by ARG lines."
   (ic/split-and-follow-vertically)
   ad-do-it)
 
-(defadvice kill-current-buffer (around elfeed-on-kill-buffer activate)
-  "Open entries in a new buffer below."
+(defun ic/elfeed-kill-external-buffer-and-window (&optional buffer-or-name)
+  "Kill the github issues window and buffer.  Return t if grep window was found."
+  (message "elfeed kill")
   (if (or (derived-mode-p 'elfeed-show-mode) (ic/elfeed-current-buffer-external))
-      (progn
-        ad-do-it
-        (delete-window))
-    ad-do-it))
+        (progn
+          (kill-buffer-and-window)
+          t)
+        nil))
+
+
+(add-to-list 'idee-kill-current-buffer-listener-list #'ic/elfeed-kill-external-buffer-and-window)
+(add-to-list 'idee-quit-window-listener-list #'ic/elfeed-kill-external-buffer-and-window)
+
+;; elfeed-kill-buffer should use (kill-current-buffer) vs (kill-buffer (current-buffer))  to trigger listeners
+;; Let's use an advice to fix that.
+(advice-add #'elfeed-kill-buffer :around #'kill-current-buffer)
 
 ;;
 ;; Media
