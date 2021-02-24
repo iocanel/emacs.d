@@ -173,7 +173,6 @@ the cursor by ARG lines."
 
 (defun ic/elfeed-kill-external-buffer-and-window (&optional buffer-or-name)
   "Kill the github issues window and buffer.  Return t if grep window was found."
-  (message "elfeed kill")
   (if (or (derived-mode-p 'elfeed-show-mode) (ic/elfeed-current-buffer-external))
         (progn
           (kill-buffer-and-window)
@@ -270,7 +269,7 @@ the cursor by ARG lines."
 (defun ic/elfeed-start-bongo-callback (process signal)
 "Callback to be called when a youtube video gets downloaded."
 (when (memq (process-status process) '(exit signal))
-  (message "Video finished!")
+  (message "Video download finished!")
   (when (not (bongo-playing-p)) (bongo-start/stop)))
   (shell-command-sentinel process signal))
 
