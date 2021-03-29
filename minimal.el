@@ -24,7 +24,7 @@
 (setq garbage-collection-messages t)
 
 ;;;###autoload
-(defun iocanel/gc-restore-settings()
+(defun ic/gc-restore-settings()
   "Restore gc settings."
   (message "Restoring garbage collection settings to their original values.")
   (setq gc-cons-threshold gc-cons-threshold)
@@ -32,17 +32,17 @@
 
 
 ;;;###autoload
-(defun iocanel/gc-maximize-threshold ()
+(defun ic/gc-maximize-threshold ()
   "Maximize the gc threshold."
   (setq gc-cons-threshold most-positive-fixnum))
 
 ;;;###autoload
-(defun iocanel/gc-restore-threshold ()
+(defun ic/gc-restore-threshold ()
   "Restore the original gc threshold."
   (setq gc-cons-threshold orig-gc-cons-threshold))
 
-(add-hook 'minibuffer-setup-hook #'iocanel/gc-maximize-threshold)
-(add-hook 'minibuffer-exit-hook #'iocanel/gc-restore-threshold)
+(add-hook 'minibuffer-setup-hook #'ic/gc-maximize-threshold)
+(add-hook 'minibuffer-exit-hook #'ic/gc-restore-threshold)
 
 ;;
 ;;
@@ -65,7 +65,7 @@
 ;;
 ;; Doom UI
 ;;
-(use-package all-the-icons :defer t)            
+(use-package all-the-icons :defer t)
 
 (use-package doom-themes
   :config
@@ -118,7 +118,7 @@
                 ("<backtab>" . dired-subtree-cycle)))
 
 ;;;###autoload
-(defun iocanel/dired-expand-all ()
+(defun ic/dired-expand-all ()
   (interactive)
   "Expand all subtrees in the dired buffer."
   (let ((has-more t))
@@ -153,21 +153,21 @@
   :config (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
 ;;;###autoload
-(defun split-and-follow-horizontally ()
+(defun ic/split-and-follow-horizontally ()
   (interactive)
   (split-window-right)
   (balance-windows)
   (other-window 1))
 
 ;;;###autoload
-(defun split-and-follow-vertically ()
+(defun ic/split-and-follow-vertically ()
   (interactive)
   (split-window-below)
   (balance-windows)
   (other-window 1))
 
-(global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
-(global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
+(global-set-key (kbd "C-x 2") 'ic/split-and-follow-horizontally)
+(global-set-key (kbd "C-x 3") 'ic/split-and-follow-vertically)
 
 ;;
 ;; Additional files
@@ -192,6 +192,7 @@
 (run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+editor.el"))))
 
 (run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+screens.el"))))
+(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+eww.el"))))
 (run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+elfeed.el"))))
 (run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+bongo.el"))))
 
@@ -208,7 +209,7 @@
 (run-with-idle-timer 5 nil (lambda () (load-file (concat ic/emacs-cfg-dir "finalize.el"))))
 
 ;; Tune garbage collect
-(run-with-idle-timer 3 nil (lambda () (iocanel/gc-restore-settings)))
+(run-with-idle-timer 5 nil (lambda () (ic/gc-restore-settings)))
 (add-hook 'focus-out-hook 'garbage-collect)
 
 ;(use-package explain-pause-mode :config (explain-pause-mode))

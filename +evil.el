@@ -20,3 +20,5 @@
 (define-key evil-motion-state-map (kbd "C-f") nil)
 (define-key evil-motion-state-map (kbd "<right>") nil)
 (define-key evil-motion-state-map (kbd "<left>") nil)
+(define-key evil-normal-state-map (kbd "<") nil)
+(define-key evil-normal-state-map (kbd ">") nil)

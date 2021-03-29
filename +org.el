@@ -241,7 +241,6 @@
 (defvar ic/github-repositories nil "The repositories that are watched by org-github-issues")
 
 (use-package org-github-issues :straight (org-github-issues :host github :repo "iensu/org-github-issues")
-  :defer t 
   :config
   (setq
         ic/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrop-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")

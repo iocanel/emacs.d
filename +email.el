@@ -7,7 +7,7 @@
   :straight (mu4e :type git :host github :repo "djcb/mu" :branch "master" :files (:defaults "mu4e/*.el"))
   :bind (("C-c a m m" . mu4e)
          ("C-c a m n" . mu4e-compose-new)
-         ("C-c a m u" . iocanel/mu4e-view-unread))
+         ("C-c a m u" . ic/mu4e-view-unread))
   :config
   (setq user-mail-address "iocanel@gmail.com"
         user-full-name "Ioannis Canellos"
@@ -26,14 +26,16 @@
                      (mail-reply-to                    . "iocanel@gmail.com")
                      (user-mail-address                . "iocanel@gmail.com")
                      (user-full-name                   . "Ioannis Canellos")
+                     (mu4e-user-mail-address-list      . "~/.mail/iocanel@gmail.com")
                      (mu4e-drafts-folder               . "/iocanel@gmail.com/[Email] Actionable")
                      (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Archived")
                      (mu4e-drafts-folder               . "/iocanel@gmail.com/[Email] Deferred")
                      (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
                      (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
+                     (mu4e-compose-complete-addresses  . t)
 
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/local/bin/msmtp")
+                     (sendmail-program                 . "/usr/bin/msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
@@ -47,15 +49,17 @@
              :vars '((smtpmail-smtp-user               . "ikanello@redhat.com")
                      (mail-reply-to                    . "ikanello@redhat.com")
                      (user-mail-address                . "ikanello@redhat.com")
+                     (user-full-name                   . "Ioannis Canellos")
+                     (mu4e-user-mail-address-list      . "~/.mail/ikanello@redhat.com")
                      (mu4e-drafts-folder               . "/ikanello@gmail.com/Drafts")
                      (mu4e-refile-folder               . "/ikanello@gmail.com/[Email] Actionable")
                      (mu4e-refile-folder               . "/ikanello@gmail.com/[Email] Archived")
                      (mu4e-refile-folder               . "/ikanello@gmail.com/[Email] Deferred")
                      (mu4e-trash-folder                . "/ikanello@gmail.com/Trash")
                      (mu4e-sent-folder                 . "/ikanello@gmail.com/Sent")
-                     (user-full-name                   . "Ioannis Canellos")
+                     (mu4e-compose-complete-addresses  . t)
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/local/bin/msmtp")
+                     (sendmail-program                 . "/usr/bin/msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
@@ -88,11 +92,14 @@
                                 (visual-line-mode))))
   :bind (:map mu4e-view-mode-map
               ("C-<tab>" . mu4e-view-headers-next-unread)
-              ("C-t" . iocanel/mark-thread-as-read)
+              ("C-t" . ic/mu4e-mark-thread-as-read)
+              ("C-r" . ic/mu4e-capture-read-later)
+              ("C-f" . ic/mu4e-capture-follow-up)
               :map mu4e-headers-mode-map
               ("C-<tab>" . mu4e-headers-next-unread)
-              ("C-t" . iocanel/mark-thread-as-read))
-  )
+              ("C-t" . ic/mu4e-mark-thread-as-read)
+              ("C-r" . ic/mu4e-capture-read-later)
+              ("C-f" . ic/mu4e-capture-follow-up)))
 
 
 ;(require 'evil-mu4e)
@@ -147,7 +154,7 @@
 ;;
 
 ;;;###autoload
-(defun iocanel/mark-thread-as-read()
+(defun ic/mu4e-mark-thread-as-read()
   (interactive)
   "Skip all messages from the current thread."
   (save-excursion
@@ -156,7 +163,7 @@
     (mu4e-headers-mark-thread t '(read))))
 
 ;;;###autoload
-(defun iocanel/mu4e-view-unread()
+(defun ic/mu4e-view-unread()
   (interactive)
   "Open my unread messages."
   (require 'mu4e)
@@ -164,14 +171,16 @@
    (mu4e-bookmark-query (car (remove-if-not (lambda (s) (equal (mu4e-bookmark-name s) "Unread messages")) (mu4e-bookmarks))))))
 
 ;;;###autoload
-(defun iocanel/get-mu4e-incoming-count ()
+(defun ic/mu4e-get-incoming-count ()
   "Count the number of unread messages."
   (let* ((query "flag:unread AND NOT flag:trashed AND NOT maildir:\"/Archived\"")
          (command (format "mu find '%s' 2>/dev/null | wc -l" query)))
     (string-trim (shell-command-to-string command))))
 
-(define-key evil-normal-state-map (kbd "SPC a m u") #'iocanel/mu4e-view-unread)
-(global-set-key (kbd "C-c a m u") #'iocanel/mu4e-view-unread)
+(define-key evil-normal-state-map (kbd "SPC a m u") #'ic/mu4e-view-unread)
+(global-set-key (kbd "C-c a m u") #'ic/mu4e-view-unread)
+
+
 ;; Capturing, source: https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-05.org#adding-custom-actions-for-quick-capturing
 
 ;;;###autoload

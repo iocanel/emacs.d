@@ -39,7 +39,6 @@
   :custom (helm-lsp-treemacs-icons nil)
   :bind ("C-c l s" . helm-lsp-workspace-symbol))
 
-(use-package company-lsp)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list
   :init
   (lsp-treemacs-sync-mode 1))
@@ -246,7 +245,7 @@
          ("M-m" . 'idee-focus-mode)))
 
 ;;;###autoload
-(defun ic/show-open-project-issues (root)
+(defun ic/org-github-issues--show-open-project-issues (root)
   "Show all the project issues currently assigned to me."
   (let* ((project (projectile-ensure-project root))
          (project-name (projectile-project-name project)))
@@ -257,9 +256,8 @@
     (goto-char (point-min))
     (org-agenda-next-line)))
 
-
 ;;;###autoload
-(defun ic/show-open-workspace-issues (workspace)
+(defun ic/org-github-issues--show-open-workspace-issues (workspace)
   "Show all the workspace issues currently assigned to me."
   (let* ((name (treemacs-project->name workspace))
          (projects (treemacs-workspace->projects workspace))
@@ -274,8 +272,28 @@
       (goto-char (point-min))
       (org-agenda-next-line))))
 
+
+(defun ic/org-github-issues--url-at-point ()
+  (save-excursion
+    (let ((origin (current-buffer)))
+      (when (eq major-mode 'org-agenda-mode) (org-agenda-switch-to))
+      (let* ((p (point))
+             (url (string-trim (org-entry-get nil "GH_URL"))))
+        (when (not (equal origin (current-buffer))) (switch-to-buffer origin))
+        url))))
+
+(defun ic/org-github-issues--eww-entry-at-point ()
+  "Browse the issue that corresponds to the org entry at point."
+  (interactive)
+  (let ((url (ic/org-github-issues--url-at-point)))
+    (when url 
+          (other-window 1)
+          (idee-jump-to-non-ide-window)
+          (ic/split-and-follow-horizontally)
+          (eww url))))
+
 ;;;###autoload
-(defun ic/kill-github-issues-and-window (&optional kill window)
+(defun ic/org-github-issues--kill-buffer-and-window (&optional buffer-or-name)
   "Kill the github issues window and buffer.  Return t if grep window was found."
   (let* ((buffer (current-buffer)))
     (if (string-match "Github issues for" (buffer-name buffer))
@@ -285,7 +303,7 @@
           t)
         nil)))
 
-(add-to-list 'idee-kill-buffer-and-window-function-list #'ic/kill-github-issues-and-window)
+(add-to-list 'idee-burry-buffer-listener-list #'ic/org-github-issues--kill-buffer-and-window)
 
 (use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
   :bind (("M-e" .  'idee-shell-show-errors)))
@@ -326,7 +344,10 @@
 ;;
 ;; Advices
 ;;
-(advice-add 'idee-treemacs-open-project-workspace :after (lambda (w) (ic/show-open-workspace-issues w)))
+(advice-add 'idee-treemacs-open-project-workspace :after (lambda (w) (ic/org-github-issues--show-open-workspace-issues w)))
+(advice-add 'iocanel/swiper-isearch-with-selection :after 'idee-refresh-view)
+(advice-add 'iocanel/swiper-isearch-with-selection-fuzzy :after 'idee-refresh-view)
+
 ;;
 ;; Web
 ;;

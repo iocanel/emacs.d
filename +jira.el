@@ -1,8 +1,8 @@
 ;;;###autoload
 (defun org-jira-login()
   (interactive)
-  (let ((jira-password (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/jboss.org/iocanel"))))
-    (jiralib-login "iocanel" jira-password)))
+  (let ((jira-password (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/redhat.com/iocanel@gmail.com"))))
+    (jiralib-login "iocanel@gmail.com" jira-password)))
 
 (use-package org-jira :straight (org-jira :host github :repo "ahungry/org-jira")
   :defer t

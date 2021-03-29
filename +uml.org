@@ -7,7 +7,8 @@
         :init
         (add-to-list 'org-src-lang-modes '("plantuml" . plantuml)
                      (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
-                           org-plantuml-jar-path plantuml-jar-path)))
+                           org-plantuml-jar-path plantuml-jar-path))
+        :hook (plantuml-mode . yas/minor-mode))
 
       (use-package flycheck-plantuml
         :after plantuml-mode
