@@ -162,6 +162,16 @@
   :defer t
   :hook ((go-mode . lsp)
          (before-save . gofmt-before-save)))
+
+
+
+;; (use-package lsp-go :straight (lsp-go :host github :repo "emacs-lsp/lsp-mode" :files ("lsp-mode.el" "lsp-protocol.el" "lsp-lens.el" "lsp-completion.el" "clients/lsp-go.el"))
+;;   :config
+;;   (setq lsp-gopls-staticcheck t
+;;         lsp-eldoc-render-all t
+;;         lsp-gopls-complete-unimported t))
+
+
 ;;
 ;; Haskell
 ;;
