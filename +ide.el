@@ -15,6 +15,12 @@
   :config (yas-reload-all)
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
+
+(use-package auto-yasnippet
+  :config (setq aya-case-fold t)
+  :bind (("C-c a c" . aya-create)
+         ("C-c a e" . aya-expand)))
+
 (use-package lsp-mode
   :config (setq lsp-enable-file-watchers nil
                 lsp-idle-del 1)
