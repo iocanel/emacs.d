@@ -111,6 +111,16 @@
   "Turn off auto-fill-mode."
   (auto-fill-mode -1))
 
+
+;; Mu4e capture templates
+
+(setq org-capture-templates (append org-capture-templates `(("e" "Email Workflow")
+    ("ef" "Follow Up" entry (file+olp "~/Documents/org/email.org" "Follow Up")
+          "* TODO Follow up with %:fromname on %a\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
+    ("er" "Read Later" entry (file+olp "~/Documents/org/email.org" "Read Later")
+          "* TODO Read %:subject\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))))
+
+
 ;; Mu4e Bookmarks
 (setq mu4e-bookmarks
       '(
@@ -162,6 +172,25 @@
 
 (define-key evil-normal-state-map (kbd "SPC a m u") #'iocanel/mu4e-view-unread)
 (global-set-key (kbd "C-c a m u") #'iocanel/mu4e-view-unread)
+;; Capturing, source: https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-05.org#adding-custom-actions-for-quick-capturing
+
+;;;###autoload
+(defun ic/mu4e-capture-follow-up (&optional msg)
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "ef"))
+
+;;;###autoload
+(defun ic/mu4e-capture-read-later (&optional msg)
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "er"))
+
+;; Add custom actions for our capture templates
+(add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+(add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+(add-to-list 'mu4e-headers-actions '("read later" . ic/mu4e-capture-read-later) t)
+(add-to-list 'mu4e-view-actions '("read later" . ic/mu4e-capture-read-later) t)
 
 ;;
 ;; Advices
