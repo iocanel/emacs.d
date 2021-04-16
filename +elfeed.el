@@ -215,6 +215,26 @@ the cursor by ARG lines."
 ;; Youtube
 ;;
 
+(defun ic/elfeed-youtube-pre-download ()
+  "Update the elfeed-search buffer based on the contents of the minibuffer."
+  (interactive)
+  (message "Predownloading youtube videos")
+  (with-temp-buffer
+    (let ((elfeed-search-filter "+youtube +unread -downloaded"))
+      (elfeed-search--update-list)
+      (dolist (entry elfeed-search-entries)
+        (ic/elfeed-download-from-youtube entry)))))
+
+(defun ic/elfeed-download-from-youtube (entry)
+  "Download the currently selected item from youtube."
+  (require 'elfeed-show)
+  (when (elfeed-entry-p entry)
+    (let* ((url (elfeed-entry-link entry)))
+      (message "Prefectching form youtube: %s" url)
+      (ignore-errors
+        (ic/youtube-download url))
+      (elfeed-tag entry 'downloaded))))
+
 ;;;###autoload
 (defun ic/elfeed-entry-youtube-p (entry)
   "Predicate that checks if ENTRY points to youtube."

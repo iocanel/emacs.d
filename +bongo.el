@@ -1,11 +1,6 @@
 ;; +bongo.el --- Bongo Extras -*- lexical-binding: t -*-
 
 
-(defconst ic/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
-(defvar ic/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The prefix to the youtube urls")
-
-(defvar ic/bongo-youtube-dl-enabled t "Download videos using youtube-dl and play them as loca files, instead of streaming them")
-
 (use-package bongo
   :config
   (setq bongo-enabled-backends '(mplayer mpv)
@@ -67,8 +62,16 @@
   (interactive)
   (if (and ic/bongo-youtube-dl-enabled (ic/youtube-url-p file-or-url))
       (let* ((video-id (substring file-or-url (length ic/youtube-watch-url-prefix) (length file-or-url)))
-             (template (concat ic/youtube-download-path video-id)))
-        (ic/youtube-get file-or-url (ic/bongo-play-callback video-id)))
+             (template (concat ic/youtube-download-path video-id))
+             (existing-file-name (ic/youtube-get-by-title-filename url))
+             (output-path (ic/youtube-local-path file-or-url)))
+        (if (and existing-file-name (file-exists-p existing-file-name))
+            (progn 
+              (message "Youtube video:%s already exists, playing ..." existing-file-name)
+              (ic/bongo-play-file existing-file-name))
+          (progn
+            (message "Youtube video file:%s does not exist, donwloading ..." output-path)
+            (ic/youtube-download file-or-url (ic/youtube-callback video-id 'ic/bongo-play-file)))))
     (ic/bongo-play-file file-or-url)))
 
 (defun ic/bongo-play-url-at-point ()
@@ -77,44 +80,115 @@
   (let* ((url (or (thing-at-point-url-at-point) (ic/org-link-url-at-point))))
          (when url (ic/bongo-play url))))
 
-;;
-;; Youtube
-;;
-(defvar ic/youtube-dl-buffer-format "*Async youtube-dl: %s*")
-;; We need to make sure that the youtbue-dl buffer stays burried!
-(add-to-list 'display-buffer-alist (cons "\\*Async youtube-dl: .*\\*" (cons #'display-buffer-no-window nil)))
-
-
 (defun ic/org-link-url-at-point ()
-  (interactive)
+  "Fetch the url of the org link at point."
   (let* ((org-link (org-element-context))
         (raw-link (org-element-property :raw-link org-link)))
     raw-link))
+
+
+;;
+;; Youtube
+;;
+
+(defconst ic/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
+(defvar ic/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The path to the youtube download folder")
+(defvar ic/youtube-download-by-id-path "/home/iocanel/Downloads/Youtube/by-id/" "The path to the youtube by-id folder")
+(defvar ic/youtube-download-by-title-path "/home/iocanel/Downloads/Youtube/by-title/" "The path to the youtube by-title folder")
+(defvar ic/bongo-youtube-dl-enabled t "Download videos using youtube-dl and play them as loca files, instead of streaming them")
+(defvar ic/youtube-dl-buffer-format "*Async youtube-dl: %s*" "The format of the buffer name that will be used to async download the video")
+(defvar ic/youtube-rencode-format "mkv" "The format that the downloaded video will be encoded into")
+(defvar ic/youtube-max-video-quality "480" "The maximum video quality")
+(defvar ic/youtube-max-audio-quality "480" "The maximum audio quality")
+(defvar ic/youtube-title-alist '())
+
+;; We need to make sure that the youtbue-dl buffer stays burried!
+(add-to-list 'display-buffer-alist (cons "\\*Async youtube-dl: .*\\*" (cons #'display-buffer-no-window nil)))
 
 (defun ic/youtube-url-p (url)
   "Predicate that checks if URL points to youtube."
   (if (stringp url) (string-prefix-p ic/youtube-watch-url-prefix url) nil))
 
-(defun ic/youtube-get (url &optional callback)
-  "Download the youtube video from URL to a temporary file and return the path to it."
-  (let* ((video-id (substring url (length ic/youtube-watch-url-prefix) (length url)))
-         (template (concat ic/youtube-download-path video-id))
+(defun ic/youtube-by-id-path (video-id-or-url)
+  "Return the output path (by-id) for the specified youtube url."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url))) video-id-or-url))
+    (concat ic/youtube-download-by-id-path video-id "." ic/youtube-rencode-format)))
+
+(defun ic/youtube-by-title-path (video-id-or-url)
+  "Return the output path (by-title) for the specified youtube url."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url))) video-id-or-url)
+         (title (replace-regexp-in-string "[^[:alnum:]]-" "_" (ic/youtube-get-title video-id))))
+    (concat ic/youtube-download-by-title-path title "." ic/youtube-rencode-format)))
+
+(defun ic/youtube-local-path (url)
+  "Return the output path for the specified youtube url."
+  (concat ic/youtube-download-path
+                   (substring url (length ic/youtube-watch-url-prefix) (length url))))
+
+(defun ic/youtube-get-by-id-prefix (video-id-or-url)
+  "Return the prefix (by-id) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+         (url (if (ic/youtube-url-p video-id-or-url) video-id-or-url (concat ic/youtube-watch-url-prefix video-id)))
+         (output-template (concat ic/youtube-download-by-id-path video-id)))
+    (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "youtube-dl \"%s\" --get-filename -o %s" url output-template)))))
+
+(defun ic/youtube-get-by-title-prefix (video-id-or-url)
+  "Return the prefix (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+         (url (if (ic/youtube-url-p video-id-or-url) video-id-or-url (concat ic/youtube-watch-url-prefix video-id)))
+         (output-template (concat ic/youtube-download-by-title-path video-id)))
+    (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "youtube-dl \"%s\" --get-filename -o %s" url output-template)))))
+
+(defun ic/youtube-get-by-id-filename (video-id-or-url)
+  "Return the filename (by-id) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url)))
+    (concat ic/youtube-download-by-id-path video-id "." ic/youtube-rencode-format)))
+
+(defun ic/youtube-get-by-title-filename (video-id-or-url)
+  "Return the filename (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+         (title (replace-regexp-in-string "[^[:alnum:]]" "_" (ic/youtube-get-title video-id))))
+    (concat ic/youtube-download-by-title-path title "." ic/youtube-rencode-format )))
+
+(defun ic/youtube-get-title (video-id-or-url)
+  "Return the filename of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+         (url (if (ic/youtube-url-p video-id-or-url) video-id-or-url (concat ic/youtube-watch-url-prefix video-id)))
+         (entry (assoc video-id ic/youtube-title-alist))
+         (output-template (concat ic/youtube-download-path video-id)))
+    (if entry
+        (cdr entry)
+       (progn
+        (let ((title (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "youtube-dl \"%s\" --get-title -o %s" url output-template)))))
+          (setq ic/youtube-title-alist (cons `(,video-id . ,title) ic/youtube-title-alist))
+        title)))))
+
+(defun ic/youtube-download (video-id-or-url &optional callback)
+  "Download the youtube video from VIDEO-ID-OR-URL to a temporary file and return the path to it."
+  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+         (template (ic/youtube-get-by-id-prefix url))
          (output-buffer (generate-new-buffer (format ic/youtube-dl-buffer-format video-id)))
          (proc (progn
                  (message "Downloading video into: %s" template)
-                 (async-shell-command (format "youtube-dl \"%s\" -o %s" url template) output-buffer)
+                 (async-shell-command (format "youtube-dl \"%s\" --no-part --hls-prefer-ffmpeg --recode-video %s -f 'bestvideo[height<=%s]+bestaudio/best[height<=%s]' -o %s" url ic/youtube-rencode-format ic/youtube-max-video-quality ic/youtube-max-audio-quality template) output-buffer)
                  (get-buffer-process output-buffer))))
          (when callback (set-process-sentinel  proc callback))
     template))
   
-(defun ic/bongo-play-callback (video-id)
-  "Create a callback for the specified VIDEO-ID"
+(defun ic/youtube-callback (video-id-or-url &optional func)
+  "Create a callback for the specified VIDEO-ID-OR-URL"
   (lambda (p s) (when (memq (process-status p) `(exit signal))
-                  (ic/bongo-play-file (concat ic/youtube-download-path
-                                              (car (seq-filter
-                                                    (lambda (f) (string-prefix-p video-id f))
-                                                    (directory-files ic/youtube-download-path)))))
+                  (let* ((video-id (if (ic/youtube-url-p video-id-or-url) (substring video-id-or-url (length ic/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+                         (by-id-filename (ic/youtube-get-by-id-filename video-id))
+                         (by-title-filename (ic/youtube-get-by-title-filename video-id)))
+                    (message "Linking %s to %s" by-id-filename by-title-filename)
+                    (shell-command-to-string (format "ln -s %s %s" by-id-filename by-title-filename))
+                    (cond
+                     ((stringp func) (funcall (intern func) by-title-filename))
+                     ((symbolp func) (funcall func by-title-filename))
+                     (t "video downloaded and linked")))
                   (shell-command-sentinel p s))))
+ 
  
 (defun ic/bongo-start-callback (process signal)
 "Callback to be called when a youtube video gets downloaded."
