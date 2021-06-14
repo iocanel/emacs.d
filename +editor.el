@@ -25,7 +25,10 @@
   :bind  ("M-l" . 'avy-goto-line)
   :bind  ("M-w" . 'avy-goto-word-1))
 
-  
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode))
+
 ;;
 ;; Ivy
 ;;
