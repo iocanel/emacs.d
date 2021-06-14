@@ -1,0 +1,12 @@
+#!/bin/bash
+
+RESOLUTION=`xdpyinfo | awk '/dimensions/{print $2}'`
+WIDTH=300
+HEIGHT=80
+
+if [ "$RESOLUTION" = "1920x1080" ]; then
+    WIDTH=140
+    HEIGHT=40
+fi
+
+emacsclient -c -a ''  -F "((name . \"org-capture-app\") (top . 10) (left . 10) (width . $WIDTH) (height . $HEIGHT))" --eval "(progn (load-theme 'doom-one) (add-hook 'org-select-mode-hook 'delete-other-windows) (org-capture nil))"

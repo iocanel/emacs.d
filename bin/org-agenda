@@ -1,0 +1,12 @@
+#!/bin/bash
+RESOLUTION=`xdpyinfo | awk '/dimensions/{print $2}'`
+WIDTH=300
+HEIGHT=80
+
+if [ "$RESOLUTION" = "1920x1080" ]; then
+    WIDTH=140
+    HEIGHT=40
+fi
+
+emacsclient -c -a ''  -F "((name . \"org-agenda-app\") (width . $WIDTH) (top . 10) (left . 10) (height . $HEIGHT))" --eval "(progn (load-theme 'doom-one) (org-agenda :arg \"a\")(delete-other-windows))"
+

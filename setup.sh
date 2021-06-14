@@ -9,3 +9,6 @@ ln -s ${SOURCE_PATH}/init.el ${HOME}/.emacs.d/init.el
 # Copy the versions profile
 mkdir -p ${HOME}/.emacs.d/straight/versions
 cp ${HOME}/versions/default.el ${HOME}/.emacs.d/straight/versions/
+
+# Copy scripts
+cp ${HOME}/bin/* ${HOME}/bin
