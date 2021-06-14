@@ -215,6 +215,18 @@
   :defer t
   :hook (java-mode . flycheck-mode))
 
+
+;;
+;; Python
+;;
+(use-package python-mode)
+(use-package lsp-python-ms
+  :ensure t
+  :init (setq lsp-python-ms-auto-install-server t)
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-python-ms)
+                          (lsp))))  ; or lsp-deferred
+
 ;;
 ;; IDEE
 ;;
