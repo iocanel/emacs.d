@@ -58,7 +58,7 @@
   (setenv "M2_HOME" m2-home)
   (setenv "PATH" (format "/bin:/usr/bin:/usr/local/bin:%s/bin:%s/bin:%s/bin" (expand-file-name "~")  java-home m2-home))
   (setq
-        lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx4G" "-Xms1024m" "-Xverify:none" "-jar")
+        lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx8G" "-Xms1024m" "-Xverify:none" "-jar")
         lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
         lsp-java-save-action-organize-imports nil
         lsp-java-maven-download-sources t
