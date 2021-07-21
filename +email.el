@@ -195,6 +195,8 @@
   (call-interactively 'org-store-link)
   (org-capture nil "er"))
 
+(require 'mu4e-headers)
+(require 'mu4e-view)
 ;; Add custom actions for our capture templates
 (add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
 (add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
