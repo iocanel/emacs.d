@@ -261,7 +261,7 @@
   "Show all the project issues currently assigned to me."
   (let* ((project (projectile-ensure-project root))
          (project-name (projectile-project-name project)))
-    (org-ql-search "~/Documents/org/roam/github.org"
+    (org-ql-search "~/Documents/org/github.org"
       `(and (property "GH_URL")
             (string-match (regexp-quote ,project-name) (org-entry-get (point) "GH_URL")))
       :title (format "Github issues for %s" project-name))
@@ -276,7 +276,7 @@
          (project-names (mapcar (lambda (p) (treemacs-project->name p)) projects))
          (main-project (car project-names)))
     (when main-project 
-      (org-ql-search "~/Documents/org/roam/github.org"
+      (org-ql-search "~/Documents/org/github.org"
         `(and (property "GH_URL")
               (or (string-match (regexp-quote ,main-project) (org-entry-get (point) "GH_URL"))
                   (seq-filter (lambda (p) (string-match (regexp-quote p) (org-entry-get (point) "GH_URL"))) project-names)))

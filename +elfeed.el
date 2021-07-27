@@ -29,7 +29,7 @@
            ("C-<tab>" . ic/elfeed-external-next-entry)))
 
 (use-package elfeed-org
-  :custom (rmh-elfeed-org-files '("~/Documents/org/roam/blogs.org"))
+  :custom (rmh-elfeed-org-files '("~/Documents/org/blogs.org"))
   :config (elfeed-org))
 
 ;;

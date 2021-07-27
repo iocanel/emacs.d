@@ -200,9 +200,9 @@
 (run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+uml.org"))))
 (run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+jira.org"))))
 
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/habits.org")))
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/nutrition.org")))
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/roam/video-notes.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/habits.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/nutrition.org")))
+(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/video-notes.org")))
 
  
 ;; Finalize

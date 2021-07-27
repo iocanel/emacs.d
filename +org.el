@@ -12,7 +12,7 @@
   (interactive)
   (require 'org-drill)
   (setq org-drill-scope 'directory)
-  (find-file "~/Documents/org/roam/index.org")
+  (find-file "~/Documents/org/index.org")
   (org-drill)
   (org-save-all-org-buffers))
 
@@ -67,18 +67,18 @@
         ("iw" "Work Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
         ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/inbox.org" "Inbox" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
 
-        ("p" "Project" entry (file+headline "~/Documents/org/roam/projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
+        ("p" "Project" entry (file+headline "~/Documents/org/para/projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
         ("b" "BJJ")
-        ("bm" "Moves" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
-        ("bs" "Submission" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
-        ("bc" "Choke" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
-        ("bw" "Sweeps" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
-        ("be" "Escapes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
-        ("bt" "Takedowns" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
-        ("bp" "Passes" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
-        ("bf" "FAQ" entry (file+olp "~/Documents/org/roam/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
+        ("bm" "Moves" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
+        ("bs" "Submission" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
+        ("bc" "Choke" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
+        ("bw" "Sweeps" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
+        ("be" "Escapes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
+        ("bt" "Takedowns" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
+        ("bp" "Passes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
+        ("bf" "FAQ" entry (file+olp "~/Documents/org/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
 
-        ("h" "Habit" entry (file+olp "~/Documents/org/roam/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
+        ("h" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
 
         ("f" "Flashcards")
         ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
@@ -105,16 +105,87 @@
         ("fl" "Languages")
         ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
 
+;;
 ;; Org roam
+;;
 (use-package org-roam
-  :config
-  (setq org-roam-directory "~/Documents/org/roam")
-  :bind (("C-c n l" . org-roam)
-         ("C-c n t" . org-roam-today)
-         ("C-c n f" . org-roam-find-file)
-         ("C-c n i" . org-roam-insert)
-         ("C-c n g" . org-roam-show-graph))
-  :hook (org-mode-hook. org-roam-mode))
+      :ensure t
+      :init
+      (setq org-roam-v2-ack t)
+      :custom
+      (org-roam-directory "~/Documents/org/roam")
+      :bind (("C-c n l" . org-roam-buffer-toggle)
+             ("C-c n f" . org-roam-node-find)
+             ("C-c n g" . org-roam-graph)
+             ("C-c n i" . org-roam-node-insert)
+             ("C-c n c" . org-roam-capture)
+             ;; Dailies
+             ("C-c n j" . org-roam-dailies-capture-today))
+      :config
+      (org-roam-setup)
+      ;; If using org-roam-protocol
+      (require 'org-roam-protocol))
+
+;;
+;; Using org roam for external apps, source: https://ag91.github.io/blog/2021/07/09/org-capture-in-nyxt-taking-notes-while-browsing
+;;
+
+(defun ic/org-roam-slug-string (title)  (let ((slug-trim-chars '(;; Combining Diacritical Marks https://www.unicode.org/charts/PDF/U0300.pdf
+                                   768 ; U+0300 COMBINING GRAVE ACCENT
+                                   769 ; U+0301 COMBINING ACUTE ACCENT
+                                   770 ; U+0302 COMBINING CIRCUMFLEX ACCENT
+                                   771 ; U+0303 COMBINING TILDE
+                                   772 ; U+0304 COMBINING MACRON
+                                   774 ; U+0306 COMBINING BREVE
+                                   775 ; U+0307 COMBINING DOT ABOVE
+                                   776 ; U+0308 COMBINING DIAERESIS
+                                   777 ; U+0309 COMBINING HOOK ABOVE
+                                   778 ; U+030A COMBINING RING ABOVE
+                                   780 ; U+030C COMBINING CARON
+                                   795 ; U+031B COMBINING HORN
+                                   803 ; U+0323 COMBINING DOT BELOW
+                                   804 ; U+0324 COMBINING DIAERESIS BELOW
+                                   805 ; U+0325 COMBINING RING BELOW
+                                   807 ; U+0327 COMBINING CEDILLA
+                                   813 ; U+032D COMBINING CIRCUMFLEX ACCENT BELOW
+                                   814 ; U+032E COMBINING BREVE BELOW
+                                   816 ; U+0330 COMBINING TILDE BELOW
+                                   817 ; U+0331 COMBINING MACRON BELOW
+                                   )))
+            (cl-flet* ((nonspacing-mark-p (char)
+                                          (memq char slug-trim-chars))
+                       (strip-nonspacing-marks (s)
+                                               (ucs-normalize-NFC-string
+                                                (apply #'string (seq-remove #'nonspacing-mark-p
+                                                                            (ucs-normalize-NFD-string s)))))
+                       (cl-replace (title pair)
+                                   (replace-regexp-in-string (car pair) (cdr pair) title)))
+              (let* ((pairs `(("[^[:alnum:][:digit:]]" . "_") ;; convert anything not alphanumeric
+                              ("__*" . "_") ;; remove sequential underscores
+                              ("^_" . "") ;; remove starting underscore
+                              ("_$" . ""))) ;; remove ending underscore
+                     (slug (-reduce-from #'cl-replace (strip-nonspacing-marks title) pairs)))
+                (downcase slug)))))
+
+(defun ic/org-roam-make-filepath (title now &optional zone)
+  "Make filename from note TITLE and NOW time (assumed in the current time ZONE)."
+  (concat
+   (file-name-as-directory org-roam-directory)
+   (format-time-string "%Y%m%d%H%M%S_" now (or zone (current-time-zone)))
+   (s-truncate 70 (ic/org-roam-slug-string title) "")
+   ".org"))
+
+(defun ic/org-roam-insert-file (file-path title &optional url)
+  "Insert org roam file in FILE-PATH with TITLE, URL."
+  (with-temp-file file-path
+    (insert
+     "* " title "\n"
+     "\n" url "\n"))
+    (with-current-buffer (find-file-noselect file-path) 
+      (org-id-get-create)
+      (org-entry-put (point) "URL" url)
+      (save-buffer)))
+
 
 ;; Google Calendar
 (use-package org-gcal
@@ -245,7 +316,7 @@
   (setq
         ic/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrop-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")
         gh-user "iocanel"
-        org-github-issues-org-file "~/Documents/org/roam/github.org"
+        org-github-issues-org-file "~/Documents/org/github.org"
         org-github-issues-tags '("github" "triage")
         org-github-issues-auto-schedule "+0d"
         org-github-issues-filter-by-assignee t
@@ -261,7 +332,7 @@
 ;;
 ;; Literate capture configuration
 ;;
-(defvar org-capture-babel-list '("~/Documents/org/roam/nutrition.org" "~/Documents/org/roam/weight.org") "List of literate capture org files.")
+(defvar org-capture-babel-list '("~/Documents/org/nutrition.org" "~/Documents/org/weight.org") "List of literate capture org files.")
 
 (defun iocanel/load-capture-babel-async (orig-fun &rest args)
   "Load org files right before calling org capture."
@@ -284,13 +355,13 @@
 
 (setq org-refile-targets
       '(
-        ("~/Documents/org/roam/bjj/BJJ.org" :maxlevel . 10)
+        ("~/Documents/org/bjj/BJJ.org" :maxlevel . 10)
 
         ;; P.A.R.A
-        ("~/Documents/org/roam/projects.org" :maxlevel . 10)
-        ("~/Documents/org/roam/areas.org" :maxlevel . 10)
-        ("~/Documents/org/roam/resources.org" :maxlevel . 10)
-        ("~/Documents/org/roam/archives.org" :maxlevel . 10)))
+        ("~/Documents/org/para/projects.org" :maxlevel . 10)
+        ("~/Documents/org/para/areas.org" :maxlevel . 10)
+        ("~/Documents/org/para/resources.org" :maxlevel . 10)
+        ("~/Documents/org/para/archives.org" :maxlevel . 10)))
 
 ;;
 ;; Agenda
