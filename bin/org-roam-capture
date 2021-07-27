@@ -1,0 +1,40 @@
+#!/bin/bash
+
+RESOLUTION=`xdpyinfo | awk '/dimensions/{print $2}'`
+WIDTH=300
+HEIGHT=80
+WINDOW_ID=`xdotool getactivewindow`
+WINDOW_ID_HEX=`printf 0x%x $WINDOW_ID`
+WINDOW_NAME=`xdotool getactivewindow getwindowname`
+APP=`cat /proc/$(xdotool getwindowpid $(xdotool getwindowfocus))/comm`
+
+if [ "$RESOLUTION" = "1920x1080" ]; then
+    WIDTH=140
+    HEIGHT=40
+fi
+
+
+URL=""
+# We seem to need a little time when calling this from i3.
+sleep 1
+
+if [ "$APP" == "chromium" ] || [ "$APP" == "firefox" ]; then
+    xdotool windowactivate $WINDOW_ID_HEX --sync
+    xdotool key "ctrl+l"
+    xdotool key "ctrl+c"
+    URL=`xclip -o -selection clipboard`
+    xsel -bc; xsel -c
+elif [ "$APP" == "nyxt" ]; then
+    xdotool windowactivate $WINDOW_ID_HEX --sync
+    xdotool key "y"
+    xdotool key "u"
+    URL=`xclip -o -selection clipboard`
+    xsel -bc; xsel -c
+fi
+
+TITLE="$WINDOW_NAME"
+
+emacsclient -c -a ''  -F "((name . \"org-roam-app\") (top . 10) (left . 10) (width . $WIDTH) (height . $HEIGHT))" --eval "(progn (load-theme 'doom-one) (let ((file (ic/org-roam-make-filepath \"$TITLE\" (current-time))))
+   (ic/org-roam-insert-file file \"$TITLE\" \"$URL\")
+   (find-file file)
+   (org-id-get-create)))"
