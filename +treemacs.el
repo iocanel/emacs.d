@@ -1,6 +1,7 @@
 (use-package treemacs
   :defer t
   :bind ("M-0" . 'treemacs-select-window)
+  :commands (treemacs treemacs-mode)
   :hook (treemacs-mode . (lambda () (setq mode-line-format nil)))
   :config
   (progn
@@ -25,7 +26,7 @@
      treemacs-sorting                    'alphabetic-desc
      treemacs-tag-follow-cleanup         t
      treemacs-tag-follow-delay           1.5
-     treemacs-persist-file              (f-join user-emacs-directory ".cache" "treemacs-persist") 
+     treemacs-persist-file              (concat (file-name-as-directory (concat (file-name-as-directory user-emacs-directory) ".cache")) "treemacs-persist")
      treemacs-width                      30)))
                                         ;(treemacs-follow-mode t)
                                         ;(treemacs-filewatch-mode t)
@@ -33,10 +34,11 @@
 ;;an alternative is (treemacs-git-mode 'extended) which is currently slow for large projects.))
                                         ;(treemacs-git-mode 'extended)))
 
-(use-package treemacs-evil :defer 1)
+(use-package treemacs-evil :defer 1 :after treemacs)
 
 (use-package treemacs-projectile
   :defer 1
+  :commands (treemacs-projectile)
   :config
   (setq treemacs-header-function #'treemacs-projectile-create-header))
 

@@ -47,6 +47,7 @@
   :bind  ("C-x C-b" . 'ivy-switch-buffer))
 
 (use-package counsel
+  :defer t
   :bind ("M-x" . 'counsel-M-x))
 
 (use-package ivy-posframe

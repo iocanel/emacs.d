@@ -291,8 +291,13 @@
 
 (use-package org2blog
   :defer t
+  :custom
+  (org2blog/wp-shortcode-langs-map (list
+                                    '("emacs-lisp" . "lisp")
+                                    '("sh" . "bash")))
   :config
   (setq org2blog/wp-use-sourcecode-shortcode t
+        org2blog/wp-image-upload t
         org2blog/wp-blog-alist
         `(("iocanel.com"
            :url "https://iocanel.com/xmlrpc.php"
@@ -302,8 +307,8 @@
              org2blog-buffer-new
              org2blog-buffer-post-publish
              org2blog-buffer-page-publish
-             org2blog/wp-login
-             org2blog/wp-loggout
+             org2blog-user-login
+             org2blog-user-logout
              org2blog/wp-show-post-in-browser))
 
 ;;
@@ -312,6 +317,8 @@
 (defvar ic/github-repositories nil "The repositories that are watched by org-github-issues")
 
 (use-package org-github-issues :straight (org-github-issues :host github :repo "iensu/org-github-issues")
+  :defer t
+  :commands (org-github-issues-sync-issues)
   :config
   (setq
         ic/github-repositories '("sundrio/sundrio" "fabric8io/kubernetes-client" "dekorateio/dekorate" "quarkusio/quarkus" "snowdrop-bot/snowdrop-bot" "spring-cloud/spring-cloud-kubernetes")
@@ -320,8 +327,8 @@
         org-github-issues-tags '("github" "triage")
         org-github-issues-auto-schedule "+0d"
         org-github-issues-filter-by-assignee t
-        org-github-issues-headline-prefix t)
-  (run-with-idle-timer 36000 t #'ic/github-issues-sync-all))
+        org-github-issues-headline-prefix t))
+
 
 ;;;###autoload
 (defun ic/github-issues-sync-all  ()
@@ -393,12 +400,16 @@
 
 (global-set-key (kbd "C-c C-c") #'org-capture)
 
+;;
+;; Quickmarks
+;;
+(use-package quickmarks :straight (quickmarks :host github :repo "iocanel/quickmarks.el"))
 
 ;;
 ;; Imgflip
 ;;
 
-(use-package imgflip.el :straight (imgflip.el :host github :repo "iocanel/imgflip.el")
+(use-package imgflip :straight (imgflip :host github :repo "iocanel/imgflip.el")
   :custom (imgflip-download-dir "~/.imgflip")
   :config
   (setq imgflip-username "iocanel"

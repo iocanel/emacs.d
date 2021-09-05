@@ -7,5 +7,4 @@
          ("C-x C-f" . find-file)
          ("M-y" . helm-show-kill-ring)))
 
-
-(use-package helm-projectile)
+(use-package helm-projectile :defer t :commands (helm-projectile helm-projectile-ag))
