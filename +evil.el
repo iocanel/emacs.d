@@ -1,3 +1,5 @@
+(setq evil-want-keybinding nil) ;; This is needed for evil-collection
+
 (use-package evil
   :defer t
   :config
@@ -16,6 +18,10 @@
     (evil-leader/set-key "c" 'org-capture)
     (evil-leader/set-key "a" 'org-agenda)))
 
+(use-package evil-collection
+  :custom (evil-collection-setup-minibuffer t)
+  :init (evil-collection-init))
+ 
 ;; C-f is needed by other parts of emacs, so we need to free this up
 (define-key evil-motion-state-map (kbd "C-f") nil)
 (define-key evil-motion-state-map (kbd "<right>") nil)

@@ -231,6 +231,7 @@
 ;; IDEE
 ;;
 (use-package queue)
+(use-package counsel)
 (use-package editorconfig
   :hook (prog-mode . (lambda () (editorconfig-mode 1))))
 

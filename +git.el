@@ -12,9 +12,6 @@
 ;;      ("C-x g" . nil) ;; Let`s unset current binding for magit-status
 ;;      ("C-x g s" . magit-status)))
 
-(use-package evil-magit
-  :after magit)
-
 (use-package browse-at-remote
   :defer t
   :bind (("C-x g g" . browse-at-remote)))
