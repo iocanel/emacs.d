@@ -405,6 +405,43 @@
                                                            (ruby . t)
                                                            (java . t)
                                                            (plantuml . t))))
+(use-package org-babel-eval-in-repl
+  :custom (eir-shell-type 'vterm)
+  :bind (:map org-mode-map
+              ("C-<return>" . ober-eval-block-in-repl)))
+
+(advice-add 'ober-eval-block-in-repl :after #'ic/next-code-block)
+
+
+(defun ic/not-empty (s)
+  "Returns non-nil if S is not empty."
+  (and s (stringp s) (not (= (length s) 0))))
+
+;; Let's intercept eir-insert to make sure the text entered is trimmed.
+(defun ic/eir-insert-trimmed (orig string)
+  "Eir insert but with trimmed arguments."
+ (let ((trimmed (replace-regexp-in-string "^[ \t\n]+" "" (replace-regexp-in-string "[ \n]+$" "" string))))
+         (when (ic/not-empty trimmed)
+           (apply orig (list trimmed)))))
+
+(defun ic/eir-send-not-empty-to-repl (orig fun-change-to-repl fun-execute region-string)
+  "Eir send to repl but ignore empty commands."
+  (when (ic/not-empty region-string)
+    (apply orig (list fun-change-to-repl fun-execute region-string))))
+
+(advice-add 'eir-insert :around #'ic/eir-insert-trimmed)
+(advice-add 'eir-send-to-repl :around #'ic/eir-send-not-empty-to-repl)
+
+;;
+;; To allow yas snippet integration with org babel and avoid org-mode shadowing the block mode (when it comes to snippets)
+;;
+
+(defun ic/yas-org-babel-integration-hook ()
+  (setq-local yas-buffer-local-condition
+              '(not (org-in-src-block-p t))))
+
+(add-hook 'org-mode-hook #'ic/yas-org-babel-integration-hook)
+
 ;;
 ;; Refile
 ;;
