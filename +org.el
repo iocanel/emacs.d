@@ -186,6 +186,30 @@
       (org-entry-put (point) "URL" url)
       (save-buffer)))
 
+(defmacro ic/org-roam-create-by-tag-functions (tag)
+  "Create functions that can be used to create/search org-roam-nodes by TAG."
+  (declare (indent 1) (debug t))
+  `(progn
+     (defun ,(intern (format "ic/org-roam-%s-node-p" tag)) (node)
+       ,(format "Returns non-nill if the specified NODE is tagged with %s." tag)
+       (let ((tags (org-roam-node-tags node)))
+         (member ,(format "%s" tag) tags)))
+
+     (defun ,(intern (format "ic/org-roam-node-find-%s" tag)) (&optional other-window initial-input &key templates)
+       ,(format "Find or create nodes tagged with %s." tag)
+       (interactive)
+       (let ((node (org-roam-node-read initial-input ',(intern (format "ic/org-roam-%s-node-p" tag)))))
+         (if (org-roam-node-file node)
+             (org-roam-node-visit node other-window)
+           (progn
+             (org-roam-capture-
+              :node node
+              :templates templates
+              :props '(:finalize find-file))
+             (insert ,(format "#+filetags: %s" tag))))))))
+
+(ic/org-roam-create-by-tag-functions "bjj")
+(ic/org-roam-create-by-tag-functions "emacs")
 
 ;; Google Calendar
 (use-package org-gcal
