@@ -417,30 +417,3 @@
       (flet ((yes-or-no-p (&rest args) t)
              (y-or-n-p (&rest args) t))
         ad-do-it))
-;;
-;; Demo aid
-;;
-(add-to-list 'display-buffer-alist
-  (cons "\\*Async Shell Command\\*.*" (cons #'display-buffer-no-window nil)))
-
-(defun inhibit-sentinel-messages (fun &rest args)
-  "Inhibit messages in all sentinels started by FUN."
-  (cl-letf* ((old-set-process-sentinel (symbol-function 'set-process-sentinel))
-         ((symbol-function 'set-process-sentinel)
-          (lambda (process sentinel)
-        (funcall
-         old-set-process-sentinel
-         process
-         `(lambda (&rest args)
-            (let ((inhibit-message t))
-              (apply (quote ,sentinel) args)))))))
-        (apply fun args)))
-
-(defun properties-save-hook ()
-  "Aynchronously rebuild the project whenever properties chagne."
-  (when (eq major-mode 'conf-javaprop-mode)
-    (let ((module-root (idee-project-root-dir buffer-file-name))
-          (output-buffer (generate-new-buffer "*Async Maven Build*")))
-      (inhibit-sentinel-messages #'async-shell-command (format "cd %s && mvn package" module-root)))))
-
-(add-hook 'after-save-hook #'properties-save-hook)
