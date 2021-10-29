@@ -44,6 +44,24 @@
   (lsp-treemacs-sync-mode 1))
 
 ;;
+;; Hideshow
+;;
+
+;; From: https://github.com/mwfogleman/.emacs.d/blob/master/michael.org#hideshow
+(use-package hideshow
+  :defer t
+  :bind ("M-h" . ic/toggle-fold)
+  :hook ((prog-mode . hs-minor-mode)))
+
+;;;###autoload
+(defun ic/toggle-fold ()
+  (interactive)
+  "Toggle folding."
+  (hs-toggle-hiding)
+  (backward-char))
+
+
+;;
 ;; YAML
 ;;
 
