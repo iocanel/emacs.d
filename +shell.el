@@ -1,3 +1,8 @@
+(use-package vterm
+  :defer t
+  :commands (vterm)
+  :bind ("C-x v" . 'vterm))
+
 (use-package eshell
   :defer t
   :config
