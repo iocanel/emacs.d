@@ -243,29 +243,52 @@
 ;; Org-present
 ;;
 
-(defvar iocanel/fringe-mode fringe-mode)
+(defvar ic/fringe-mode fringe-mode)
+(defvar ic/org-present-modeline-enabled nil "Flag to specify if modeline should be completly turned off when presenting.")
+(defvar ic/org-present-mode-line-format "" "The modeline format to use when presenting.")
+(defvar ic/org-present-original-mode-line-format nil "The original modeline to use when exisitng presentation.")
 
 ;;;###autoload
-(defun iocanel/org-present-start ()
+(defun ic/org-present-start ()
   (interactive)
   "Setup screen for org present."
   (org-bullets-mode 1)
   (org-present-big)
   (org-present-hide-cursor)
-  (turn-on-hide-mode-line-mode)
+  (if ic/org-present-modeline-enabled
+      (progn
+        (setq-local ic/org-present-original-mode-line-format mode-line-format)
+        (setq-local mode-line-format ic/org-present-mode-line-format))
+    (turn-on-hide-mode-line-mode))
+  (presentation-mode)
   ;; Center the text
-  (set-fringe-mode (/ (- (frame-pixel-width) (* 90 (frame-char-width))) 2))
+  (set-fringe-mode (/ (- (frame-pixel-width) (* 10 (frame-char-width))) 20 ))
   (org-present-read-only))
 
 ;;;###autoload
-(defun iocanel/org-present-stop ()
+(defun ic/org-present-stop ()
   (interactive)
   "Exit org-present."
   (org-present-small)
   (org-present-show-cursor)
-  (turn-off-hide-mode-line-mode)
+  (if ic/org-present-modeline-enabled
+      (setq-local mode-line-format ic/org-present-original-mode-line-format)
+    (turn-off-hide-mode-line-mode))
   (org-present-read-write)
-  (set-fringe-mode iocanel/fringe-mode))
+  (org-present-quit)
+  (funcall ic/selected-screen-mode)
+  (set-fringe-mode ic/fringe-mode))
+
+;;;###autoload
+(defun ic/next-code-block ()
+  (interactive)
+  "Jump to the next code block."
+  (re-search-forward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
+
+(defun ic/previous-code-block ()
+  (interactive)
+  "Jump to the next code block."
+  (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
 
 (use-package org-present
   :defer t
@@ -275,10 +298,12 @@
   :bind (("C-c a p" . org-present)
          :map org-present-mode-keymap
          ("C-q" . org-present-quit)
+         ("M-n" . ic/next-code-block)
+         ("M-p" . ic/previous-code-block)
          ("<right>" . org-present-next)
          ("<left>" . org-present-prev))
-  :hook ((org-present-mode . iocanel/org-present-start)
-         (org-present-mode-quit . iocanel/org-present-stop)))
+  :hook ((org-present-mode . ic/org-present-start)
+         (org-present-mode-quit . ic/org-present-stop)))
 
 (use-package hide-mode-line :defer t)
 
