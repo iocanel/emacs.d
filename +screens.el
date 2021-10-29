@@ -16,7 +16,7 @@
   (set-face-attribute 'default nil :height 150)
   (set-face-attribute 'treemacs-root-face nil :height 160))
 
-(defun presenetation-mode()
+(defun presentation-mode()
   "Modify theme for presentations use"
   (interactive)
   (set-face-attribute 'default nil :height 250)
@@ -33,4 +33,5 @@
   (setq inhibit-message t)
   (setq-default inhibit-message t))
 
-(comf-mode)
+(setq ic/selected-screen-mode 'comf-mode)
+(funcall ic/selected-screen-mode)
