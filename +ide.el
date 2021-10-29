@@ -43,6 +43,11 @@
   :init
   (lsp-treemacs-sync-mode 1))
 
+;;
+;; YAML
+;;
+
+(use-package yaml-mode :ensure t)
 
 ;;
 ;; Java
