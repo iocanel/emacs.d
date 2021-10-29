@@ -180,11 +180,22 @@
     (while (> (point) up-to)
       (paredit-delete-indentation))))
 
+;;
+;; Rust
+;;
 
+(use-package rustic
+  :defer t
+  :hook ((rustic-mode . lsp))
+  :bind (:map rustic-mode-map
+              ("C-c c a" . rustic-cargo-add)
+              ("C-c c r" . rustic-cargo-remove)
+              ("C-c c b" . rustic-cargo-build)
+              ("C-c c x" . rustic-cargo-run)
+              ("C-c r a s" . lsp-rust-analyzer-status)))
 ;;
 ;; Golang
 ;;
- 
 
 (use-package go-mode
   :defer t
