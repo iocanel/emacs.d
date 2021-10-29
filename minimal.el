@@ -22,24 +22,27 @@
 ;;
 
 (setq garbage-collection-messages t)
+(setq target-gc-cons-threshold (* 128 1024 1024))
 
 ;;;###autoload
 (defun ic/gc-restore-settings()
+  (interactive)
   "Restore gc settings."
   (message "Restoring garbage collection settings to their original values.")
-  (setq gc-cons-threshold gc-cons-threshold)
-  (setq gc-cons-percentage 0.05))
+  (setq gc-cons-threshold target-gc-cons-threshold)
+  (setq gc-cons-percentage 0.4))
 
 
 ;;;###autoload
 (defun ic/gc-maximize-threshold ()
+  (interactive)
   "Maximize the gc threshold."
   (setq gc-cons-threshold most-positive-fixnum))
 
 ;;;###autoload
 (defun ic/gc-restore-threshold ()
   "Restore the original gc threshold."
-  (setq gc-cons-threshold orig-gc-cons-threshold))
+  (setq gc-cons-threshold target-gc-cons-threshold))
 
 (add-hook 'minibuffer-setup-hook #'ic/gc-maximize-threshold)
 (add-hook 'minibuffer-exit-hook #'ic/gc-restore-threshold)
