@@ -110,12 +110,17 @@
 (setq dired-dwim-target t)
 
 (use-package dired-narrow
+  :after dired
+  :commands (dired-narrow dired-narrow-fuzzy dired-narrow-regexp)
   :bind (:map dired-mode-map 
               ("C-c C-n" . dired-narrow)
               ("C-c C-f" . dired-narrow-fuzzy)
               ("C-c C-N" . dired-narrow-regexp)))
 
 (use-package dired-subtree
+    :defer t
+    :after dired
+    :commands (dired-subtree-toggle dired-subtree-cycle)
     :bind (:map dired-mode-map 
                 ("<tab>" . dired-subtree-toggle)
                 ("<backtab>" . dired-subtree-cycle)))
