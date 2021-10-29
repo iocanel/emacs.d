@@ -489,7 +489,9 @@
 ;;
 ;; Quickmarks
 ;;
-(use-package quickmarks :straight (quickmarks :host github :repo "iocanel/quickmarks.el"))
+(use-package quickmarks :straight (quickmarks :host github :repo "iocanel/quickmarks.el")
+  :config
+  (qm-init))
 
 ;;
 ;; Imgflip
