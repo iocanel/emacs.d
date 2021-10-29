@@ -180,9 +180,6 @@ the cursor by ARG lines."
         nil))
 
 
-(add-to-list 'idee-kill-current-buffer-listener-list #'ic/elfeed-kill-external-buffer-and-window)
-(add-to-list 'idee-quit-window-listener-list #'ic/elfeed-kill-external-buffer-and-window)
-
 ;; elfeed-kill-buffer should use (kill-current-buffer) vs (kill-buffer (current-buffer))  to trigger listeners
 ;; Let's use an advice to fix that.
 (advice-add #'elfeed-kill-buffer :around #'kill-current-buffer)

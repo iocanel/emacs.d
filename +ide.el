@@ -6,22 +6,27 @@
 ;; Snippets
 ;;
 (use-package yasnippet
+  :defer t
   :init
-  (setq yas-snippet-dirs '("~/.emacs.d/snippets"                 ;; personal snippets
+  (setq yas-snippet-dirs '(
+                           "~/.emacs.d/snippets"                 ;; personal snippets
+                           "~/.emacs.d/idee/snippets"            ;; idee snippets
+                           "~/.emacs.d/idee/templates"           ;; idee snippets
                            "~/.config/emacs/snippets"
                            "~/.config/emacs/templates")
         yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
         yas-prompt-functions '(yas-completing-prompt))
-  :config (yas-reload-all)
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
 
 (use-package auto-yasnippet
+  :defer t
   :config (setq aya-case-fold t)
   :bind (("C-c a c" . aya-create)
          ("C-c a e" . aya-expand)))
 
 (use-package lsp-mode
+  :defer t
   :config (setq lsp-enable-file-watchers nil
                 lsp-idle-del 1)
   :bind (("C-c l m" . lsp)
@@ -36,6 +41,7 @@
 
 
 (use-package helm-lsp
+  :defer t
   :custom (helm-lsp-treemacs-icons nil)
   :bind ("C-c l s" . helm-lsp-workspace-symbol))
 
@@ -127,7 +133,11 @@
                ("C-c d g" . cider-grimoire)
                ("C-c d w" . cider-grimoire-web)
                ("C-c d c" . clojure-cheatsheet)
-               ("C-c d d" . dash-at-point)))
+               ("C-c d d" . dash-at-point)
+               ("C-c e b" . cider-eval-buffer)
+               ("C-c e r" . cider-eval-region)
+               ("C-c e s" . cider-eval-last-sexp)
+               ("C-x e" . cider-eval-last-sexp)))
 
 (use-package cider
   :commands (cider cider-connect cider-jack-in)
@@ -253,7 +263,7 @@
 ;;
 ;; Python
 ;;
-(use-package python-mode)
+(use-package python-mode :defer t)
 (use-package lsp-python-ms
   :ensure t
   :init (setq lsp-python-ms-auto-install-server t)
@@ -267,22 +277,40 @@
 (use-package queue)
 (use-package counsel)
 (use-package editorconfig
+  :defer t
   :hook (prog-mode . (lambda () (editorconfig-mode 1))))
 
-(use-package dockerfile-mode)
-(use-package dockerfile-mode)
+(use-package dockerfile-mode :defer t)
 (use-package demo-it :defer t)
 (use-package async-await :defer t)
 
 ;;
 ;; IDEE optional packages
 ;;
-(use-package ag)
-(use-package helm-ag :bind (("C-c g" . helm-do-ag-project-root)))
-(use-package polymode)
+(use-package ag :ensure t)
+(use-package polymode :ensure t)
+(use-package helm-ag
+  :defer t
+  :straight (helm-ag :host github :repo "ioforks/helm-ag")
+  :commands (helm-do-ag-project-root helm-ag)
+  :bind (("C-c g" . helm-do-ag-project-root)
+         ("C-c r" . helm-resume)))
+
+;;
+;; Currently helm-ag-edit buffer is not properly displayed. So we make sure we call `display-buffer` to address all issues.
+;;
+;; (define-advice helm-ag--edit (:around (orig-fun &rest args) helm-ag-edit-and-focus)
+;;   (message "calling adviced helm-ag-edit.")
+;;   (let ((res (apply orig-fun args)))
+;;     (message "calling display-buffer")
+;;     (display-buffer "*helm-ag-edit*")
+;;     (let ((w (get-buffer-window "*helm-ag-edit*")))
+;;       (select-window w)
+;;     res)))
 
 
 (use-package idee
+  :defer t
   :straight (idee :host github :repo "iocanel/idee")
   :config (idee-init)
   :bind (("C-c i" . 'idee-hydra/body)
@@ -339,19 +367,6 @@
           (ic/split-and-follow-horizontally)
           (eww url))))
 
-;;;###autoload
-(defun ic/org-github-issues--kill-buffer-and-window (&optional buffer-or-name)
-  "Kill the github issues window and buffer.  Return t if grep window was found."
-  (let* ((buffer (current-buffer)))
-    (if (string-match "Github issues for" (buffer-name buffer))
-        (progn
-          (kill-buffer-and-window)
-          (idee-refresh-view)
-          t)
-        nil)))
-
-(add-to-list 'idee-burry-buffer-listener-list #'ic/org-github-issues--kill-buffer-and-window)
-
 (use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
   :bind (("M-e" .  'idee-shell-show-errors)))
 
@@ -407,8 +422,8 @@
 ;;
 ;; Yas Snippets
 ;;
-(yas-reload-all)
-
+(run-with-idle-timer 1 nil (lambda () (let ((inhibit-message nil))
+                                           (yas-reload-all))))
 
 ;;
 ;; Skip confirmation when killing project buffers (from EmacsWiki)

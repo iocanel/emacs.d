@@ -90,6 +90,8 @@
     (column-number-mode)))
 
 (use-package hide-mode-line
+  :defer t
+  :commands (global-hide-mode-line-mode)
   :config
   (when (not (display-graphic-p)) (global-hide-mode-line-mode)))
 
@@ -136,6 +138,7 @@
             (dired-next-dirline 1)
             (dired-subtree-toggle))
         ('error (setq has-more nil))))))
+
 ;;
 ;; Editor
 ;;
@@ -177,6 +180,7 @@
 (global-set-key (kbd "C-x 2") 'ic/split-and-follow-horizontally)
 (global-set-key (kbd "C-x 3") 'ic/split-and-follow-vertically)
 
+
 ;;
 ;; Additional files
 ;;
@@ -190,34 +194,29 @@
 (load-file (concat ic/emacs-cfg-dir "+projectile.el"))
 (load-file (concat ic/emacs-cfg-dir "+helm.el"))
 (load-file (concat ic/emacs-cfg-dir "+git.el"))
-(load-file (concat ic/emacs-cfg-dir "+eshell.el"))
+(load-file (concat ic/emacs-cfg-dir "+shell.el"))
+
+(load-file (concat ic/emacs-cfg-dir "+ide.el"))
+(load-file (concat ic/emacs-cfg-dir "+editor.el"))
+(load-file (concat ic/emacs-cfg-dir "+screens.el"))
+(load-file (concat ic/emacs-cfg-dir "+elfeed.el"))
+(load-file (concat ic/emacs-cfg-dir "+bongo.el"))
+(load-file (concat ic/emacs-cfg-dir "+org.el"))
+(load-file (concat ic/emacs-cfg-dir "+email.el"))
+(ic/gc-restore-settings)
 
  ;; Async
-(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+latex.el"))))
-(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+email.el"))))
-(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+org.el"))))
-(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+ide.el"))))
-(run-with-idle-timer 1 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+editor.el"))))
+(run-with-idle-timer 0 nil (lambda ()
+                               (load-file (concat ic/emacs-cfg-dir "+latex.el"))
+                               (load-file (concat ic/emacs-cfg-dir "+jira.el"))
+                               (load-file (concat ic/emacs-cfg-dir "+jira.el"))
+                               (load-file (concat ic/emacs-cfg-dir "+eww.el"))
+                               (load-file (concat ic/emacs-cfg-dir "+uml.el"))
+                               (load-file "~/Documents/org/habits.el")
+                               (load-file "~/Documents/org/nutrition.el")
+                               (load-file "~/Documents/org/video-notes.el")
+                               (load-file (concat ic/emacs-cfg-dir "finalize.el"))
 
-(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+screens.el"))))
-(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+eww.el"))))
-(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+elfeed.el"))))
-(run-with-idle-timer 2 nil (lambda () (load-file (concat ic/emacs-cfg-dir "+bongo.el"))))
+                               ;; Tune garbage collect
+                               (add-hook 'focus-out-hook 'garbage-collect)))
 
-;; Org files
-(run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+uml.org"))))
-(run-with-idle-timer 3 nil (lambda () (org-babel-load-file (concat ic/emacs-cfg-dir "+jira.org"))))
-
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/habits.org")))
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/nutrition.org")))
-(run-with-idle-timer 4 nil (lambda () (org-babel-load-file "~/Documents/org/video-notes.org")))
-
- 
-;; Finalize
-(run-with-idle-timer 5 nil (lambda () (load-file (concat ic/emacs-cfg-dir "finalize.el"))))
-
-;; Tune garbage collect
-(run-with-idle-timer 5 nil (lambda () (ic/gc-restore-settings)))
-(add-hook 'focus-out-hook 'garbage-collect)
-
-;(use-package explain-pause-mode :config (explain-pause-mode))

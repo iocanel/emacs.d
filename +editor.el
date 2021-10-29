@@ -1,8 +1,16 @@
+;;; -*- lexical-binding: t; -*-
+
 ;;
 ;; Editor
 ;;
 
 (global-set-key [escape] 'keyboard-escape-quit)
+
+;;
+;; Prefer splitting windows side by side (see split-window-sensibly for more details
+;;
+(setq split-height-threshold nil)
+(setq split-width-threshold 0)
 
 ;; (use-package multiple-cursors
 ;;   :defer t
@@ -32,12 +40,16 @@
 ;;
 ;; Ivy
 ;;
-(use-package flx :defer t)
-(use-package smex :defer t)
+(use-package flx :ensure t)
+(use-package smex :ensure t)
 
+(require 'flx)
 (use-package ivy
+  :ensure t
+  :after flx
   :init
   (setq ivy-use-virtual-buffers t
+        ivy--flx-featurep t ;; for some reason integration seems to be broken, so we need this
         ivy-re-builders-alist '((swiper . regexp-quote)
                                 (swiper-isearch . regexp-quote)
                                 (t . ivy--regex-fuzzy))
@@ -50,11 +62,125 @@
   :defer t
   :bind ("M-x" . 'counsel-M-x))
 
-(use-package ivy-posframe
-  :after ivy
-  :init 
-  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
-  (ivy-posframe-mode 1))
+;;
+;; Configure pop-up windows
+;;
+(use-package popper
+  :straight t 
+  :init
+  (setq popper-reference-buffers
+        '(
+          "\\*Messages\\*"
+          "\\*Warnings\\*"
+          "\\*Backtrace\\*"
+          "\\*Flycheck errors\\*"
+          "\\*Flymake diagnostics for .*\\*"
+          "\\*Async Shell Command\\*"
+          "\\*.*compilation.*\\*"
+          "\\*Org QL View: Github issues for .*\\*"
+          "\\*eshell.*\\*"
+          "\\*shell.*\\*"
+          "\\*vterm.*\\*"
+          "\\*scratch.*\\*"
+          "\\*undo-tree*\\*"
+          "\\*helm-ag\\*"
+          "\\*helm-ag-edit\\*"
+          "\\*side.*\\*")
+        popper-mode-line (propertize " π " 'face 'mode-line-emphasis))
+  :config
+    (evil-leader/set-key "p t" 'popper-toggle-latest)
+    (evil-leader/set-key "p c" 'popper-cycle)
+    (evil-leader/set-key "p k" 'popper-kill-latest-popup)
+  (popper-mode +1))
+
+
+;;
+;; Below it the display-buffer-alist rules.
+;; Ideally all window placement will go through here.
+;; There are however exception where windows are manually created and don't go via `display-buffer`.
+;; Those cases require manual intervention (either overriding or advising).
+;;
+;; Source of inspiration: https://www.youtube.com/watch?v=rjOhJMbA-q0
+;;
+ (setq display-buffer-alist
+       `(
+          ;; This is needed so that popper respects my custom configuration
+          `(popper-display-control-p (,popper-display-function))
+
+          ;; Side helper buffers
+          ("\\*undo-tree\\*"
+           (display-buffer-in-side-window)
+           (window-width . 0.10)
+           (side . right)
+           (slot . 0))
+
+          ("\\*side .*\\*"
+           (display-buffer-in-side-window)
+           (window-width . 0.50)
+           (side . right)
+           (slot . 1))
+
+          ("\\*eww\\*"
+           (display-buffer-in-side-window)
+           (window-width . 0.30)
+           (side . right)
+           (slot . 2))
+
+          ;; Bottom Buffers
+          ("\\*\\(Async [s\\|S]hell [c\\|C]ommand.*\\|eshell.*\\|shell.*\\|vterm.*\\|helm-ag\\|helm-ag-edit\\|xref\\|.*compilation\\)\\*"
+           (display-buffer-in-side-window)
+           (window-height . 0.20)
+           (side . bottom)
+           (slot . 0))
+
+          ("\\*\\(Flycheck errors\\|Flymake diagnostics for .*\\)\\*"
+           (display-buffer-in-side-window)
+           (window-height . 0.20)
+           (side . bottom)
+           (slot . 1))
+
+          ("\\*Messages\\*"
+           (display-buffer-in-side-window)
+           (window-height . 0.20)
+           (side . bottom)
+           (slot . 1))
+
+          ("\\*\\(Messages\\|Warnings\\|Backtrace\\)\\*"
+           (display-buffer-in-side-window)
+           (window-height . 0.20)
+           (side . bottom)
+           (slot . 2))
+
+          ("\\*Org QL View: Github issues for .*\\*"
+           (display-buffer-in-side-window)
+           (window-height . 0.20)
+           (side . bottom)
+           (slot . 2))
+
+          ))
+
+;;
+;; The command below is used to kill popup buffers.
+;; The idea is that the function will bind to `q` and 
+;; kill the buffer is buffer is a popup or otherwise record marco.
+;;
+(defun ic/kill-if-popup (register)
+  (interactive
+   (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
+           (or evil-this-register (evil-read-key)))))
+  "Kill the currently selected window if its a popup."
+  (if (popper-popup-p (current-buffer))
+      (popper-kill-latest-popup)
+    (evil-record-macro register)))
+
+(define-key evil-normal-state-map (kbd "q") #'ic/kill-if-popup)
+
+
+;; (use-package ivy-posframe
+;;   :after ivy
+;;   :init 
+;;   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+;;   (ivy-posframe-mode 1))
 
 ;; Causing issues with grep
 ;; (use-package helm-posframe
@@ -140,7 +266,7 @@
 ;; Hydra posframe
 ;;
 
-(use-package hydra-posframe
-  :straight (hydra-posframe :host github :repo "Ladicle/hydra-posframe")
-  :config
-  (hydra-posframe-mode 1))
+;; (use-package hydra-posframe
+;;   :straight (hydra-posframe :host github :repo "Ladicle/hydra-posframe")
+;;   :config
+;;   (hydra-posframe-mode 1))

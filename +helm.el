@@ -8,3 +8,5 @@
          ("M-y" . helm-show-kill-ring)))
 
 (use-package helm-projectile :defer t :commands (helm-projectile helm-projectile-ag))
+
+(setq projectile-completion-system 'helm)
