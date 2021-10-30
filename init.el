@@ -32,18 +32,11 @@
 (setq straight-use-package-by-default t
       straight-check-for-modifications 'never)
 
-(use-package org :straight t)
 (straight-use-package '(org :type built-in))
 
-;; Profile emacs
-(use-package esup)
-
 ;; Load the literate configuration
-(defvar ic/emacs-cfg-dir nil "The cfg directory of my emacs configuration.")
-(let* ((init-file (file-truename (cond (load-in-progress load-file-name) ((and (boundp 'byte-compile-current-file) byte-compile-current-file) byte-compile-current-file) (:else (buffer-file-name)))))
-       (config-dir (file-name-directory (directory-file-name init-file))))
-  (setq ic/emacs-cfg-dir config-dir)
-  (load-file (concat config-dir "minimal.el")))
+(defvar ic/emacs-cfg-dir "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/" "The cfg directory of my emacs configuration.")
+(load-file (concat ic/emacs-cfg-dir "minimal.el"))
 
 ;;
 ;; Generated Stuff
