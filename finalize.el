@@ -1,13 +1,5 @@
 ;;: Turn messages back on
 
-;; Recomplie config if it's not already compiled
-(let ((lock-file (locate-user-emacs-file ".config.lock")))
-  (when (not (file-exists-p lock-file))
-    ;; Compile configuration files
-    (ic/recompile-configuration)
-    ;; Create lockfile
-    (with-temp-buffer (write-file lock-file))))
-
 (defun ic/recompile-configuration()
   "Recompile configurration."
   (interactive)
@@ -20,4 +12,18 @@
                 (error nil))))
           (seq-filter (lambda (f) (string-match "\.el$" f)) (directory-files config-dir)))))
 
+
+
+;; Recomplie config if it's not already compiled
+(let ((lock-file (locate-user-emacs-file ".config.lock")))
+  (when (not (file-exists-p lock-file))
+    ;; Compile configuration files
+    (ic/recompile-configuration)
+    ;; Create lockfile
+    (with-temp-buffer (write-file lock-file))))
 (setq inhibit-message nil)
+
+
+;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/early-init.el")
+;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/+irc.el")
+;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/+org.el")
