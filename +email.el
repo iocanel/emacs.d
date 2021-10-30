@@ -3,7 +3,7 @@
 ;; We also need to jump into the mu4e folder and run `make`
 
 (use-package mu4e
-  ;;:straight (mu4e :type git :host github :repo "djcb/mu" :branch "release/1.4.x" :files (:defaults "mu4e/*.el"))
+  :defer t
   :straight (mu4e :type git :host github :repo "djcb/mu" :branch "master" :files (:defaults "mu4e/*.el"))
   :bind (("C-c a m m" . mu4e)
          ("C-c a m n" . mu4e-compose-new)
@@ -82,6 +82,56 @@
   (setq mu4e-view-show-images t)
   (setq org-mu4e-convert-to-html t)
   (add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+(require 'mu4e-headers)
+(require 'mu4e-view)
+;; Add custom actions for our capture templates
+(add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+(add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+(add-to-list 'mu4e-headers-actions '("read later" . ic/mu4e-capture-read-later) t)
+(add-to-list 'mu4e-view-actions '("read later" . ic/mu4e-capture-read-later) t)
+
+;;
+;; Advices
+;;
+
+;; Scroll mu4e-header along with next/prev messages
+(defadvice mu4e-view-headers-next (around scroll-down-mu4e-header activate)
+  "Scroll down the mu4e-header window when moving onto next email"
+  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+  (save-excursion
+    (select-window (get-buffer-window "*mu4e-headers*"))
+    (recenter))
+  ad-do-it)
+
+(defadvice mu4e-view-headers-prev (around scroll-up-mu4e-header activate)
+  "Scroll up the mu4e-header window when moving onto prev email"
+  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+  (save-excursion
+    (select-window (get-buffer-window "*mu4e-headers*"))
+    (recenter))
+  ad-do-it)
+
+(defadvice mu4e-view-headers-next-unread (around scroll-down-mu4e-header activate)
+  "Scroll down the mu4e-header window when moving onto next email"
+  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+  (save-excursion
+    (select-window (get-buffer-window "*mu4e-headers*"))
+    (recenter))
+  ad-do-it)
+
+(defadvice mu4e-view-headers-prev-unread (around scroll-down-mu4e-header activate)
+  "Scroll down the mu4e-header window when moving onto next email"
+  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+  (save-excursion
+    (other-window 1)
+    (recenter))
+  ad-do-it)
+
+(ad-activate 'mu4e-view-headers-next)
+(ad-activate 'mu4e-view-headers-prev)
+(ad-activate 'mu4e-view-headers-next-unread)
+(ad-activate 'mu4e-view-headers-prev-unread)
+
   :hook ((mu4e-view-mode . (lambda () (mu4e-mark-region-code) (smiley-buffer)))
          (mu4e-compose-mode . (lambda ()
                                 (no-auto-fill)
@@ -195,52 +245,3 @@
   (call-interactively 'org-store-link)
   (org-capture nil "er"))
 
-(require 'mu4e-headers)
-(require 'mu4e-view)
-;; Add custom actions for our capture templates
-(add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-headers-actions '("read later" . ic/mu4e-capture-read-later) t)
-(add-to-list 'mu4e-view-actions '("read later" . ic/mu4e-capture-read-later) t)
-
-;;
-;; Advices
-;;
-
-;; Scroll mu4e-header along with next/prev messages
-(defadvice mu4e-view-headers-next (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
-
-(defadvice mu4e-view-headers-prev (around scroll-up-mu4e-header activate)
-  "Scroll up the mu4e-header window when moving onto prev email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
-
-(defadvice mu4e-view-headers-next-unread (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
-
-(defadvice mu4e-view-headers-prev-unread (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (other-window 1)
-    (recenter))
-  ad-do-it)
-
-(ad-activate 'mu4e-view-headers-next)
-(ad-activate 'mu4e-view-headers-prev)
-(ad-activate 'mu4e-view-headers-next-unread)
-(ad-activate 'mu4e-view-headers-prev-unread)
