@@ -19,13 +19,28 @@
 (use-package idee
   :defer t
   :straight (idee :host github :repo "iocanel/idee")
+  :custom
+  (idee-display-buffer-enabled t)
+  (idee-popper-enabled t)
+  :init
+  (evil-leader/set-key "m" 'idee-maven-hydra/body)
+  (evil-leader/set-key "t" 'idee-treemacs-hydra/body)
+  :commands (idee-init
+             idee-open
+             idee-vcs
+             idee-terminal-view
+             idee-side-by-side-view
+             idee-new-project
+             idee-treemacs-hydra/body
+             idee-treemacs-switch-to-project-workspace
+             idee-treemacs-create-and-switch-to-workspace
+             ide-focus-mode)
   :bind (("C-c i" . 'idee-hydra/body)
          ("C-c p" . 'idee-project-hydra/body)
          ("C-c f" . 'idee-file-hydra/body)
          ("C-c t" . 'idee-treemacs-hydra/body)
          ("M-m" . 'idee-focus-mode))
-  :config (idee-init)
-
+  :config
   ;;
   ;; Additional code
   ;;
@@ -77,6 +92,30 @@
           (idee-jump-to-non-ide-window)
           (ic/split-and-follow-horizontally)
           (eww url))))
+
+;;
+;; LSP 
+;;
+(require 'idee-lsp)
+(idee-lsp-init)
+
+;;
+;; Java
+;;                                         
+(require 'idee-java)
+(idee-java-init)
+
+;; Maven configuration
+(define-derived-mode maven-pom-mode nxml-mode "maven-pom-mode" "Major mode for editting Maven pom files")
+(add-to-list 'auto-mode-alist '("pom\\.xml\\'" . maven-pom-mode))
+(add-to-list 'idee-module-root-markers "pom.xml")
+;; Populate maven known group ids
+(add-to-list 'idee-maven-known-group-ids "io.dekorate")
+(add-to-list 'idee-maven-known-group-ids "io.fabric8")
+(add-to-list 'idee-maven-known-group-ids "io.quarkus")
+(add-to-list 'idee-maven-known-group-ids "io.sundr")
+(add-to-list 'idee-maven-known-group-ids "org.springframework")
+(add-to-list 'idee-maven-known-group-ids "org.junit")
  
 
 ;;
@@ -85,61 +124,56 @@
 (advice-add 'idee-treemacs-open-project-workspace :after (lambda (w) (ic/org-github-issues--show-open-workspace-issues w)))
 )
 
-(use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
-  :after idee
-  :defer t
-  :commands (idee-shell-show-errors)
-  :bind (("M-e" .  'idee-shell-show-errors)))
+;; (use-package idee-counsel :straight (idee :host github :repo "iocanel/idee")
+;;   :after idee
+;;   :defer t
+;;   :commands (idee-shell-show-errors)
+;;   :bind (("M-e" .  'idee-shell-show-errors)))
 
-(use-package idee-lsp :straight (idee :host github :repo "iocanel/idee")
-  :after idee
-  :config
-  (idee-lsp-init))
+;; (use-package idee-lsp :straight (idee :host github :repo "iocanel/idee")
+;;   :after idee
+;;   :config
+;;   (idee-lsp-init))
 
-(use-package idee-java :straight (idee :host github :repo "iocanel/idee")
-  :after idee
-  :config
-  (idee-java-init)
- ;; Maven configuration
- (define-derived-mode maven-pom-mode nxml-mode "maven-pom-mode" "Major mode for editting Maven pom files")
- (add-to-list 'auto-mode-alist '("pom\\.xml\\'" . maven-pom-mode))
- (add-to-list 'idee-module-root-markers "pom.xml")
- ;; Populate maven known group ids
- (add-to-list 'idee-maven-known-group-ids "io.dekorate")
- (add-to-list 'idee-maven-known-group-ids "io.fabric8")
- (add-to-list 'idee-maven-known-group-ids "io.quarkus")
- (add-to-list 'idee-maven-known-group-ids "io.sundr")
- (add-to-list 'idee-maven-known-group-ids "org.springframework")
- (add-to-list 'idee-maven-known-group-ids "org.junit"))
+;; (use-package idee-java :straight (idee :host github :repo "iocanel/idee")
+;;   :after idee
+;;   :defer t
+;;   :commands (idee-maven-hydra/body)
+;;   :init
+;;   (evil-leader/set-key "m" 'idee-maven-hydra/body)
+;;   :config
+;;   (message "idee-java loaded!")
 
-(use-package idee-dap :straight (idee :host github :repo "iocanel/idee")
-  :after idee
-  :defer t)
+;;  )
 
-(use-package idee-kubernetes :straight (idee :host github :repo "iocanel/idee")
-  :after (idee yaml-mode)
-  :defer t
-  :commands (idee-kubernetes-create-dwim
-             idee-kubernetes-create-from-buffer
-             idee-kubernetes-create-from-region
-             idee-kubernetes-delete-dwim
-             idee-kubernetes-delete-from-buffer
-             idee-kubernetes-delete-from-region
-             idee-kubernetes-replace-dwim
-             idee-kubernetes-replace-from-buffer
-             idee-kubernetes-replace-from-region)
-  :bind (:map yaml-mode-map 
-         ("C-c k c" . 'idee-kubernetes-create-dwim)
-         ("C-c k d" . 'idee-kubernetes-delete-dwim)
-         ("C-c u d" . 'idee-kubernetes-update-dwim)))
+;; (use-package idee-dap :straight (idee :host github :repo "iocanel/idee")
+;;   :after idee
+;;   :defer t)
 
-(use-package idee-docker :straight (idee :host github :repo "iocanel/idee")
-  :after (idee dockerfile-mode)
-  :bind (:map dockerfile-mode-map 
-         ("C-c d b" . 'idee-docker-build)
-         ("C-c d k" . 'idee-docker-kill)
-         ("C-c d r" . 'idee-docker-run-dockerfile)
-         ("C-c d p" . 'idee-docker-push-dockerfile)))
+;; (use-package idee-kubernetes :straight (idee :host github :repo "iocanel/idee")
+;;   :after (idee yaml-mode)
+;;   :defer t
+;;   :commands (idee-kubernetes-create-dwim
+;;              idee-kubernetes-create-from-buffer
+;;              idee-kubernetes-create-from-region
+;;              idee-kubernetes-delete-dwim
+;;              idee-kubernetes-delete-from-buffer
+;;              idee-kubernetes-delete-from-region
+;;              idee-kubernetes-replace-dwim
+;;              idee-kubernetes-replace-from-buffer
+;;              idee-kubernetes-replace-from-region)
+;;   :bind (:map yaml-mode-map 
+;;          ("C-c k c" . 'idee-kubernetes-create-dwim)
+;;          ("C-c k d" . 'idee-kubernetes-delete-dwim)
+;;          ("C-c u d" . 'idee-kubernetes-update-dwim)))
+
+;; (use-package idee-docker :straight (idee :host github :repo "iocanel/idee")
+;;   :after (idee dockerfile-mode)
+;;   :bind (:map dockerfile-mode-map 
+;;          ("C-c d b" . 'idee-docker-build)
+;;          ("C-c d k" . 'idee-docker-kill)
+;;          ("C-c d r" . 'idee-docker-run-dockerfile)
+;;          ("C-c d p" . 'idee-docker-push-dockerfile)))
 
 ;;
 ;; Web
@@ -157,3 +191,8 @@
       (flet ((yes-or-no-p (&rest args) t)
              (y-or-n-p (&rest args) t))
         ad-do-it))
+
+;;
+;; Bootstrap
+;;
+(run-with-idle-timer 0.5 nil 'idee-init)
