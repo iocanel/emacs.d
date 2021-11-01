@@ -185,7 +185,6 @@
 ;; Additional files
 ;;
 
-(setq ic/emacs-cfg-dir (file-name-directory (directory-file-name (file-truename (cond (load-in-progress load-file-name) ((and (boundp 'byte-compile-current-file) byte-compile-current-file) byte-compile-current-file) (:else (buffer-file-name)))))))
 
 (load-file (concat ic/emacs-cfg-dir "+autosave.el"))
 (load-file (concat ic/emacs-cfg-dir "+evil.el"))
@@ -196,8 +195,9 @@
 (load-file (concat ic/emacs-cfg-dir "+git.el"))
 (load-file (concat ic/emacs-cfg-dir "+shell.el"))
 
-(load-file (concat ic/emacs-cfg-dir "+ide.el"))
 (load-file (concat ic/emacs-cfg-dir "+editor.el"))
+(load-file (concat ic/emacs-cfg-dir "+prog.el"))
+(load-file (concat ic/emacs-cfg-dir "+ide.el"))
 (load-file (concat ic/emacs-cfg-dir "+screens.el"))
 (load-file (concat ic/emacs-cfg-dir "+elfeed.el"))
 (load-file (concat ic/emacs-cfg-dir "+bongo.el"))
@@ -205,18 +205,19 @@
 (load-file (concat ic/emacs-cfg-dir "+email.el"))
 (ic/gc-restore-settings)
 
- ;; Async
+;; Async
 (run-with-idle-timer 0 nil (lambda ()
-                               (load-file (concat ic/emacs-cfg-dir "+latex.el"))
-                               (load-file (concat ic/emacs-cfg-dir "+jira.el"))
-                               (load-file (concat ic/emacs-cfg-dir "+jira.el"))
-                               (load-file (concat ic/emacs-cfg-dir "+eww.el"))
-                               (load-file (concat ic/emacs-cfg-dir "+uml.el"))
-                               (load-file "~/Documents/org/habits.el")
-                               (load-file "~/Documents/org/nutrition.el")
-                               (load-file "~/Documents/org/video-notes.el")
-                               (load-file (concat ic/emacs-cfg-dir "finalize.el"))
+;;                                (load-file (concat ic/emacs-cfg-dir "+latex.el"))
+;;                                (load-file (concat ic/emacs-cfg-dir "+jira.el"))
+;;                                (load-file (concat ic/emacs-cfg-dir "+jira.el"))
+;;                                (load-file (concat ic/emacs-cfg-dir "+eww.el"))
+;;                                (load-file (concat ic/emacs-cfg-dir "+uml.el"))
+;;                                (load-file "~/Documents/org/habits.el")
+;;                                (load-file "~/Documents/org/nutrition.el")
+;;                                (load-file "~/Documents/org/video-notes.el")
+                                (load-file (concat ic/emacs-cfg-dir "finalize.el"))
 
-                               ;; Tune garbage collect
-                               (add-hook 'focus-out-hook 'garbage-collect)))
+                                ;; Tune garbage collect
+                                (add-hook 'focus-out-hook 'garbage-collect)))
 
+(use-package esup)

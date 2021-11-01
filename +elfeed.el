@@ -2,6 +2,7 @@
 (define-minor-mode ic/elfeed-external-mode "A minor mode to add external modes `showing` elfeed entry content" (use-local-map ic/elfeed-external-mode-map))
 
 (use-package elfeed
+  :defer t
   :config
   (evil-set-initial-state 'elfeed-search-mode 'emacs) 
   (evil-set-initial-state 'elfeed-show-mode 'emacs) 
@@ -29,6 +30,7 @@
            ("C-<tab>" . ic/elfeed-external-next-entry)))
 
 (use-package elfeed-org
+  :after elfeed
   :custom (rmh-elfeed-org-files '("~/Documents/org/blogs.org"))
   :config (elfeed-org))
 
@@ -372,4 +374,3 @@ the cursor by ARG lines."
     (let ((link (elfeed-entry-link elfeed-show-entry)))
       (xwidget-webkit-browse-url link)
       (ic/elfeed-external-mode))))
-

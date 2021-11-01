@@ -22,8 +22,3 @@
     ;; Create lockfile
     (with-temp-buffer (write-file lock-file))))
 (setq inhibit-message nil)
-
-
-;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/early-init.el")
-;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/+irc.el")
-;;(native-compile "/home/iocanel/workspace/src/github.com/iocanel/emacs.d/+org.el")

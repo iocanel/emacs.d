@@ -12,9 +12,10 @@
   (add-to-list 'shr-external-rendering-functions '(nav . ic/eww-ignore-tag-nav)))
   
 (use-package ace-link
+  :after eww
   :defer t
+  :commands (eww-back-url eww-forward-url ace-link-eww)
   :bind  (:map eww-mode-map
                ("<" . eww-back-url)
                (">" . eww-forward-url)
-               ("C-c f" . 'ace-link-eww)))
-
+               ("C-c f" . ace-link-eww)))

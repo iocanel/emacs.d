@@ -60,6 +60,7 @@
 
 (use-package counsel
   :defer t
+  :commands (counsel-M-x counsel-ibuffer counsel-recentf counsel-ag counsel-rg counsel-google)
   :bind ("M-x" . 'counsel-M-x))
 
 ;;
@@ -209,46 +210,46 @@
 ;;
 
 ;;;###autoload
-(defun iocanel/swiper-isearch()
+(defun ic/swiper-isearch()
   (interactive)
   "Non-fuzzy version of swipper-isearch"
   (let ((ivy-re-builders-alist '((swiper-isearch . regexp-quote))))
     (swiper-isearch)))
 
 ;;;###autoload
-(defun iocanel/swiper-isearch-fuzzy()
+(defun ic/swiper-isearch-fuzzy()
   (interactive)
   "Fuzzy version of swipper-isearch"
   (let ((ivy-re-builders-alist '((swiper-isearch . ivy--regex-fuzzy))))
     (swiper-isearch)))
 
 ;;;###autoload
-(defun iocanel/swiper-isearch-with-selection (&optional start end)
+(defun ic/swiper-isearch-with-selection (&optional start end)
   "Swiper variation that uses selected text as initial input."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
   (let ((start (or start (if (use-region-p) (region-beginning) nil)))
         (end (or end (if (use-region-p) (region-end) nil))))
     (if (and (use-region-p) start end)
         (swiper (buffer-substring start end))
-      (iocanel/swiper-isearch))
+      (ic/swiper-isearch))
     (keyboard-escape-quit)))
 
 ;;;###autoload
-(defun iocanel/swiper-isearch-with-selection-fuzzy (&optional start end)
+(defun ic/swiper-isearch-with-selection-fuzzy (&optional start end)
   "Swiper variation that uses selected text as initial input."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
   (let ((start (or start (if (use-region-p) (region-beginning) nil)))
         (end (or end (if (use-region-p) (region-end) nil))))
     (if (and (use-region-p) start end)
         (swiper (buffer-substring start end))
-      (iocanel/swiper-isearch-fuzzy))
+      (ic/swiper-isearch-fuzzy))
     (keyboard-escape-quit)))
 
 (use-package swiper
   :defer t
   :config
-  :bind (("C-s" . 'iocanel/swiper-isearch-with-selection)
-         ("C-f" . 'iocanel/swiper-isearch-with-selection-fuzzy)))
+  :bind (("C-s" . 'ic/swiper-isearch-with-selection)
+         ("C-f" . 'ic/swiper-isearch-with-selection-fuzzy)))
 
 (use-package mark-multiple
   :defer t
