@@ -563,7 +563,7 @@
 ;;
 ;; Quickmarks
 ;;
-(use-package quickmarks :straight (quickmarks :host github :repo "ic/quickmarks.el")
+(use-package quickmarks :straight (quickmarks :host github :repo "iocanel/quickmarks.el")
   :after org
   :defer t
   :config
@@ -573,11 +573,11 @@
 ;; Imgflip
 ;;
 
-(use-package imgflip :straight (imgflip :host github :repo "ic/imgflip.el")
+(use-package imgflip :straight (imgflip :host github :repo "iocanel/imgflip.el")
   :after org
   :defer t
   :custom (imgflip-download-dir "~/.imgflip")
   :config
   (setq imgflip-username "iocanel"
-        imgflip-password (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/imgflip/ic/password"))))
+        imgflip-password (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/imgflip/iocanel/password"))))
 
