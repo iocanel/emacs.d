@@ -98,9 +98,7 @@
 ;; Java
 ;;
 
-
 (use-package lsp-java
-  :after (lsp java-mode)
   :defer t
   :init
   (defvar java-home "/home/iocanel/sdk/candidates/java/current")
