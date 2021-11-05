@@ -4,7 +4,7 @@
 
 (use-package mu4e
   :defer t
-  :straight (mu4e :type git :host github :repo "djcb/mu" :branch "master" :files (:defaults "mu4e/*.el"))
+  :straight (mu4e :type git :host github :repo "djcb/mu" :branch "1.6.9-signed" :files (:defaults "mu4e/*.el"))
   :bind (("C-c a m m" . mu4e)
          ("C-c a m n" . mu4e-compose-new)
          ("C-c a m u" . ic/mu4e-view-unread))
