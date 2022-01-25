@@ -1,5 +1,8 @@
 ;;; +uml.el --- UML Configuration -*- lexical-binding: t; -*-
 
+;;
+;; PlantUML
+;;
 (use-package plantuml-mode
   :commands plantuml-download-jar
   :init
@@ -12,6 +15,9 @@
   :after plantuml-mode
   :config (flycheck-plantuml-setup))
 
+;;
+;; yuml
+;;
 (use-package eyuml
   :init (add-to-list 'org-src-lang-modes '("yuml" . yuml)))
 
@@ -27,9 +33,10 @@
       (insert body)
       (goto-char (point-min))
       (while (search-forward "\n" nil t) (replace-match "," nil t))
-      (write-file in-file)
+      (write-region nil nil in-file)
+      (message (buffer-substring (point-min) (point-max)))
       (eyuml-create-document type out-file))
-    out-file))
+    (format "[[file:%s]]" out-file)))
 
 (defun eyuml-create-document (type &optional out-file)
   "Fetch remote document, TYPE could be class,usecase or activity."
@@ -43,4 +50,23 @@
                       (set-buffer-file-coding-system 'raw-text)
                       (insert data)
                       (write-region nil nil out-file))))))))
+
+;;
+;; Flowchart.js
+;;
+
+(add-to-list 'org-src-lang-modes '("flowchart-js" . flowchart-js))
+(defun org-babel-execute:flowchart-js (body params)
+  "Execute a block of flowchartjs code with org-babel."
+  (let* ((in-file (org-babel-temp-file "" ".flowchart-js"))
+         (out-file (or (cdr (assq :file params))
+		      (error "flowchart-js requires a \":file\" header argument")))
+         (cmd (format "diagrams flowchart %s %s" in-file out-file))
+        (verbosity (or (cdr (assq :verbosity params)) 0)))
+    (with-temp-buffer
+      (insert body)
+      (goto-char (point-min))
+      (write-region nil nil in-file))
+    (shell-command cmd)
+    nil))
 
