@@ -32,6 +32,7 @@
 
 (use-package lsp-mode
   :defer t
+  :custom (lsp-keymap-prefix "C-c l")
   :config (setq lsp-enable-file-watchers nil
                 lsp-idle-del 1)
   :commands (lsp lsp-deferred)
