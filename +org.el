@@ -369,8 +369,8 @@
 
 ;;;###autoload
 (defun ic/org-present-start ()
-  (interactive)
   "Setup screen for org present."
+  (interactive)
   (org-bullets-mode 1)
   (org-present-big)
   (org-present-hide-cursor)
@@ -386,8 +386,8 @@
 
 ;;;###autoload
 (defun ic/org-present-stop ()
-  (interactive)
   "Exit org-present."
+  (interactive)
   (org-present-small)
   (org-present-show-cursor)
   (if ic/org-present-modeline-enabled
@@ -400,15 +400,32 @@
 
 ;;;###autoload
 (defun ic/next-code-block ()
-  (interactive)
   "Jump to the next code block."
+  (interactive)
   (re-search-forward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
 
 ;;;###autoload
 (defun ic/previous-code-block ()
-  (interactive)
   "Jump to the next code block."
+  (interactive)
+  (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
   (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
+
+(defun ic/code-block-p ()
+  "Return non-nil if in code block."
+  (let* ((previous-end-pos (save-excursion
+                             (progn (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
+                                    (point))))
+         (previous-begin-pos (save-excursion (progn (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t)
+                                                    (point)))))
+    (> previous-begin-pos previous-end-pos)))
+
+(defun ic/ensure-in-code-block ()
+  "Jump to the next code block if not current not in code block."
+  (interactive)
+  (when (not (ic/code-block-p))
+    (ic/next-code-block)))
+
 
 (use-package org-present
   :defer t
@@ -416,14 +433,25 @@
   (setq org-present-text-scale 3
         org-present-run-after-navigate-functions  '(org-display-inline-images))
   :bind (("C-c a p" . org-present)
-         :map org-present-mode-keymap
-         ("C-q" . org-present-quit)
          ("M-n" . ic/next-code-block)
          ("M-p" . ic/previous-code-block)
+         :map org-present-mode-keymap
+         ("C-q" . ic/org-present-stop)
          ("<right>" . org-present-next)
          ("<left>" . org-present-prev))
   :hook ((org-present-mode . ic/org-present-start)
          (org-present-mode-quit . ic/org-present-stop)))
+
+(use-package org-tree-slide
+  :defer t
+  :bind
+  ((:map org-tree-slide-mode-map
+         ("q" . org-tree-slide-mode)
+         ("C-i" . org-display-inline-images)
+         ("<right>" . org-tree-slide-move-next-tree)
+         ("<left>" . org-tree-slide-move-previous-tree))))
+
+(add-hook 'org-tree-slide-before-content-view-hook #'org-display-inline-images)
 
 (use-package hide-mode-line :defer t)
 
@@ -528,8 +556,8 @@
   :bind (:map org-mode-map
               ("C-<return>" . ober-eval-block-in-repl)))
 
+(advice-add 'ober-eval-block-in-repl :before #'ic/ensure-in-code-block)
 (advice-add 'ober-eval-block-in-repl :after #'ic/next-code-block)
-
 
 (defun ic/not-empty (s)
   "Returns non-nil if S is not empty."
