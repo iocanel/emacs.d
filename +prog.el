@@ -285,7 +285,7 @@
 
 (use-package flycheck
   :defer t
-  :hook (java-mode . flycheck-mode))
+  :hook (prog-mode . flycheck-mode))
 
 ;;
 ;; Python
