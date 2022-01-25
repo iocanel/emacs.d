@@ -16,6 +16,9 @@
                            "~/.config/emacs/templates")
         yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
         yas-prompt-functions '(yas-completing-prompt))
+  :config
+  (yas-recompile-all)
+  (yas-reload-all)
   :commands (yas-recompile-all yas-reload-all)
   :hook ((text-mode prog-mode org-mode eshell-mode conf-javaprop-mode) . yas-minor-mode))
 
