@@ -149,10 +149,15 @@
 
 (use-package idee-dap :straight (idee-dap :host github :repo "iocanel/idee" :files ("idee-dap.el")))
 
+(use-package idee-javascript :straight (idee-javascript :host github :repo "iocanel/idee" :files ("idee-javascript.el"))
+  :config
+  (idee/javascript-init))
+
 (use-package idee-rust :straight
   (idee-rust :host github :repo "iocanel/idee" :files ("idee-rust.el"))
   :config
   (idee/rust-init))
+
 (use-package idee-kubernetes :straight (idee-kubernetes :host github :repo "iocanel/idee" :files ("idee-kubernetes.el"))
   :defer t
   :commands (idee/kubernetes-create-dwim
