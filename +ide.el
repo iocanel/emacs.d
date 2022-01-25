@@ -26,7 +26,6 @@
                                                             "idee-headers.el"
                                                             "idee-navigation.el"
                                                             "idee-views.el"
-                                                            "idee-hydra.el"
                                                             "idee-treemacs.el"
                                                             "idee-projects.el"
                                                             "idee-templates.el"
@@ -34,9 +33,10 @@
                                                             "idee-vterm.el"
                                                             "idee-visitors.el"
                                                             "idee-arch.el"
-                                                            "idee-yml.el"))
+                                                            "idee-yml.el"
+                                                            "idee-hydra.el"))
   :custom
-  (idee/display-buffer-enabled t)
+  (idee/display-buffer-setup-enabled t)
   (idee/popper-enabled t)
   :init
   (evil-leader/set-key "m" 'idee/maven-hydra/body)
@@ -128,17 +128,16 @@
   (idee/lsp-init))
 
 (use-package idee-java :straight (idee-java :host github :repo "iocanel/idee" :files ("idee-java.el" "idee-java-utils.el" "idee-lsp-java.el" "idee-jshell.el" "idee-maven.el" "idee-spring.el" "idee-quarkus.el"))
-  :defer t
   :commands (idee/maven-hydra/body)
   :init
-  (evil-leader/set-key "m" 'idee-maven-hydra/body)
+  (evil-leader/set-key "m" 'idee/maven-hydra/body)
   :config
   (idee/java-init)
 
   ;; Maven configuration
   (define-derived-mode maven-pom-mode nxml-mode "maven-pom-mode" "Major mode for editting Maven pom files")
   (add-to-list 'auto-mode-alist '("pom\\.xml\\'" . maven-pom-mode))
-  (add-to-list 'ide-module-root-markers "pom.xml")
+  (add-to-list 'idee/module-root-markers "pom.xml")
   ;; Populate maven known group ids
   (add-to-list 'idee/maven-known-group-ids "io.dekorate")
   (add-to-list 'idee/maven-known-group-ids "io.fabric8")
@@ -203,3 +202,4 @@
 ;; Bootstrap
 ;;
 (run-with-idle-timer 0 nil 'idee/init)
+(run-with-idle-timer 0 nil 'idee/java-init)

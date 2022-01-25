@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 ;;
 ;; Display settings
 ;;
@@ -21,14 +23,13 @@
 ;; Garbage collection
 ;;
 
-(setq garbage-collection-messages t)
+(setq garbage-collection-messages nil)
 (setq target-gc-cons-threshold (* 128 1024 1024))
 
 ;;;###autoload
 (defun ic/gc-restore-settings()
   (interactive)
   "Restore gc settings."
-  (message "Restoring garbage collection settings to their original values.")
   (setq gc-cons-threshold target-gc-cons-threshold)
   (setq gc-cons-percentage 0.4))
 
@@ -44,8 +45,8 @@
   "Restore the original gc threshold."
   (setq gc-cons-threshold target-gc-cons-threshold))
 
-(add-hook 'minibuffer-setup-hook #'ic/gc-maximize-threshold)
-(add-hook 'minibuffer-exit-hook #'ic/gc-restore-threshold)
+;;(add-hook 'minibuffer-setup-hook #'ic/gc-maximize-threshold)
+;;(add-hook 'minibuffer-exit-hook #'ic/gc-restore-threshold)
 
 ;;
 ;;
@@ -73,7 +74,7 @@
 (use-package doom-themes
   :config
   (when (display-graphic-p)
-    (load-theme 'doom-one t)(setq mode-line-format nil)))
+    (load-theme 'doom-dracula t)(setq mode-line-format nil)))
 
 (use-package doom-modeline
   :init
@@ -214,10 +215,8 @@
 ;;                                (load-file (concat ic/emacs-cfg-dir "+uml.el"))
 ;;                                (load-file "~/Documents/org/habits.el")
 ;;                                (load-file "~/Documents/org/nutrition.el")
-;;                                (load-file "~/Documents/org/video-notes.el")
-                                (load-file (concat ic/emacs-cfg-dir "finalize.el"))
+                                  (load-file "~/Documents/org/video-notes.el")
+                                  (load-file (concat ic/emacs-cfg-dir "finalize.el"))
 
                                 ;; Tune garbage collect
                                 (add-hook 'focus-out-hook 'garbage-collect)))
-
-(use-package esup)

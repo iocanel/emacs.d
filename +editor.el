@@ -1,4 +1,4 @@
-;;; -*- lexical-binding: t; -*-
+;;; +editor.el --- Editor Configuration -*- lexical-binding: t; -*-
 
 ;;
 ;; Editor
@@ -94,12 +94,32 @@
     (evil-leader/set-key "p k" 'popper-kill-latest-popup)
   (popper-mode +1))
 
+
+(defun ic/shell-pop-up-frame-enable()
+  "Make shell windows pop-up frame."
+  (interactive)
+  (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                                  (display-buffer-reuse-window display-buffer-pop-up-frame)
+                                                                   (reusable-frames . visible)
+                                                (window-height . 0.40)
+                                                (side . bottom)
+                                                (slot . 0)))))
+
+(defun ic/shell-pop-up-frame-dissable()
+  "Make shell windows pop-up use window."
+  (interactive)
+  (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                (display-buffer-in-side-window)
+                                                (window-height . 0.40)
+                                                (side . bottom)
+                                                (slot . 0)))))
 ;;
 ;; The command below is used to kill popup buffers.
 ;; The idea is that the function will bind to `q` and 
 ;; kill the buffer is buffer is a popup or otherwise record marco.
 ;;
 (defun ic/kill-if-popup (register)
+  "If the buffer is a pop-up buffer kill it, or record a macro using REGISTER otherwise."
   (interactive
    (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
            (or evil-this-register (evil-read-key)))))
@@ -110,7 +130,6 @@
 
 (define-key evil-normal-state-map (kbd "q") #'ic/kill-if-popup)
 
-
 ;; (use-package ivy-posframe
 ;;   :after ivy
 ;;   :init 
@@ -118,6 +137,7 @@
 ;;   (ivy-posframe-mode 1))
 
 ;; Causing issues with grep
+
 ;; (use-package helm-posframe
 ;;   :custom (helm-posframe-poshandler #'posframe-poshandler-window-center)
 ;;   :init 
@@ -125,8 +145,8 @@
 ;;   (helm-posframe-enable))
 
 (defun error-filter (list)
-  "Stip dublicates from the list.
-   Credits: https://stackoverflow.com/questions/3815467/stripping-duplicate-elements-in-a-list-of-strings-in-elisp."
+  "Stip dublicates from the LIST.
+Credits: https://stackoverflow.com/questions/3815467/stripping-duplicate-elements-in-a-list-of-strings-in-elisp."
   (let ((new-list nil))
     (while list
       (let  ((current (car list)))
@@ -145,21 +165,21 @@
 
 ;;;###autoload
 (defun ic/swiper-isearch()
+  "Non-fuzzy version of swipper-isearch."
   (interactive)
-  "Non-fuzzy version of swipper-isearch"
   (let ((ivy-re-builders-alist '((swiper-isearch . regexp-quote))))
     (swiper-isearch)))
 
 ;;;###autoload
 (defun ic/swiper-isearch-fuzzy()
+  "Fuzzy version of swipper-isearch."
   (interactive)
-  "Fuzzy version of swipper-isearch"
   (let ((ivy-re-builders-alist '((swiper-isearch . ivy--regex-fuzzy))))
     (swiper-isearch)))
 
 ;;;###autoload
 (defun ic/swiper-isearch-with-selection (&optional start end)
-  "Swiper variation that uses selected text as initial input."
+  "Swiper variation using selected from START to END text as initial input."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
   (let ((start (or start (if (use-region-p) (region-beginning) nil)))
         (end (or end (if (use-region-p) (region-end) nil))))
@@ -170,7 +190,7 @@
 
 ;;;###autoload
 (defun ic/swiper-isearch-with-selection-fuzzy (&optional start end)
-  "Swiper variation that uses selected text as initial input."
+  "Swiper variation using selected from START to END text as initial input for fuzzy search."
   (interactive (if (use-region-p) (list (region-beginning) (region-end))))
   (let ((start (or start (if (use-region-p) (region-beginning) nil)))
         (end (or end (if (use-region-p) (region-end) nil))))
@@ -197,6 +217,8 @@
   :defer t 
   :bind ("C-o" . 'clm/toogle-command-log-buffer))
 
+(evil-leader/set-key "w b" 'balance-windows)
+
 ;;
 ;; Hydra posframe
 ;;
@@ -205,3 +227,13 @@
 ;;   :straight (hydra-posframe :host github :repo "Ladicle/hydra-posframe")
 ;;   :config
 ;;   (hydra-posframe-mode 1))
+
+;;
+;; Utils
+;;
+(defun ic/set-buffer-to-unix ()
+  "Utility to set the buffer encoding to unix.
+This is often handy to remove ^M from the end of line."
+  (interactive)
+  (set-buffer-file-coding-system 'unix 't))
+

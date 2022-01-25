@@ -1,11 +1,16 @@
 ;; +bongo.el --- Bongo Extras -*- lexical-binding: t -*-
 
-
+(setq bongo-mpv-initialization-period 1)
+ 
 (use-package bongo
   :config
-  (setq bongo-enabled-backends '(mplayer mpv)
-        bongo-backend-matchers '((mplayer (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")
-                                 (mpv ("https:") . "youtube")))
+   (setq bongo-enabled-backends '(mpv)
+        bongo-backend-matchers '((mpv (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")))
+
+  ;; Used to use mplayer, but ditched it as mpv seems better. Let's keep the config just in case.
+  ;; (setq bongo-enabled-backends '(mplayer mpv)
+  ;;       bongo-backend-matchers '((mplayer (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")
+  ;;                                (mpv ("https:") . "youtube")))
   (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
   :custom
   (bongo-default-directory "~/Documents/music")

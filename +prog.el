@@ -111,10 +111,10 @@
   (setenv "M2_HOME" m2-home)
   (setenv "PATH" (format "/bin:/usr/bin:/usr/local/bin:%s/bin:%s/bin:%s/bin" (expand-file-name "~")  java-home m2-home))
   (setq
-   lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx8G" "-Xms1024m" "-Xverify:none" "-jar")
+   lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms1024m" "-Xverify:none" "-jar")
    lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
    lsp-java-save-action-organize-imports nil
-   lsp-java-maven-download-sources t
+   lsp-java-maven-download-sources nil
    lsp-java-autobuild-enabled nil
    lsp-java-import-gradle-enabled nil
    lsp-inhibit-message nil
@@ -240,8 +240,6 @@
   :hook ((go-mode . lsp)
          (before-save . gofmt-before-save)))
 
-
-
 ;; (use-package lsp-go :straight (lsp-go :host github :repo "emacs-lsp/lsp-mode" :files ("lsp-mode.el" "lsp-protocol.el" "lsp-lens.el" "lsp-completion.el" "clients/lsp-go.el"))
 ;;   :config
 ;;   (setq lsp-gopls-staticcheck t
@@ -252,7 +250,6 @@
 ;; Javascript
 ;;
 (use-package javascript-mode :defer t)
-(use-package tide :defer t :after java-script-mode)
 ;;
 ;; Haskell
 ;;
