@@ -8,10 +8,10 @@
 (use-package yasnippet
   :defer t
   :init
-  (setq yas-snippet-dirs '(
-                           "~/.emacs.d/snippets"                 ;; personal snippets
-                           "~/.emacs.d/idee/snippets"            ;; idee snippets
-                           "~/.emacs.d/idee/templates"           ;; idee snippets
+  (setq yas-snippet-dirs `(
+                           ,(concat user-emacs-directory "snippets") ;; personal snippets
+                           ,(concat (file-name-as-directory (concat user-emacs-directory "idee")) "snippets") ;; idee snippets
+                           ,(concat (file-name-as-directory (concat user-emacs-directory "idee")) "templates") ;; idee templates
                            "~/.config/emacs/snippets"
                            "~/.config/emacs/templates")
         yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
