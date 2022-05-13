@@ -7,16 +7,7 @@
 ;;
 ;; IDEE optional packages
 ;;
-(use-package ag :ensure t)
 (use-package polymode :ensure t)
-(use-package helm-ag
-  :defer t
-  :straight (helm-ag :host github :repo "ioforks/helm-ag")
-  :commands (helm-do-ag-project-root helm-ag)
-  :bind (("C-c g" . helm-do-ag-project-root)
-         ("C-c r" . helm-resume)
-         :map helm-ag-mode-map
-         ("C-c C-f" . helm-follow-mode)))
 
 (use-package idee
   :defer t
