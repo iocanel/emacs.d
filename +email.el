@@ -12,8 +12,8 @@
   (setq user-mail-address "iocanel@gmail.com"
         user-full-name "Ioannis Canellos"
         mu4e-maildir "~/.mail"
-        mu4e-compose-context-policy 'ask-if-none
-        mu4e-context-policy 'pick-first
+        mu4e-compose-context-policy 'ask
+        mu4e-context-policy 'ask
         mu4e-contexts
         `( ,(make-mu4e-context
              :name "personal"
@@ -67,7 +67,7 @@
   (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
-  (setq mu4e-update-interval 60)
+  (setq mu4e-update-interval nil)
   (setq mu4e-headers-results-limit 1000000)
   ;; Why would I want to leave my message open after I've sent it?
   (setq message-kill-buffer-on-exit t)
@@ -77,60 +77,61 @@
   (setq mu4e-confirm-quit nil)
   (setq mu4e-headers-visible-lines 25)
   ;; convert org mode to HTML automatically
- 
+  
   ;; enable inline images
   (setq mu4e-view-show-images t)
   (setq org-mu4e-convert-to-html t)
   (add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
-(require 'mu4e-headers)
-(require 'mu4e-view)
-;; Add custom actions for our capture templates
-(add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-headers-actions '("read later" . ic/mu4e-capture-read-later) t)
-(add-to-list 'mu4e-view-actions '("read later" . ic/mu4e-capture-read-later) t)
 
-;;
-;; Advices
-;;
+  (require 'mu4e-headers)
+  (require 'mu4e-view)
+  ;; Add custom actions for our capture templates
+  (add-to-list 'mu4e-headers-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+  (add-to-list 'mu4e-view-actions '("follow up" . ic/mu4e-capture-follow-up) t)
+  (add-to-list 'mu4e-headers-actions '("read later" . ic/mu4e-capture-read-later) t)
+  (add-to-list 'mu4e-view-actions '("read later" . ic/mu4e-capture-read-later) t)
 
-;; Scroll mu4e-header along with next/prev messages
-(defadvice mu4e-view-headers-next (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
+  ;;
+  ;; Advices
+  ;;
 
-(defadvice mu4e-view-headers-prev (around scroll-up-mu4e-header activate)
-  "Scroll up the mu4e-header window when moving onto prev email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
+  ;; Scroll mu4e-header along with next/prev messages
+  (defadvice mu4e-view-headers-next (around scroll-down-mu4e-header activate)
+    "Scroll down the mu4e-header window when moving onto next email"
+    (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+    (save-excursion
+      (select-window (get-buffer-window "*mu4e-headers*"))
+      (recenter))
+    ad-do-it)
 
-(defadvice mu4e-view-headers-next-unread (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (select-window (get-buffer-window "*mu4e-headers*"))
-    (recenter))
-  ad-do-it)
+  (defadvice mu4e-view-headers-prev (around scroll-up-mu4e-header activate)
+    "Scroll up the mu4e-header window when moving onto prev email"
+    (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+    (save-excursion
+      (select-window (get-buffer-window "*mu4e-headers*"))
+      (recenter))
+    ad-do-it)
 
-(defadvice mu4e-view-headers-prev-unread (around scroll-down-mu4e-header activate)
-  "Scroll down the mu4e-header window when moving onto next email"
-  (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
-  (save-excursion
-    (other-window 1)
-    (recenter))
-  ad-do-it)
+  (defadvice mu4e-view-headers-next-unread (around scroll-down-mu4e-header activate)
+    "Scroll down the mu4e-header window when moving onto next email"
+    (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+    (save-excursion
+      (select-window (get-buffer-window "*mu4e-headers*"))
+      (recenter))
+    ad-do-it)
 
-(ad-activate 'mu4e-view-headers-next)
-(ad-activate 'mu4e-view-headers-prev)
-(ad-activate 'mu4e-view-headers-next-unread)
-(ad-activate 'mu4e-view-headers-prev-unread)
+  (defadvice mu4e-view-headers-prev-unread (around scroll-down-mu4e-header activate)
+    "Scroll down the mu4e-header window when moving onto next email"
+    (when (not hl-line-sticky-flag) (setq hl-line-sticky-flag t))
+    (save-excursion
+      (other-window 1)
+      (recenter))
+    ad-do-it)
+
+  (ad-activate 'mu4e-view-headers-next)
+  (ad-activate 'mu4e-view-headers-prev)
+  (ad-activate 'mu4e-view-headers-next-unread)
+  (ad-activate 'mu4e-view-headers-prev-unread)
 
   :hook ((mu4e-view-mode . (lambda () (mu4e-mark-region-code) (smiley-buffer)))
          (mu4e-compose-mode . (lambda ()
@@ -152,7 +153,7 @@
               ("C-f" . ic/mu4e-capture-follow-up)))
 
 
-;(require 'evil-mu4e)
+                                        ;(require 'evil-mu4e)
 
 ;; Mu4e cusotmization
 (setq doom-modeline-mu4e t)
@@ -160,7 +161,7 @@
 
 (defalias 'org-mail 'org-mu4e-compose-org-mode)
 
-; use imagemagick, if available
+                                        ; use imagemagick, if available
 (when (fboundp 'imagemagick-register-types)
   (imagemagick-register-types))
 
@@ -168,29 +169,31 @@
   "Turn off auto-fill-mode."
   (auto-fill-mode -1))
 
-
-;; Mu4e capture templates
-
-(setq org-capture-templates (append org-capture-templates `(("e" "Email Workflow")
-    ("ef" "Follow Up" entry (file+olp "~/Documents/org/email.org" "Follow Up")
-          "* TODO Follow up with %:fromname on %a\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
-    ("er" "Read Later" entry (file+olp "~/Documents/org/email.org" "Read Later")
-          "* TODO Read %:subject\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))))
-
-
 ;; Mu4e Bookmarks
 (setq mu4e-bookmarks
       '(
-        ("date:2d..now AND flag:unread AND NOT flag:trashed AND not flag:list AND date:30d..now AND (to:iocanel or ikanello) AND NOT from:Connect2Go" "Must read" ?r)
-        ("flag:unread AND NOT flag:trashed AND NOT maildir:\"/Archived\" AND NOT from:Connect2Go" "Unread messages" ?U)
-        ("date:2d..now AND flag:unread AND NOT flag:trashed AND NOT maildir:\"/Archived\" AND NOT from:Connect2Go" "Recent unread messages" ?u)
-        ("mime:text/calendar" "Events" ?E)
-        ("date:30d..now AND mime:text/calendar" "Recent Events" ?e)
-        ("not flag:list AND date:30d..now AND (to:iocanel or ikanello)" "Personal" ?P)
-        ("date:2d..now AND not flag:list AND date:30d..now AND (to:iocanel or ikanello)" "Recent Personal" ?p)
+        ("date:2d..now AND flag:unread AND NOT flag:trashed AND not flag:list AND date:30d..now AND (to:iocanel or ikanello)" "Must read" ?i)
+
+        ("NOT flag:trashed AND NOT maildir:\"/Archived\"" "Messages (all)" ?U)
+        ("flag:unread AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Messages (unread)" ?u)
+
+        ("not flag:list AND date:30d..now AND (to:iocanel or ikanello)" "Personal (all)" ?P)
+        ("flag:unread AND not flag:list AND date:30d..now AND (to:iocanel or ikanello)" "Personal (unread)" ?p)
+
+        ;; Github
+        ("from:github AND AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Github (all)" ?G)
+        ("flag:unread AND from:github AND AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Github (unread)" ?g)
+        ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:review_requested AND NOT maildir:\"/Archived\"" "Github (review)" ?r)
+        ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:mention AND NOT maildir:\"/Archived\"" "Github (mentions)" ?m)
+
+        ;; Events
+        ("mime:text/calendar" "Events (all)" ?E)
+        ("flat:unread AND mime:text/calendar" "Events (unread)" ?e)
+
+        ;; Period
         ("date:today" "Today's messages" ?t)
-        ("date:7d..now" "Last 7 days" ?w)
-        ("from:Connect2Go" "Home events" ?h)))
+        ("date:7d..now" "Last 7 days" ?w)))
+        
 
 ;; Sending Emails
 (setq message-send-mail-function 'message-send-mail-with-sendmail)
@@ -205,8 +208,8 @@
 
 ;;;###autoload
 (defun ic/mu4e-mark-thread-as-read()
-  (interactive)
   "Skip all messages from the current thread."
+  (interactive)
   (save-excursion
     (select-window (get-buffer-window "*mu4e-headers*"))
     (recenter)
@@ -214,8 +217,8 @@
 
 ;;;###autoload
 (defun ic/mu4e-view-unread()
-  (interactive)
   "Open my unread messages."
+  (interactive)
   (require 'mu4e)
   (mu4e-headers-search
    (mu4e-bookmark-query (car (remove-if-not (lambda (s) (equal (mu4e-bookmark-name s) "Unread messages")) (mu4e-bookmarks))))))
@@ -235,13 +238,14 @@
 
 ;;;###autoload
 (defun ic/mu4e-capture-follow-up (&optional msg)
+  "Create a follow up todo item."
   (interactive)
   (call-interactively 'org-store-link)
   (org-capture nil "ef"))
 
 ;;;###autoload
 (defun ic/mu4e-capture-read-later (&optional msg)
+  "Create a read later todo item."
   (interactive)
   (call-interactively 'org-store-link)
   (org-capture nil "er"))
-
