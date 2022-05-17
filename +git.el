@@ -33,30 +33,33 @@
          ("C-x g p c" . forge-create-pullreq)))
 
 (use-package github-review
- :bind (("C-x g r" . github-review-forge-pr-at-point)
+  :defer t
+  :config
+
+  (defadvice github-review-save-diff (after github-review-save-diff-after activate)
+    "Go to the first line when opening new pr for review."
+    (goto-char (point-min)))
+
+  (defadvice github-review-approve (after github-review-approve-after activate)
+    "Accept, show message in minibuffer and kill the review buffer."
+    (message "Pull request approved!")
+    (set-buffer-modified-p nil)
+    (kill-this-buffer))
+
+  (defadvice github-review-reject (after github-review-reject-after activate)
+    "Reject, show message in minibuffer and kill the review buffer."
+    (message "Pull request rejected!")
+    (set-buffer-modified-p nil)
+    (kill-this-buffer))
+
+  (defadvice github-review-comment (after github-review-comment-after activate)
+    "Comment, show message in minibuffer and kill the review buffer."
+    (message "Pull request commented!")
+    (set-buffer-modified-p nil)
+    (kill-this-buffer))
+  
+  :bind (("C-x g r" . github-review-forge-pr-at-point)
          :map github-review-mode-map
          ("C-x a" . github-review-approve)
          ("C-x c" . github-review-comment)
          ("C-x k" . github-review-reject)))
-
-(defadvice github-review-save-diff (after github-review-save-diff-after activate)
-  "Go to the first line when opening new pr for review."
-  (goto-char (point-min)))
-
-(defadvice github-review-approve (after github-review-approve-after activate)
-  "Accept, show message in minibuffer and kill the review buffer."
-  (message "Pull request approved!")
-  (set-buffer-modified-p nil)
-  (kill-this-buffer))
-
-(defadvice github-review-reject (after github-review-reject-after activate)
-  "Reject, show message in minibuffer and kill the review buffer."
-  (message "Pull request rejected!")
-  (set-buffer-modified-p nil)
-  (kill-this-buffer))
-
-(defadvice github-review-comment (after github-review-comment-after activate)
-  "Comment, show message in minibuffer and kill the review buffer."
-  (message "Pull request commented!")
-  (set-buffer-modified-p nil)
-  (kill-this-buffer))
