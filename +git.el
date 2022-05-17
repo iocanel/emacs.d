@@ -27,6 +27,8 @@
 
 
 (use-package forge
+  :defer t
+  :commands (forge-pull)
   :bind (("C-x g i c" . forge-create-issue)
          ("C-x g p c" . forge-create-pullreq)))
 
