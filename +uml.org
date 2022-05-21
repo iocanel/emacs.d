@@ -19,7 +19,7 @@
     This section contains snippets to ease the development of planuml diagrams.
 
 **** Start
-     #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/start
+     #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/start")
        # -*- mode: snippet -*-
        # name: start
        # key: start 
@@ -33,7 +33,7 @@
 
 **** Conditionals
 ***** If then else
-      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/ite
+      #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/ite")
         # -*- mode: snippet -*-
         # name: if then else
         # key: ite
@@ -46,7 +46,7 @@
 
 **** Notes
 ***** Left
-      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/ln
+      #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/ln")
         # -*- mode: snippet -*-
         # name: left note
         # key: ln 
@@ -58,7 +58,7 @@
 
     
 ***** Right
-      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/rn
+      #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/rn")
         # -*- mode: snippet -*-
         # name: right note
         # key: rn 
@@ -71,7 +71,7 @@
 **** Splits
 
 ***** Single split
-      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/split
+      #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/split")
         # -*- mode: snippet -*-
         # name: split
         # key: split 
@@ -85,7 +85,7 @@
       #+end_src
 
 ***** Split again
-      #+begin_src snippet :tangle ~/.emacs.d/snippets/plantuml-mode/split
+      #+begin_src snippet :tangle (concat user-emacs-directory "snippets/plantuml-mode/sa")
         # -*- mode: snippet -*-
         # name: split again
         # key: sa
