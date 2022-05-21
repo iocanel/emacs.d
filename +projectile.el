@@ -1,5 +1,6 @@
 (use-package projectile
   :defer t
+  :commands (projectile-switch-project projectile-find-file projectile-grep projectile-add-known-project projectile-remove-known-project)
   :config
   (setq projectile-completion-system 'ivy
         projectile-enable-caching t
