@@ -1,7 +1,6 @@
 ;;
 ;; IDEE
 ;;
-(use-package queue)
 
 
 ;;
