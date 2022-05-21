@@ -287,16 +287,30 @@
 ;;
 ;; Python
 ;;
-(use-package python-mode :defer t)
-(use-package anaconda-mode :defer t :after python-mode)
-(use-package lsp-python-ms
-  :after (python-mode lsp-mode)
+(use-package python-mode
   :defer t
-  :init (setq lsp-python-ms-auto-install-server t)
+  :custom (python-shell-interpreter "python3"))
+
+;(use-package anaconda-mode :defer t)
+(use-package poetry
+  :defer t
+  :hook
+  ;; activate poetry-tracking-mode when python-mode is active
+  (python-mode . poetry-tracking-mode))
+
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-venv-path nil)
   :hook (python-mode . (lambda ()
-                         (require 'lsp-python-ms)
-                         (lsp))))  ; or lsp-deferred
-;;
+                          (require 'lsp-pyright)
+                          (lsp))))
+
+
+;; (use-package lsp-python-ms
+;;   :after (python-mode lsp-mode)
+;;   :defer t
+;;   :init (setq lsp-python-ms-auto-install-server t))
+
 ;; Web
 ;;
 (defun iocanel/open-in-browser()
