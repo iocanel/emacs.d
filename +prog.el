@@ -109,7 +109,7 @@
   (defvar m2-home "/home/iocanel/sdk/candidates/maven/current")
   (setenv "JAVA_HOME" java-home)
   (setenv "M2_HOME" m2-home)
-  (setenv "PATH" (format "/bin:/usr/bin:/usr/local/bin:%s/bin:%s/bin:%s/bin" (expand-file-name "~")  java-home m2-home))
+  (setenv "PATH" (concat (getenv "PATH") (format ":%s/bin:%s/bin" java-home m2-home)))
   (setq
    lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms1024m" "-Xverify:none" "-jar")
    lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
