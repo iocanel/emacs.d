@@ -141,11 +141,12 @@
 (use-package idee-dap :straight (idee-dap :host github :repo "iocanel/idee" :files ("idee-dap.el")))
 
 (use-package idee-javascript :straight (idee-javascript :host github :repo "iocanel/idee" :files ("idee-javascript.el"))
+  :defer t
   :config
   (idee/javascript-init))
 
-(use-package idee-rust :straight
-  (idee-rust :host github :repo "iocanel/idee" :files ("idee-rust.el"))
+(use-package idee-rust :straight (idee-rust :host github :repo "iocanel/idee" :files ("idee-rust.el"))
+  :defer t
   :config
   (idee/rust-init))
 
