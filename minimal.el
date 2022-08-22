@@ -121,24 +121,23 @@
               ("C-c C-N" . dired-narrow-regexp)))
 
 (use-package dired-subtree
-    :defer t
     :after dired
+    :config
+    (defun ic/dired-expand-all ()
+      (interactive)
+      "Expand all subtrees in the dired buffer."
+      (let ((has-more t))
+        (while has-more
+          (condition-case ex
+              (progn
+                (dired-next-dirline 1)
+                (dired-subtree-toggle))
+            ('error (setq has-more nil))))))
     :commands (dired-subtree-toggle dired-subtree-cycle)
     :bind (:map dired-mode-map 
                 ("<tab>" . dired-subtree-toggle)
+                ("S-<tab>" . ic/dired-expand-all)
                 ("<backtab>" . dired-subtree-cycle)))
-
-;;;###autoload
-(defun ic/dired-expand-all ()
-  (interactive)
-  "Expand all subtrees in the dired buffer."
-  (let ((has-more t))
-    (while has-more
-      (condition-case ex
-          (progn
-            (dired-next-dirline 1)
-            (dired-subtree-toggle))
-        ('error (setq has-more nil))))))
 
 ;;
 ;; Editor
