@@ -17,6 +17,7 @@
 ;;
 ;; Auto revert
 ;;                                        
+
 (global-auto-revert-mode 1)
 
 ;;
@@ -54,13 +55,12 @@
 ;;
 (add-hook 'emacs-startup-hook
           (lambda ()
-
             (let ((inhibit-message nil))
-            (message "Emacs ready in %s with %d garbage collections."
-                     (format "%.2f seconds"
-                             (float-time
-                              (time-subtract after-init-time before-init-time)))
-                     gcs-done))))
+              (message "Emacs ready in %s with %d garbage collections."
+                       (format "%.2f seconds"
+                               (float-time
+                                (time-subtract after-init-time before-init-time)))
+                       gcs-done))))
 
 ;; Eval Path
 (setq max-lisp-eval-depth 10000)
@@ -74,7 +74,7 @@
 (use-package doom-themes
   :config
   (when (display-graphic-p)
-    (load-theme 'doom-dracula t)(setq mode-line-format nil)))
+    (load-theme 'doom-one t)(setq mode-line-format nil)))
 
 (use-package doom-modeline
   :init
@@ -160,7 +160,7 @@
 ;;
 (use-package ace-window
   :defer t
-  :bind  ("M-o" . 'ace-window)
+  :bind  (("M-o" . 'ace-window) ("M-s" . 'ace-swap-window))
   :config (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
 ;;;###autoload
@@ -199,23 +199,25 @@
 (load-file (concat ic/emacs-cfg-dir "+prog.el"))
 (load-file (concat ic/emacs-cfg-dir "+ide.el"))
 (load-file (concat ic/emacs-cfg-dir "+screens.el"))
+
+(load-file (concat ic/emacs-cfg-dir "+org.el"))
 (load-file (concat ic/emacs-cfg-dir "+elfeed.el"))
 (load-file (concat ic/emacs-cfg-dir "+bongo.el"))
-(load-file (concat ic/emacs-cfg-dir "+org.el"))
-(load-file (concat ic/emacs-cfg-dir "+email.el"))
-(ic/gc-restore-settings)
 
 ;; Async
-(run-with-idle-timer 0 nil (lambda ()
-;;                                (load-file (concat ic/emacs-cfg-dir "+latex.el"))
-;;                                (load-file (concat ic/emacs-cfg-dir "+jira.el"))
-;;                                (load-file (concat ic/emacs-cfg-dir "+jira.el"))
-;;                                (load-file (concat ic/emacs-cfg-dir "+eww.el"))
-;;                                (load-file (concat ic/emacs-cfg-dir "+uml.el"))
-;;                                (load-file "~/Documents/org/habits.el")
-;;                                (load-file "~/Documents/org/nutrition.el")
-                                  (load-file "~/Documents/org/video-notes.el")
-                                  (load-file (concat ic/emacs-cfg-dir "finalize.el"))
+;; (run-with-idle-timer 0 nil (lambda ()
+(load-file (concat ic/emacs-cfg-dir "+latex.el"))
+(load-file (concat ic/emacs-cfg-dir "+jira.el"))
+(load-file (concat ic/emacs-cfg-dir "+email.el"))
+(load-file (concat ic/emacs-cfg-dir "+asciidoc.el"))
+(load-file (concat ic/emacs-cfg-dir "+eww.el"))
+(load-file (concat ic/emacs-cfg-dir "+uml.el"))
+(load-file "~/Documents/org/habits.el")
+(load-file "~/Documents/org/nutrition.el")
+(load-file "~/Documents/org/video-notes.el")
+(load-file (concat ic/emacs-cfg-dir "finalize.el"))
 
-                                ;; Tune garbage collect
-                                (add-hook 'focus-out-hook 'garbage-collect)))
+;; Tune garbage collect
+(ic/gc-restore-settings)
+(setq inhibit-message nil)
+(add-hook 'focus-out-hook 'garbage-collect)

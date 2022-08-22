@@ -21,4 +21,3 @@
     (ic/recompile-configuration)
     ;; Create lockfile
     (with-temp-buffer (write-file lock-file))))
-(setq inhibit-message nil)
