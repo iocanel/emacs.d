@@ -36,6 +36,8 @@
 (use-package undo-tree
   :config
   (global-undo-tree-mode))
+  (setq undo-tree-auto-save-history t
+        undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo/"))))
 
 ;;
 ;; Ivy
