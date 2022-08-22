@@ -29,9 +29,9 @@
   
 (use-package avy
   :defer t
-  :bind  ("M-c" . 'avy-goto-char)
-  :bind  ("M-l" . 'avy-goto-line)
-  :bind  ("M-w" . 'avy-goto-word-1))
+  :bind  (("M-c" . 'avy-goto-char)
+          ("M-l" . 'avy-goto-line)
+          ("M-w" . 'avy-goto-word-1)))
 
 (use-package undo-tree
   :config
