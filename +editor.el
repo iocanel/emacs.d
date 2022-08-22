@@ -24,8 +24,6 @@
 ;;          ("C-c m u n" . mc/unmark-next-like-this)
 ;;          ("C-c m u p" . mc/unmark-previous-like-this)))
 
-(use-package ace-mc)
-;  :bind ("C-c m f" . ace-mc))
   
 (use-package avy
   :defer t

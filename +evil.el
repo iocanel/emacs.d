@@ -22,6 +22,11 @@
   :custom (evil-collection-setup-minibuffer t)
   :init (evil-collection-init))
  
+(use-package evil-mc
+  :defer t
+  :hook ((text-mode . evil-mc-mode)
+         (prog-mode . evil-mc-mode)))
+
 ;; C-f is needed by other parts of emacs, so we need to free this up
 (define-key evil-motion-state-map (kbd "C-f") nil)
 (define-key evil-motion-state-map (kbd "<right>") nil)
