@@ -170,46 +170,45 @@
 ;;
 ;; Swiper
 ;;
-
-;;;###autoload
-(defun ic/swiper-isearch()
-  "Non-fuzzy version of swipper-isearch."
-  (interactive)
-  (let ((ivy-re-builders-alist '((swiper-isearch . regexp-quote))))
-    (swiper-isearch)))
-
-;;;###autoload
-(defun ic/swiper-isearch-fuzzy()
-  "Fuzzy version of swipper-isearch."
-  (interactive)
-  (let ((ivy-re-builders-alist '((swiper-isearch . ivy--regex-fuzzy))))
-    (swiper-isearch)))
-
-;;;###autoload
-(defun ic/swiper-isearch-with-selection (&optional start end)
-  "Swiper variation using selected from START to END text as initial input."
-  (interactive (if (use-region-p) (list (region-beginning) (region-end))))
-  (let ((start (or start (if (use-region-p) (region-beginning) nil)))
-        (end (or end (if (use-region-p) (region-end) nil))))
-    (if (and (use-region-p) start end)
-        (swiper (buffer-substring start end))
-      (ic/swiper-isearch))
-    (keyboard-escape-quit)))
-
-;;;###autoload
-(defun ic/swiper-isearch-with-selection-fuzzy (&optional start end)
-  "Swiper variation using selected from START to END text as initial input for fuzzy search."
-  (interactive (if (use-region-p) (list (region-beginning) (region-end))))
-  (let ((start (or start (if (use-region-p) (region-beginning) nil)))
-        (end (or end (if (use-region-p) (region-end) nil))))
-    (if (and (use-region-p) start end)
-        (swiper (buffer-substring start end))
-      (ic/swiper-isearch-fuzzy))
-    (keyboard-escape-quit)))
-
 (use-package swiper
   :defer t
+  :commands (ic/swiper-isearch ic/swiper-isearch-fuzzy ic/swiper-isearch-with-selection ic/swiper-isearch-with-selection-fuzzy)
   :config
+  ;;
+  ;; Swiper related custom functions
+  ;;
+  (defun ic/swiper-isearch()
+    "Non-fuzzy version of swipper-isearch."
+    (interactive)
+    (let ((ivy-re-builders-alist '((swiper-isearch . regexp-quote))))
+      (swiper-isearch)))
+
+  (defun ic/swiper-isearch-fuzzy()
+    "Fuzzy version of swipper-isearch."
+    (interactive)
+    (let ((ivy-re-builders-alist '((swiper-isearch . ivy--regex-fuzzy))))
+      (swiper-isearch)))
+
+  (defun ic/swiper-isearch-with-selection (&optional start end)
+    "Swiper variation using selected from START to END text as initial input."
+    (interactive (if (use-region-p) (list (region-beginning) (region-end))))
+    (let ((start (or start (if (use-region-p) (region-beginning) nil)))
+          (end (or end (if (use-region-p) (region-end) nil))))
+      (if (and (use-region-p) start end)
+          (swiper (buffer-substring start end))
+        (ic/swiper-isearch))))
+  
+  (defun ic/swiper-isearch-with-selection-fuzzy (&optional start end)
+    "Swiper variation using selected from START to END text as initial input for fuzzy search."
+    (interactive (if (use-region-p) (list (region-beginning) (region-end))))
+    (let ((start (or start (if (use-region-p) (region-beginning) nil)))
+          (end (or end (if (use-region-p) (region-end) nil))))
+      (if (and (use-region-p) start end)
+          (swiper (buffer-substring start end))
+        (ic/swiper-isearch-fuzzy))))
+  ;;
+  ;; End of swiper functions
+  ;; 
   :bind (("C-s" . 'ic/swiper-isearch-with-selection)
          ("C-f" . 'ic/swiper-isearch-with-selection-fuzzy)))
 
