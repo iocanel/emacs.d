@@ -32,7 +32,8 @@
 
 (use-package lsp-mode
   :defer t
-  :custom (lsp-keymap-prefix "C-c l")
+  :custom ((lsp-keymap-prefix "C-c l")
+           (lsp-keep-workspace-alive nil))
   :config (setq lsp-enable-file-watchers nil
                 lsp-idle-del 1)
   :commands (lsp lsp-deferred)
@@ -54,7 +55,6 @@
   :bind ("C-c l s" . helm-lsp-workspace-symbol))
 
 (use-package lsp-treemacs
-  :after (lsp treemacs)
   :defer t
   :commands lsp-treemacs-errors-list
   :config
@@ -111,12 +111,14 @@
   (setenv "M2_HOME" m2-home)
   (setenv "PATH" (concat (getenv "PATH") (format ":%s/bin:%s/bin" java-home m2-home)))
   (setq
-   lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms1024m" "-Xverify:none" "-jar")
+   lsp-java-vmargs '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms2G" "-Xverify:none" "-jar")
    lsp-java-java-path "/home/iocanel/.sdkman/candidates/java/current/bin/java"
    lsp-java-save-action-organize-imports nil
-   lsp-java-maven-download-sources nil
    lsp-java-autobuild-enabled nil
+   lsp-java-maven-download-sources t
+   lsp-java-import-maven-enabled nil
    lsp-java-import-gradle-enabled nil
+   lsp-java-max-concurrent-builds 1
    lsp-inhibit-message nil
    lsp-java-format-on-type-enabled nil
    lsp-java-completion-guess-arguments t
@@ -319,11 +321,3 @@
     (browse-url (concat "file://" filename))))
 
 
-
-;;
-;; Skip confirmation when killing project buffers (from EmacsWiki)
-;;
-(defadvice projectile-kill-buffers (around auto-confirm compile activate)
-  (flet ((yes-or-no-p (&rest args) t)
-         (y-or-n-p (&rest args) t))
-    ad-do-it))

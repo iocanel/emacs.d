@@ -12,6 +12,15 @@
         projectile-sort-order 'recentf
         projectile-switch-project-action 'projectile-dired)
   (projectile-global-mode)
+
+  ;;
+  ;; Skip confirmation when killing project buffers (from EmacsWiki): https://www.emacswiki.org/emacs/YesOrNoP
+  ;;
+  (defadvice projectile-kill-buffers (around auto-confirm compile activate)
+      (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&rest args) t))
+                ((symbol-function 'y-or-n-p) (lambda (&rest args) t)))
+        ad-do-it))
+
   :bind (("C-x b" . projectile-switch-to-buffer)))
 
 ;;

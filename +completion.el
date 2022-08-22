@@ -1,4 +1,5 @@
 (use-package company
+  :defer t
   :config
   (setq company-tooltip-limit 20                      ; bigger popup window
         company-idle-delay 0.5                        ; decrease delay before autocompletion popup shows
