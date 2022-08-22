@@ -61,6 +61,7 @@
  '(request-log-level 'debug)
  '(ring-bell-function 'ignore)
  '(sendmail-program "/usr/local/bin/msmtp" t)
+ '(vterm-max-scrollback 100000)
  '(warning-minimum-level :error)
  '(warning-suppress-types '((comp) (yasnippet backquote-change)))
  '(yas-prompt-functions '(yas-completing-prompt)))
