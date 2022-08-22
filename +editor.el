@@ -70,7 +70,8 @@
 ;; Configure pop-up windows
 ;;
 (use-package popper
-  :straight t 
+  :defer t 
+  :commands (ic/shell-pop-up-frame-enable ic/shell-pop-up-frame-disable ic/kill-if-popup)
   :init
   (setq popper-reference-buffers
         '(
@@ -92,46 +93,50 @@
           "\\*side.*\\*")
         popper-mode-line (propertize " π " 'face 'mode-line-emphasis))
   :config
+    (defun ic/shell-pop-up-frame-enable()
+      "Make shell windows pop-up frame."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                                      (display-buffer-reuse-window display-buffer-pop-up-frame)
+                                                                      (reusable-frames . visible)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
+
+    (defun ic/shell-pop-up-frame-dissable()
+      "Make shell windows pop-up use window."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                                      (display-buffer-in-side-window)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
+    ;;
+    ;; The command below is used to kill popup buffers.
+    ;; The idea is that the function will bind to `q` and 
+    ;; kill the buffer is buffer is a popup or otherwise record marco.
+    ;;
+    (defun ic/kill-if-popup (register)
+      "If the buffer is a pop-up buffer kill it, or record a macro using REGISTER otherwise."
+      (interactive
+       (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
+               (or evil-this-register (evil-read-key)))))
+      "Kill the currently selected window if its a popup."
+      (if (popper-popup-p (current-buffer))
+          (popper-kill-latest-popup)
+        (evil-record-macro register)))
+
     (evil-leader/set-key "p t" 'popper-toggle-latest)
     (evil-leader/set-key "p c" 'popper-cycle)
     (evil-leader/set-key "p k" 'popper-kill-latest-popup)
-  (popper-mode +1))
+    (define-key evil-normal-state-map (kbd "q") #'ic/kill-if-popup)
+  :hook ((eshell-mode . popper-mode)
+         (vterm-mode . popper-mode)
+         (undo-tree-mode . popper-mode)
+         (helm-ag-mode . popper-mode)
+         (flycheck-error-list-mode . popper-mode)
+         (flymake-mode . popper-mode)))
 
-
-(defun ic/shell-pop-up-frame-enable()
-  "Make shell windows pop-up frame."
-  (interactive)
-  (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
-                                                                  (display-buffer-reuse-window display-buffer-pop-up-frame)
-                                                                   (reusable-frames . visible)
-                                                (window-height . 0.40)
-                                                (side . bottom)
-                                                (slot . 0)))))
-
-(defun ic/shell-pop-up-frame-dissable()
-  "Make shell windows pop-up use window."
-  (interactive)
-  (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
-                                                (display-buffer-in-side-window)
-                                                (window-height . 0.40)
-                                                (side . bottom)
-                                                (slot . 0)))))
-;;
-;; The command below is used to kill popup buffers.
-;; The idea is that the function will bind to `q` and 
-;; kill the buffer is buffer is a popup or otherwise record marco.
-;;
-(defun ic/kill-if-popup (register)
-  "If the buffer is a pop-up buffer kill it, or record a macro using REGISTER otherwise."
-  (interactive
-   (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
-           (or evil-this-register (evil-read-key)))))
-  "Kill the currently selected window if its a popup."
-  (if (popper-popup-p (current-buffer))
-      (popper-kill-latest-popup)
-    (evil-record-macro register)))
-
-(define-key evil-normal-state-map (kbd "q") #'ic/kill-if-popup)
 
 ;; (use-package ivy-posframe
 ;;   :after ivy
