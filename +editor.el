@@ -63,6 +63,21 @@
 
 (use-package counsel
   :defer t
+  :config
+
+  (defun error-filter (list)
+    "Stip dublicates from the LIST.
+     Credits: https://stackoverflow.com/questions/3815467/stripping-duplicate-elements-in-a-list-of-strings-in-elisp."
+    (let ((new-list nil))
+      (while list
+        (let  ((current (car list)))
+          (when (and current
+                     (not (member current new-list))
+                     (string-match-p (regexp-quote "ERROR") current))
+            (setq new-list (cons current new-list))))
+        (setq list (cdr list)))
+      (nreverse new-list)))
+  (advice-add 'counsel-compilation-errors-cands :filter-return #'error-filter)
   :commands (counsel-M-x counsel-ibuffer counsel-recentf counsel-ag counsel-rg counsel-google)
   :bind ("M-x" . 'counsel-M-x))
 
@@ -151,21 +166,6 @@
 ;;   :init 
 ;;   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
 ;;   (helm-posframe-enable))
-
-(defun error-filter (list)
-  "Stip dublicates from the LIST.
-Credits: https://stackoverflow.com/questions/3815467/stripping-duplicate-elements-in-a-list-of-strings-in-elisp."
-  (let ((new-list nil))
-    (while list
-      (let  ((current (car list)))
-        (when (and current
-                   (not (member current new-list))
-                   (string-match-p (regexp-quote "ERROR") current))
-          (setq new-list (cons current new-list))))
-        (setq list (cdr list)))
-    (nreverse new-list)))
-
-(advice-add 'counsel-compilation-errors-cands :filter-return #'error-filter)
 
 ;;
 ;; Swiper
