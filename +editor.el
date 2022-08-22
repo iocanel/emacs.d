@@ -46,13 +46,7 @@
 ;;
 ;; Ivy
 ;;
-(use-package flx :ensure t)
-(use-package smex :ensure t)
-
-(require 'flx)
 (use-package ivy
-  :ensure t
-  :after flx
   :init
   (setq ivy-use-virtual-buffers t
         ivy--flx-featurep t ;; for some reason integration seems to be broken, so we need this
@@ -61,8 +55,11 @@
                                 (t . ivy--regex-fuzzy))
         completing-read-function 'ivy-completing-read)
   :config
-  (ivy-mode 1)
-  :bind  ("C-x C-b" . 'ivy-switch-buffer))
+  (use-package flx :ensure t)
+    :bind  ("C-x C-b" . 'ivy-switch-buffer)
+    :hook ((text-mode . ivy-mode)
+           (prog-mode . ivy-mode)
+           (dired-mode . ivy-mode)))
 
 (use-package counsel
   :defer t
