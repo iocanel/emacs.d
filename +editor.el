@@ -39,6 +39,9 @@
         undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo/"))))
   :hook ((text-mode . undo-tree-mode)
          (prog-mode . undo-tree-mode))
+  :bind (:map evil-normal-state-map
+              ("u" . undo-tree-undo)
+              ("C-R" . undo-tree-redo)))
 
 ;;
 ;; Ivy
