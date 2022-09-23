@@ -22,6 +22,12 @@
                         (:endgroup . nil)
                         ("@laptop" . ?l))))
 
+   :bind (("C-c c" . ic/org-edit-special)
+         ("M-n" . ic/next-code-block)
+         ("M-p" . ic/previous-code-block)
+          :map org-src-mode-map
+         ("C-x x" . org-edit-exit)))
+
 (setq org-capture-templates
       '(
         ("c" "Calendar")
@@ -400,6 +406,49 @@
 (defvar ic/org-present-mode-line-format "" "The modeline format to use when presenting.")
 (defvar ic/org-present-original-mode-line-format nil "The original modeline to use when exisitng presentation.")
 
+;;;###autoload
+(defun ic/next-code-block ()
+  "Jump to the next code block."
+  (interactive)
+  (re-search-forward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
+
+;;;###autoload
+(defun ic/previous-code-block ()
+  "Jump to the next code block."
+  (interactive)
+  (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
+  (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
+
+;;;###autoload
+(defun ic/code-block-p ()
+  "Return non-nil if in code block."
+  (let* ((previous-end-pos (save-excursion
+                             (progn (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
+                                    (point))))
+         (previous-begin-pos (save-excursion (progn (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t)
+                                                      (point)))))
+    (> previous-begin-pos previous-end-pos)))
+
+;;;###autoload
+(defun ic/ensure-in-code-block ()
+    "Jump to the next code block if not current not in code block."
+    (interactive)
+    (when (not (ic/code-block-p))
+      (ic/next-code-block)))
+
+;;;###autoload
+(defun ic/org-edit-special ()
+  "Edit special or create src block and edit special."
+    (interactive)
+    (cond
+     ((bound-and-true-p org-src-mode) (org-edit-src-exit))
+     ((ic/code-block-p) (org-edit-special))
+     (:default 
+      (progn
+        (org-insert-structure-template "src")
+        (insert (completing-read "Select language:" '("sh" "java" "javascript" "rust" "python" "clojre" "yaml", "json") nil nil))
+        (org-edit-special)))))
+
 
 (use-package org-present
   :defer t
@@ -436,33 +485,6 @@
     (org-present-quit)
     (funcall ic/selected-screen-mode)
     (set-fringe-mode ic/fringe-mode))
-
-  (defun ic/next-code-block ()
-    "Jump to the next code block."
-    (interactive)
-    (re-search-forward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
-
-  (defun ic/previous-code-block ()
-    "Jump to the next code block."
-    (interactive)
-    (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
-    (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t))
-
-  (defun ic/code-block-p ()
-    "Return non-nil if in code block."
-    (let* ((previous-end-pos (save-excursion
-                               (progn (re-search-backward "^[[:space:]]*\\(#\\+end_src\\)" nil t)
-                                      (point))))
-           (previous-begin-pos (save-excursion (progn (re-search-backward "^[[:space:]]*\\(#\\+begin_src\\)" nil t)
-                                                      (point)))))
-      (> previous-begin-pos previous-end-pos)))
-
-  (defun ic/ensure-in-code-block ()
-    "Jump to the next code block if not current not in code block."
-    (interactive)
-    (when (not (ic/code-block-p))
-      (ic/next-code-block)))
-
 
   :bind (("C-c a p" . org-present)
          ("M-n" . ic/next-code-block)
@@ -678,6 +700,7 @@
 
 (advice-add 'org-capture :before #'ic/load-capture-babel-async)
 
+(use-package ob-typescript)
 ;;
 ;; Org Babel
 ;;
@@ -685,6 +708,7 @@
   (org-babel-do-load-languages 'org-babel-load-languages '((shell .t)
                                                            (ruby . t)
                                                            (java . t)
+                                                           (typescript . t)
                                                            (plantuml . t))))
 (use-package org-babel-eval-in-repl
   :custom (eir-shell-type 'vterm)
@@ -721,7 +745,30 @@
   (setq-local yas-buffer-local-condition
               '(not (org-in-src-block-p t))))
 
+(defvar ic/last-tangle-source-buffer nil)
+(defvar ic/last-tangle-source-buffer-point 0)
+
+(defun ic/org-tangle-prepare ()
+  (setq ic/last-tangle-source-buffer (current-buffer))
+  (setq ic/last-tangle-source-buffer-point (point))
+        (get-buffer-create "**tangle**")
+  (copy-to-buffer "**tangle**" (point-min) (point-max))
+  (goto-char (point-min))
+  (while (re-search-forward "//add:\\([a-zA-Z0-9_-]+\\)" nil t)
+    (let* ((text (buffer-substring (match-beginning 1) (match-end 1)))
+           (new-text (format "<<%s>>" text)))
+      (replace-match new-text))))
+
+
+(defun ic/org-tangle-restore ()
+    (with-current-buffer "**tangle**"
+      (copy-to-buffer ic/last-tangle-source-buffer (point-min) (point-max)))
+    (with-current-buffer ic/last-tangle-source-buffer
+      (goto-char ic/last-tangle-source-buffer-point))) 
+    
 (add-hook 'org-mode-hook #'ic/yas-org-babel-integration-hook)
+(add-hook 'org-babel-pre-tangle-hook #'ic/org-tangle-prepare)
+(add-hook 'org-babel-post-tangle-hook #'ic/org-tangle-restore)
 
 (defun ic/org-export-use-docx ()
   "Set the odt prferred output to docx." 
