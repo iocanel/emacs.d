@@ -1,0 +1,3 @@
+#+begin_src emacs-lisp
+(message "loaded")
+#+end_src
