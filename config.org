@@ -1,3 +1,277 @@
+
+* EMACS
+** Bootstrap
+
+*** Lexical binding
+ #+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+ #+end_src
+
+** Core
+*** Package Manager
+**** Installer 
 #+begin_src emacs-lisp
-(message "loaded")
+ (defvar elpaca-installer-version 0.4)
+ (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+ (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+ (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+ (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                :ref nil
+                                :files (:defaults (:exclude "extensions"))
+                                :build (:not elpaca--activate-package)))
+ (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+         (build (expand-file-name "elpaca/" elpaca-builds-directory))
+         (order (cdr elpaca-order))
+         (default-directory repo))
+   (add-to-list 'load-path (if (file-exists-p build) build repo))
+   (unless (file-exists-p repo)
+     (make-directory repo t)
+     (when (< emacs-major-version 28) (require 'subr-x))
+     (condition-case-unless-debug err
+          (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                   ((zerop (call-process "git" nil buffer t "clone"
+                                         (plist-get order :repo) repo)))
+                   ((zerop (call-process "git" nil buffer t "checkout"
+                                         (or (plist-get order :ref) "--"))))
+                   (emacs (concat invocation-directory invocation-name))
+                   ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                         "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                   ((require 'elpaca))
+                   ((elpaca-generate-autoloads "elpaca" repo)))
+              (kill-buffer buffer)
+            (error "%s" (with-current-buffer buffer (buffer-string))))
+        ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+   (unless (require 'elpaca-autoloads nil t)
+     (require 'elpaca)
+     (elpaca-generate-autoloads "elpaca" repo)
+     (load "./elpaca-autoloads")))
+ (add-hook 'after-init-hook #'elpaca-process-queues)
+ (elpaca `(,@elpaca-order))
+#+end_src
+
+**** use-package
+Configure elpace `use-package` integration so that the rest of the configuration just uses `use-package`.
+#+begin_src emacs-lisp
+  (elpaca elpaca-use-package
+    ;; Enable :elpaca use-package keyword.
+    (elpaca-use-package-mode)
+    ;; Assume :elpaca t unless otherwise specified.
+    (setq elpaca-use-package-by-default t))
+
+  ;; Block until current queue processed.
+  (elpaca-wait)
+  #+end_src
+
+**** use-feature
+There are cases where we want to use `use-package` with internal packages.
+In these cases `:elpaca nil` needs to be set. Let's create a macro `use-feature`
+that combines `use-package` with `:elpaca nil` nicely.
+
+Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
+
+#+begin_src emacs-lisp
+(defmacro use-feature (name &rest args)
+  "Like `use-package' but accounting for asynchronous installation.
+  NAME and ARGS are in `use-package'."
+  (declare (indent defun))
+  `(use-package ,name
+     :elpaca nil
+     ,@args))
+#+end_src
+
+*** General
+
+#+begin_src emacs-lisp
+  (use-package general
+    :demand t
+    :config
+    (general-override-mode)
+    (general-auto-unbind-keys))
+  (elpaca-wait)
+  (general-create-definer leader-key!
+    :states '(insert normal hybrid motion visual operator emacs)
+    :keymaps 'override
+    :prefix "SPC" ;; set leader
+    :global-prefix "M-SPC")
+#+end_src
+
+*** Evil Mode
+
+**** Package
+
+#+begin_src emacs-lisp
+  (use-package evil
+    :custom
+    (evil-symbol-word-search t "search by symbol with * and #.")
+    (evil-shift-width 2 "Same behavior for vim's '<' and '>' commands")
+    (evil-want-C-i-jump t)
+    (evil-complete-all-buffers nil)
+    (evil-want-keybinding nil)
+    (evil-want-integration t)
+    (evil-want-C-i-jump t)
+    (evil-search-module 'evil-search "use vim-like search instead of 'isearch")
+    (evil-undo-system 'undo-redo)
+    :config
+    (setq evil-want-fine-undo nil) ;Fix issue with undo granularity (See: https://github.com/syl20bnr/spacemacs/issues/2675)
+    (evil-mode))
+#+end_src
+
+
+**** Evil Collection
+
+#+begin_src emacs-lisp
+  (use-package evil-collection
+    :elpaca (:remotes ("fork" :repo "progfolio/evil-collection"))
+    :after (evil)
+    :custom
+    (evil-collection-elpaca-want-g-filters nil)
+    (evil-collection-setup-minibuffer t "Add evil bindings to minibuffer")
+    (evil-collection-company-use-tng t)
+    (evil-collection-ement-want-auto-retro t)
+    :config
+    (evil-collection-init))
+#+end_src
+
+** Editor
+
+*** Autorevert
+Ensure that we always see the actual file content.
+#+begin_src emacs-lisp
+  (global-auto-revert-mode 1)
+#+end_src
+
+*** Exit confirmation
+
+#+begin_src emacs-lisp
+  (setq confirm-kill-emacs 'y-or-n-p)
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+*** Identation
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil)
+(setq electric-indent-inhibit t)
+#+end_src
+
+** UI
+*** Appearance
+
+**** All icons
+#+begin_src emacs-lisp
+  (use-package all-the-icons :defer t)
+#+end_src
+
+**** Themes
+
+***** Doom themes
+
+#+begin_src emacs-lisp
+  (use-package doom-themes
+    :config
+    (when (display-graphic-p)
+      (load-theme 'doom-one t)(setq mode-line-format nil)))
+#+end_src
+
+*** Bell
+Disable the annoying bell
+#+begin_src emacs-lisp
+  (setq visible-bell nil)
+  (setq ring-bell-function 'silent)
+#+end_src
+
+*** Display Settings
+#+begin_src emacs-lisp
+  (setq inhibit-message nil) ;; Changing that makes evil-search '/' invisible!
+  (setq inhibit-startup-message t)
+  (set-face-attribute 'default nil :height 150)
+#+end_src
+
+*** Mode line 
+***** Doom modeline
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :init
+    (setq doom-modeline-buffer-file-name-style 'truncate-upto-project
+          doom-modeline-icon t
+          doom-modeline-major-mode-icon t
+          doom-modeline-major-mode-color-icon t
+          doom-modeline-lsp t
+          doom-modeline-column-zero-based t)
+    :config
+    (when
+        (display-graphic-p)
+      (doom-modeline-mode)
+      (column-number-mode)))
+#+end_src
+
+
+**** Fonts
+The configured font needs to support the unicode characters that are used by the modeline.
+The default font is good enough so let's not define additonal configuration here.
+
+#+begin_src emaacs-lips
+  (push '(font . "Source Code Pro") default-frame-alist)
+(set-face-font 'default "Source Code Pro")
+(set-face-font 'variable-pitch "DejaVu Sans")
+(copy-face 'default 'fixed-pitch)
+#+end_src
+
+** Language
+*** Org Mode
+**** Package
+#+begin_src emacs-lisp
+    (use-feature org
+      :defer t
+      :config
+      (setq org-pretty-entities t
+            org-hide-emphasis-markers t)
+      :bind (:map org-mode-map
+                  (("<tab>" . org-cycle)
+                   ("<backtab>" . org-shiftab))))
+#+end_src
+**** Bullets
+#+begin_src emacs-lisp
+  (use-package org-bullets
+  :after (org)
+  :hook (org-mode . org-bullets-mode)
+  :custom (org-bullets-bullet-list '("◇" "◉" "○" "✸" "✿" "✚" "★" "►")))
+#+end_src
+
+**** Indent
+To ensure that heading is aligned with the content, let's use the `org-indent` feaature.
+
+#+begin_src emacs-lisp
+  (use-feature org-indent
+    :diminish ""
+    :after (org)
+    :hook (org-mode . org-indent-mode)
+    :config
+    (define-advice org-indent-refresh-maybe (:around (fn &rest args) "when-buffer-visible")
+      "Only refresh indentation when buffer's window is visible.
+  Speeds up `org-agenda' remote operations."
+      (when (get-buffer-window (current-buffer) t) (apply fn args))))
+#+end_src
+
+*** Key Bindings
+
+Let's configure here all our keybindings to keep things tidy!
+
+#+begin_src emacs-lisp
+  (leader-key!
+    ;; 
+    ;; Open
+    ;;
+    "o" '(:ignore t :wk "open")
+    "of" '(find-file :wk "open file")
+    "ob" '(ibffer :wk "open buffer")
+
+    ;; 
+    ;; Buffer
+    ;;
+    "b" '(:ignore t :wk "buffer")
+    "bb" '(switch-to-buffer :wk "Switch buffer")
+    "bk" '(kill-this-buffer :wk "Kill this buffer")
+    "bn" '(next-buffer :wk "Next buffer")
+    "bp" '(previous-buffer :wk "Previous buffer")
+    "br" '(revert-buffer :wk "Reload buffer"))
 #+end_src
