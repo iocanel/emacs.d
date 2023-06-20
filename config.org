@@ -1,7 +1,6 @@
 
 * EMACS
 ** Bootstrap
-
 *** Lexical binding
  #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
@@ -132,8 +131,15 @@ Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
     (evil-collection-init))
 #+end_src
 
+** Libraries
+*** f.el
+#+begin_src emacs-lisp
+  (use-package f :demand t)
+  ;; As this is asynchronous let's call `elpaca-await` to ensure that f.el
+  ;; is available for use in my emacs configuration
+  (elpaca-wait) 
+#+end_src
 ** Editor
-
 *** Autorevert
 Ensure that we always see the actual file content.
 #+begin_src emacs-lisp
@@ -147,6 +153,13 @@ Ensure that we always see the actual file content.
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+end_src
 
+*** Save history
+Persists history over Emacs restarts
+#+begin_src emacs-lisp
+  (use-feature savehist
+  :init
+  (savehist-mode))
+#+end_src
 *** Identation
 #+begin_src emacs-lisp
 (setq-default indent-tabs-mode nil)
@@ -155,12 +168,10 @@ Ensure that we always see the actual file content.
 
 ** UI
 *** Appearance
-
 **** All icons
 #+begin_src emacs-lisp
   (use-package all-the-icons :defer t)
 #+end_src
-
 **** Themes
 
 ***** Doom themes
@@ -220,15 +231,197 @@ The default font is good enough so let's not define additonal configuration here
 *** Org Mode
 **** Package
 #+begin_src emacs-lisp
-    (use-feature org
-      :defer t
-      :config
-      (setq org-pretty-entities t
-            org-hide-emphasis-markers t)
-      :bind (:map org-mode-map
-                  (("<tab>" . org-cycle)
-                   ("<backtab>" . org-shiftab))))
+  (use-feature org
+    :defer t
+    :config
+    (setq org-pretty-entities t
+	  org-hide-emphasis-markers t)
+    :bind (:map org-mode-map
+		(("<tab>" . org-cycle)
+		 ("<backtab>" . org-shiftab))))
+
 #+end_src
+
+**** Getting things done
+
+To implement my `[[Getting things done]] workflow` I am going to use two main files:
+
+- [[~/Documents/org/roam/Inbox.org][Inbox]]
+- [[~/Documents/org/roam/Archives.org][Archives]]
+
+Extra inboxes may be used when there are technical reasons.
+
+The inbox file may have one or more subheadings and so does the archive.
+Ideally, inbox subheadings should match the inbox.
+
+We have two challenges to solve:
+
+- Automatically archieve `DONE` items.
+- Move archived items to the correct archive subheading.
+
+***** Configuration
+#+begin_src emacs-lisp
+  (setq my/inbox-file "~/Documents/org/roam/Inbox.org")
+  (setq my/archive-file "~/Documents/org/roam/Archives.org")
+#+end_src
+
+***** Refile
+****** Functions
+******* Refile item ::function::
+#+begin_src emacs-lisp
+    (defun my/org-refile (file headline &optional new-state)
+      "Refile item to the target FILE under the HEADLINE and set the NEW-STATE."
+      (let ((pos (save-excursion
+                   (find-file file)
+                   (org-find-exact-headline-in-buffer headline))))
+        (save-excursion
+          (org-refile nil nil (list headline file nil pos))
+          (org-refile-goto-last-stored)
+          (when new-state (org-todo new-state)))))
+
+#+end_src
+
+***** Archiving
+****** Functions
+******* Find archive target
+#+begin_src emacs-lisp
+  (defun my/org-find-archive-target (tag)
+    "Find the archive target for the specified TAG.
+  The idea is that the archive file has multiple headings one for each category.
+  When a tagged item is archived it should go to an archive with at least one matching tag
+  or to the 'Unsorted' when none is matched. Archives are expected to be tagged with the archive tag."
+    (or (car
+         (car
+          (org-ql-query
+            :select '(list (substring-no-properties (org-get-heading t t)))
+            :from my/archive-file
+            :where `(tags "archive" ,tag))))
+        "Unsorted"))
+#+end_src
+
+******* Archive item ::function::
+#+begin_src emacs-lisp
+    (defun my/org-archive ()
+      "Mark item as complete and refile to archieve."
+      (interactive)
+        (save-window-excursion
+          (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-goto))
+          (let* ((tags (org-get-tags))
+                 (headline (if tags (car (mapcar (lambda (tag) (my/org-find-archive-target tag)) tags)) nil)))
+            (my/org-refile my/archive-file headline "DONE")))
+          ;; Redo the agenda
+          (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-redo)))
+
+#+end_src
+
+******* Auto archive ::function::
+#+begin_src emacs-lisp 
+  (defun my/org-auto-archive ()
+    "Archieve all completed items in my inbox."
+    (interactive)
+      (save-window-excursion
+        (find-file my/inbox-file)
+        (goto-char 0)
+        (let ((pos))
+          (while (not (eq (point) pos))
+            (setq pos (point))
+            (outline-next-heading)
+            (let* ((line (buffer-substring-no-properties (bol) (eol)))
+                   (line-without-stars (replace-regexp-in-string "^[\\*]+ " "" line)))
+            (when (string-prefix-p "DONE" line-without-stars)
+              (my/org-archive)
+              (goto-char 0) ;; We need to go back from the beggining to avoid loosing entries
+        (save-buffer)))))))
+
+#+end_src
+
+**** Agenda
+***** Configuration
+#+begin_src emacs-lisp
+(setq org-agenda-files (append
+                        '("~/Documents/org/quickmarks.org"
+                          "~/Documents/org/github.org"
+                          "~/Documents/org/habits.org"
+                          "~/Documents/org/nutrition.org"
+                          "~/Documents/org/roam/Inbox.org")
+                          (directory-files-recursively "~/Documents/org/jira" "\.org$")))
+#+end_src
+***** Functions
+
+****** Archive agenda item at point ::function::
+Requires:
+- [[Getting things done]]
+- [[Archive item]]
+
+#+begin_src emacs-lisp
+  (defun my/org-agenda-archive-at-point ()
+    "Archive the url of the specified item."
+    (interactive)
+    (let ((agenda-window-configuration (current-window-configuration)))
+      (org-agenda-switch-to)
+      (my/org-archive)
+      (set-window-configuration agenda-window-configuration)))
+#+end_src
+****** Browse at point ::function::
+#+begin_src emacs-lisp
+  (defun my/org-agenda-browse-at-point ()
+    "Browse the url of the specified item."
+    (interactive)
+    (let ((agenda-window-configuration (current-window-configuration)))
+      (org-agenda-switch-to)
+      (let ((url (car
+                  (mapcar (lambda (p) (replace-regexp-in-string (regexp-quote "\"") "" (org-entry-get (point) p)))
+                          (seq-filter (lambda (n) (string-suffix-p "url" n t))
+                                      (mapcar (lambda (e) (car e)) (org-entry-properties)))))))
+        (when url (browse-url  url)))
+      (set-window-configuration agenda-window-configuration)))
+#+end_src
+****** Export Agenda ::function::
+
+***** Super Agenda
+
+Requires:
+- [[Getting things done]]
+  - [[Archive item]]
+  - [[Refile item]]
+- [[Agenda]]
+  - [[Export Agenda]]
+  - [[Archive agenda item at point]]
+    
+#+begin_src emacs-lisp
+(use-package org-super-agenda
+  :commands (my/org-agenda-browse-at-point my/org-agenda-archive-at-point my/org-agenda-export my/org-archive my/org-refile)
+  :config
+  (setq org-super-agenda-groups '((:name "Events" :time-grid t :todo "TODAY")
+                                  (:name "Habbits" :tag "habit" :todo "TODAY")
+                                  (:name "Due" :deadline past)
+                                  (:name "Jira" :tag "jira")
+                                  (:name "Email" :tag "email")
+                                  (:name "Github pulls" :tag "pull")
+                                  (:name "Github issues" :tag "issue"))
+        ;; agenda
+        org-agenda-scheduled-leaders '("" "")
+        org-agenda-tag-filter-preset '("-drill")
+        org-agenda-start-day "+0"
+        org-agenda-start-on-weekday nil
+        org-agenda-span 2
+        org-agenda-files (append
+                          (directory-files-recursively "~/Documents/org/jira" "\.org$")
+                          '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org"))
+        ;; Refile
+        org-refile-targets '(
+                             ;; P.A.R.A
+                             ("~/Documents/org/roam/Projects.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Areas.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Resources.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Archives.org" :maxlevel . 10)))
+  :hook (org-agenda-mode . org-super-agenda-mode)
+  :bind (:map org-agenda-mode-map
+              ("C-a" . my/org-agenda-archive-at-point)
+              ("C-b" . my/org-agenda-browse-at-point)))
+
+ #+end_src
+
 **** Bullets
 #+begin_src emacs-lisp
   (use-package org-bullets
@@ -252,26 +445,1264 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
       (when (get-buffer-window (current-buffer) t) (apply fn args))))
 #+end_src
 
-*** Key Bindings
+**** Org Roam
+***** Package
+#+begin_src emacs-lisp
+  (use-package org-roam)
+#+end_src
+***** Configuration
+#+begin_src emacs-lisp
+(setq org-roam-directory "~/Documents/org/roam")
+#+end_src
+***** Capture templates
+#+begin_src emacs-lisp
+(setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}\n") :unnarrowed t)))
+(setq org-roam-dailies-capture-templates `(("d" "default" entry "* %?" :target (file+head "%<%Y-%m-%d>.org"
+                                                                                 ,(concat "#+title: %<%Y-%m-%d>\n"
+                                                                                         "* Daily Checklist\n"
+                                                                                         "** TODO Log weight\n"
+                                                                                         "** TODO Check emails\n"
+                                                                                         "** TODO Check github issues / pull requests"
+                                                                                         )))))
 
-Let's configure here all our keybindings to keep things tidy!
+#+end_src
+
+#+RESULTS:
+
+***** Multi directory setup
+To have multiple different org roam directories, just add the following `.dir-local.el` file in the root of each roam root.
+#+begin_example :file .dir-locals.el
+((nil . ((eval . (setq-local org-roam-directory (locate-dominating-file default-directory ".dir-locals.el"))))))
+#+end_example
+
+***** Functions
+******  Roam extract subtree and insert ::function::
+One of the pieces of functionality I am missing is the ability to move a subtree to a node.
+Inspiration drawn from logseq plugin: https://github.com/vipzhicheng/logseq-plugin-move-block
 
 #+begin_src emacs-lisp
-  (leader-key!
-    ;; 
-    ;; Open
-    ;;
-    "o" '(:ignore t :wk "open")
-    "of" '(find-file :wk "open file")
-    "ob" '(ibffer :wk "open buffer")
-
-    ;; 
-    ;; Buffer
-    ;;
-    "b" '(:ignore t :wk "buffer")
-    "bb" '(switch-to-buffer :wk "Switch buffer")
-    "bk" '(kill-this-buffer :wk "Kill this buffer")
-    "bn" '(next-buffer :wk "Next buffer")
-    "bp" '(previous-buffer :wk "Previous buffer")
-    "br" '(revert-buffer :wk "Reload buffer"))
+(defun my/org-roam-extract-subtree-and-insert ()
+  "Convert current subtree at point to a node, extract it into a new file and insert a ref to it."
+  (interactive)
+  (save-excursion
+    (org-back-to-heading-or-point-min t)
+    ;; Get the stars of the heading
+    (let ((stars (car (split-string (buffer-substring (bol) (eol))))))
+      (when (bobp) (user-error "Already a top-level node"))
+      (org-id-get-create)
+      (save-buffer)
+      (org-roam-db-update-file)
+      (let* ((template-info nil)
+             (node (org-roam-node-at-point))
+             (template (org-roam-format-template
+                        (string-trim (org-capture-fill-template org-roam-extract-new-file-path))
+                        (lambda (key default-val)
+                          (let ((fn (intern key))
+                                (node-fn (intern (concat "org-roam-node-" key)))
+                                (ksym (intern (concat ":" key))))
+                            (cond
+                             ((fboundp fn)
+                              (funcall fn node))
+                             ((fboundp node-fn)
+                              (funcall node-fn node))
+                             (t (let ((r (read-from-minibuffer (format "%s: " key) default-val)))
+                                  (plist-put template-info ksym r)
+                                  r)))))))
+             (file-path
+              (expand-file-name
+               (read-file-name "Extract node to: " (file-name-as-directory org-roam-directory) template nil template)
+               org-roam-directory)))
+        (when (file-exists-p file-path)
+          (user-error "%s exists. Aborting" file-path))
+        (org-cut-subtree)
+        (save-buffer)
+        (with-current-buffer (find-file-noselect file-path)
+          (org-paste-subtree)
+          (while (> (org-current-level) 1) (org-promote-subtree))
+          (save-buffer)
+          (org-roam-promote-entire-buffer)
+          (save-buffer))
+        ;; Insert a link to the extracted node
+        (insert (format "%s [[id:%s][%s]]\n" stars (org-roam-node-id node) (org-roam-node-title node)))))))
 #+end_src
+
+
+***** Logseq Integration
+
+Integration based on:
+- https://coredumped.dev/2021/05/26/taking-org-roam-everywhere-with-logseq/
+- https://gist.githubusercontent.com/zot/ddf1a89a567fea73bc3c8a209d48f527/raw/6d2f8da7a43ac8aa1babd2d5e7a978a15f321498/org-roam-logseq.el
+
+Requires:
+- [[f.el]]
+
+#+begin_src emacs-lisp
+    (defvar my/logseq-folder "~/Documents/logseq/" "The logseq folder")
+
+    ;; You probably don't need to change these values
+    (defvar my/logseq-pages (f-expand (f-join my/logseq-folder "pages")))
+    (defvar my/logseq-journals (f-expand (f-join my/logseq-folder "journals")))
+    (defvar my/rich-text-types '(bold italic subscript link strike-through superscript underline inline-src-block))
+
+#+end_src
+
+***** Functions
+
+****** Utilities
+
+#+begin_src emacs-lisp
+  (defun my/textify (headline)
+    "Create a string represntation of the current HEADLINE."
+    (save-excursion
+      (apply 'concat (flatten-list
+                      (my/textify-all (org-element-property :title headline))))))
+
+  (defun my/textify-all (nodes)
+    "Create a string representation of all NODES"
+    (mapcar 'my/subtextify nodes))
+
+  (defun my/subtextify (node)
+    "Create a string represntation of the current NODE."
+    (cond ((not node) "") ;; if node is nil -> emtpy string
+          ((stringp node) (substring-no-properties node)) ;; if string -> remove properties 
+          ((member (org-element-type node) my/rich-text-types) 
+           (list (my/textify-all (cddr node))
+                 (if (> (org-element-property :post-blank node))
+                     (make-string (org-element-property :post-blank node) ?\s)
+                   "")))
+          (t "")))
+
+  (defun my/with-length (str) (cons (length str) str))
+#+end_src
+
+****** Logseq to Roam ::function::
+
+#+begin_src emacs-lisp
+  (defun my/logseq-to-roam-buffer (buffer)
+    "Convert BUFFER links from using logseq format to org-roam.
+    Logseq is using file references, which org-roam is using ids.
+    This function covnerts fuzzy anf file: links to id links."
+    (save-excursion
+      (let* (changed
+             link)
+        (set-buffer buffer)
+        (goto-char 1)
+        (while (search-forward "[[" nil t)
+          (setq link (org-element-context))
+          (setq newlink (my/logseq-to-roam-link link))
+          (when newlink
+            (setq changed t)
+            (goto-char (org-element-property :begin link))
+            (delete-region (org-element-property :begin link) (org-element-property :end link))
+            ;; note, this format string is reall =[[%s][%s]]= but =%= is a markup char so one's hidden
+            (insert newlink)))
+        ;; ensure org-roam knows about the changed links
+        (when changed (save-buffer)))))
+
+  (defun my/logseq-to-roam ()
+    "Convert the current buffer from logseq to roam."
+    (interactive)
+    (my/logseq-to-roam-buffer (current-buffer)))
+
+  (defun my/logseq-to-roam-link (link)
+    "Convert the LINK from logseq format to roam.
+    Logseq is using file references, which org-roam is using ids.
+    This function covnerts fuzzy anf file: links to id links."
+    (let (filename
+          id
+          linktext
+          newlink)
+      (when (eq 'link (org-element-type link))
+        (when (equal "fuzzy" (org-element-property :type link))
+          (setq filename (f-expand (f-join my/logseq-pages
+                                           (concat (org-element-property :path link) ".org"))))
+          (setq linktext (org-element-property :raw-link link)))
+        (when (equal "file" (org-element-property :type link))
+          (setq filename (f-expand (org-element-property :path link)))
+          (if (org-element-property :contents-begin link)
+              (setq linktext (buffer-substring-no-properties
+                              (org-element-property :contents-begin link)
+                              (org-element-property :contents-end link)))
+            (setq linktext (buffer-substring-no-properties
+                            (+ (org-element-property :begin link) 2)
+                            (- (org-element-property :end link) 2)))))
+        (when (and filename (f-exists-p filename))
+          (setq id (caar (org-roam-db-query [:select id :from nodes :where (like file $s1)]
+                                            filename)))
+          (when id
+            (setq newlink (format "[[id:%s][%s]]%s"
+                                  id
+                                  linktext
+                                  (if (> (org-element-property :post-blank link))
+                                      (make-string (org-element-property :post-blank link) ?\)
+                                                   ""))))
+            (when (not (equal newlink
+                              (buffer-substring-no-properties
+                               (org-element-property :begin link)
+                               (org-element-property :end link))))
+              newlink))))))
+#+end_src
+
+****** Roam to Logseq ::function::
+#+begin_src emacs-lisp
+
+  (defun my/roam-to-logseq-buffer (buffer)
+    "Convert BUFFER links from using logseq format to org-roam.
+    Logseq is using file references, which org-roam is using ids.
+    This function covnerts fuzzy anf file: links to id links."
+    (save-excursion
+      (let* (changed)
+        (with-current-buffer buffer
+          (goto-char 1)
+          (while (search-forward "[[id:" nil t)
+            (let* ((id (car (split-string (buffer-substring-no-properties (point) (eol)) "]")))
+                   (node (org-roam-node-from-id id))
+                   (title (org-roam-node-title node)))
+              (when title
+                (setq file (car (org-id-find id)))
+                (setq link (org-element-context))
+                (setq newlink (format "[[%s]]" title))
+                (when newlink
+                  (setq changed t)
+                  (goto-char (org-element-property :begin link))
+                  (delete-region (org-element-property :begin link) (org-element-property :end link))
+                  ;; note, this format string is reall =[[%s][%s]]= but =%= is a markup char so one's hidden
+                  (insert newlink)))
+              ;; ensure org-roam knows about the changed links
+              (when changed (save-buffer))))))))
+
+  (defun my/roam-to-logseq ()
+    "Convert the current buffer from roam to logseq."
+    (interactive)
+    (my/roam-to-logseq-buffer (current-buffer)))
+
+  (defun my/roam-file-modified-p (file-path)
+    (let ((content-hash (org-roam-db--file-hash file-path))
+          (db-hash (caar (org-roam-db-query [:select hash :from files
+                                                     :where (= file $s1)] file-path))))
+      (not (string= content-hash db-hash))))
+
+  (defun my/modified-logseq-files ()
+    (emacsql-with-transaction (org-roam-db)
+                              (seq-filter 'my/roam-file-modified-p
+                                          (org-roam--list-files my/logseq-folder))))
+#+end_src
+
+****** Check Logseq ::function::
+#+begin_src emacs-lisp
+  (defun my/logseq-journal-p (file) (string-match-p (concat "^" my/logseq-journals) file))
+  (defun my/ensure-file-id (file)
+    "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
+    (setq file (f-expand file))
+    (if (my/logseq-journal-p file)
+        `(nil . nil)
+      (let* ((buf (get-file-buffer file))
+             (was-modified (buffer-modified-p buf))
+             (new-buf nil)
+             has-data
+             org
+             changed
+             sec-end)
+        (when (not buf)
+          (setq buf (find-file-noselect file))
+          (setq new-buf t))
+        (set-buffer buf)
+        (setq org (org-element-parse-buffer))
+        (setq has-data (cddr org))
+        (goto-char 1)
+        (when (not (and (eq 'section (org-element-type (nth 2 org))) (org-roam-id-at-point)))
+          ;; this file has no file id
+          (setq changed t)
+          (when (eq 'headline (org-element-type (nth 2 org)))
+            ;; if there's no section before the first headline, add one
+            (insert "\n")
+            (goto-char 1))
+          (org-id-get-create)
+          (setq org (org-element-parse-buffer)))
+        (when (nth 3 org)
+          (when (not (org-collect-keywords ["title"]))
+            ;; no title -- ensure there's a blank line at the section end
+            (setq changed t)
+            (setq sec-end (org-element-property :end (nth 2 org)))
+            (goto-char (1- sec-end))
+            (when (and (not (equal "\n\n" (buffer-substring-no-properties (- sec-end 2) sec-end))))
+              (insert "\n")
+              (goto-char (1- (point)))
+              (setq org (org-element-parse-buffer)))
+            ;; copy the first headline to the title
+            (insert (format "#+title: %s" (string-trim (my/textify (nth 3 org)))))))
+        ;; ensure org-roam knows about the new id and/or title
+        (when changed (save-buffer))
+        (cons new-buf buf))))
+
+  (defun my/check-logseq ()
+    (interactive)
+    (let (created
+          files
+          bufs
+          unmodified
+          cur
+          bad
+          buf)
+      (setq files (org-roam--list-files my/logseq-folder))
+      ;; make sure all the files have file ids
+      (dolist (file-path files)
+        (setq file-path (f-expand file-path))
+        (setq cur (my/ensure-file-id file-path))
+        (setq buf (cdr cur))
+        (push buf bufs)
+        (when (and (not (my/logseq-journal-p file-path)) (not buf))
+          (push file-path bad))
+        (when (not (buffer-modified-p buf))
+          (push buf unmodified))
+        (when (car cur)
+          (push buf created)))
+      ;; patch fuzzy links
+      (mapc 'my/logseq-to-roam-buffer (seq-filter 'identity bufs))
+      (dolist (buf unmodified)
+        (when (buffer-modified-p buf)
+          (save-buffer unmodified)))
+      (mapc 'kill-buffer created)
+      (when bad
+        (message "Bad items: %s" bad))
+      nil))
+#+end_src
+***** Troubleshooting
+****** org-roam-extract-subtree is creating empty file
+It turns out that this was caused by doomemacs file template functionality that was over writing the extracted node file.
+
+**** Org Capture
+***** Capture Template
+
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+          '(
+            ("c" "Calendar")
+            ("cw" "Work Event" entry (file  "~/Documents/org/calendars/work.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+            ("cp" "Personal Event" entry (file  "~/Documents/org/calendars/personal.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+
+            ("i" "Inbox")
+            ("iw" "Work Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+            ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+
+            ("e" "Email Workflow")
+            ("ef" "Follow Up" entry (file+olp "~/Documents/org/raom/Inbox.org" "Email" "Follow Up") "* TODO Follow up with %:fromname on %a :email:\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
+            ("er" "Read Later" entry (file+olp "~/Documents/org/roam/Inbox.org" "Email" "Read Later") "* TODO Read %:subject :email: \nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t)
+
+            ("p" "Project" entry (file+headline "~/Documents/org/roam/Projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
+            ("d" "System design" entry (file+headline "~/Documents/org/system-design/system-design.org" "System Design") (file "~/Documents/org/templates/system-design.orgtmpl"))
+
+            ("b" "BJJ")
+            ("bm" "Moves" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
+            ("bs" "Submission" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
+            ("bc" "Choke" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
+            ("bw" "Sweeps" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
+            ("be" "Escapes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
+            ("bt" "Takedowns" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
+            ("bp" "Passes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
+            ("bf" "FAQ" entry (file+olp "~/Documents/org/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
+
+            ("h" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
+
+            ("f" "Flashcards")
+            ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
+            ("fS" "Stories"  entry (file+headline "~/Documents/org/flashcards/stories.org" "Stories") "* Story :drill:\n %t\n %^{The story}\n")
+            ("fe" "Emacs")
+            ("fef" "Emacs facts"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("feq" "Emacs questions"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fh" "History")
+            ("fhf" "History facts"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("fhq" "History questions"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fm" "Maths")
+            ("fmf" "Math facts"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("fmq" "Math questions"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fc" "Computer Science")
+            ("fcf" "Computer Science facts"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("fcq" "Computer Science questions"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fs" "Sports")
+            ("fsf" "Sports facts"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("fsq" "Sports questions"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fn" "Nutrition")
+            ("ft" "Trading")
+            ("ftf" "Trading facts"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Fact :drill:\n %t\n %^{The fact}\n")
+            ("ftq" "Trading questions"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+            ("fl" "Languages")
+            ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
+#+end_src
+***** Window Manager Integration
+
+To use org-capture directly from window manager it's handy to close side frames and automatically close main frame when done.
+Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
+
+#+begin_src emacs-lisp
+(defadvice org-switch-to-buffer-other-window
+    (after supress-window-splitting activate)
+  "Delete the extra window if we're in a capture frame"
+  (if (equal "org-capture" (frame-parameter nil 'name))
+      (delete-other-windows)))
+
+(defadvice org-capture-finalize
+    (after delete-capture-frame activate)
+  "Advise capture-finalize to close the frame"
+  (when (and (equal "org-capture" (frame-parameter nil 'name))
+             (not (eq this-command 'org-capture-refile)))
+    (delete-frame)))
+
+(defadvice org-capture-refile
+    (after delete-capture-frame activate)
+  "Advise org-refile to close the frame"
+  (delete-frame))
+#+end_src
+
+**** Org Drill
+#+begin_src emacs-lisp
+;;;###autoload
+(defun my/org-drill ()
+  "Require, configure and call org-drill."
+  (interactive)
+  (require 'org-drill)
+  (let ((org-drill-scope 'directory))
+    (find-file "~/Documents/org/roam/index.org")
+    (org-drill)
+    (org-save-all-org-buffers)))
+
+;;;###autoload
+(defun my/org-drill-buffer ()
+  "Require, configure and call org-drill."
+  (interactive)
+  (require 'org-drill)
+  (let  ((org-drill-scope 'file))
+    (org-drill)
+    (org-save-all-org-buffers)))
+:init (setq org-drill-scope 'directory)
+
+;;;###autoload
+(defun my/org-drill-match ()
+  "Require, configure and call org-drill."
+  (interactive)
+  (require 'org-drill)
+  (let ((org-drill-scope 'directory)
+        (org-drill-match (read-string "Please specify a filter (e.g. tag, property etc) for the drill: ")))
+    (find-file "~/Documents/org/roam/index.org")
+    (org-drill)
+    (org-save-all-org-buffers)))
+
+(use-package org-drill :after org)
+#+end_src
+
+**** Org Habit
+***** Package
+#+begin_src emacs-lisp
+  (use-feature org-habit
+    :after org
+    :config
+    (setq org-habit-following-days 7
+          org-habit-preceding-days 35
+          org-habit-show-habits t)
+
+    (defvar my/org-habit-capture-alist '() "An association list that maps capture keys to habit headings")
+
+    (defun my/org-habit-check-captured ()
+          "Check if there is a habit matching that latest captured item and mark it as done."
+          (message "Checking for habits linked to the captured template ...")
+          (let* ((key  (plist-get org-capture-plist :key))
+                 (habit (cdr (assoc key my/org-habit-capture-alist))))
+            (if habit
+                (progn
+                  (message "Found linked habit:%s" habit)
+                  (when (not org-note-abort) (my/org-habit-mark habit)))
+              (message "No habit found for capture template with key:%s." key))))
+
+    (defun my/org-habit-mark (heading)
+         (let* ((habits-file "/home/iocanel/Documents/org/habits.org")
+                (original (current-buffer))
+                (buf (find-file habits-file)))
+           (save-excursion
+             (with-current-buffer buf
+               (goto-char (point-min))
+               (re-search-forward (concat "TODO " heading ".*:habit:"))
+               (org-habit-parse-todo)
+               (org-todo)
+               (save-buffer)))
+           (message "Switching back to: %s" original)
+           (switch-to-buffer original t t)))
+
+      (advice-add 'org-drill :after (lambda() (my/org-habit-mark "Org Drill")))
+      (add-hook 'org-capture-after-finalize-hook 'my/org-habit-check-captured))
+   #+end_src
+**** Org Links
+
+#+begin_src emacs-lisp
+(defun my/dired-file-as-plantuml-link-to-clipboard ()
+  "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
+  (interactive)
+  (let* ((file (dired-get-filename))
+         (name (file-name-base file))
+         (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
+         (extension (file-name-extension file))
+         (link (format "[[\"file:%s\" %s]]"  file cleaned-name)))
+    (kill-new link)
+    (message "Plantuml link to file copied to clipboard: %s" file)))
+
+(defun my/dired-file-as-org-link-to-clipboard ()
+  "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
+  (interactive)
+  (let* ((file (dired-get-filename))
+         (name (file-name-base file))
+         (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
+         (extension (file-name-extension file))
+         (protocol (if (string-match-p "\\(\\.\\(mp4\\|mkv\\|avi\\)\\)$" file) "mpv" "file"))
+         (link (format "[[%s:%s][%s]]" protocol file cleaned-name)))
+    (kill-new link)
+    (message "Org link to file copied to clipboard: %s" file)))
+
+(define-key dired-mode-map (kbd "C-c o l") 'my/dired-file-as-org-link-to-clipboard)
+(define-key dired-mode-map (kbd "C-c u l") 'my/dired-file-as-plantuml-link-to-clipboard)
+#+end_src
+
+**** Org Github Issues
+***** Package
+#+begin_src emacs-lisp
+     (use-package org-github-issues
+       :elpaca (org-github-issues :host github :repo "iensu/org-github-issues")
+       :init
+       (defvar my/github-repositories nil "The list of watch repositories by org-github-issues")
+       :commands (org-github-issues-sync-all my/org-github-issues-eww-at-point my/org-github-issues-show-open-project-issues my/org-github-issues-show-open-workspace-issues)
+       :config
+       (setq
+        gh-user "iocanel"
+        org-github-issues-user "iocanel"
+        org-github-issues-org-file "~/Documents/org/github.org"
+        org-github-issues-tags '("github")
+        org-github-issues-issue-tags '("issue")
+        org-github-issues-pull-tags '("pull")
+        org-github-issues-tag-transformations '((".*" "")) ;; force all labels to empty string so that they can be ommitted.
+        org-github-issues-auto-schedule "+0d"
+        org-github-issues-filter-by-assignee t
+        org-github-issues-headline-prefix t)
+
+  (defun my/org-github-issues-url-at-point ()
+     "Utility that fetches the url of the issue at point."
+     (save-excursion
+       (let ((origin (current-buffer)))
+         (when (eq major-mode 'org-agenda-mode) (org-agenda-switch-to))
+         (let* ((p (point))
+                (url (string-trim (org-entry-get nil "GH_URL"))))
+           (when (not (equal origin (current-buffer))) (switch-to-buffer origin))
+           url))))
+
+  (defun my/org-github-issues-eww-at-point ()
+    "Browse the issue that corresponds to the org entry at point."
+    (interactive)
+    (let ((url (my/org-github-issues-url-at-point)))
+      (when url
+        (other-window 1)
+        ;(idee/jump-to-non-ide-window)
+        (split-window-horizontally)
+        (eww url))))
+
+  (defun my/org-github-issues-show-open-project-issues (root)
+    "Show all the project issues currently assigned to me."
+    (let* ((project (projectile-ensure-project root))
+           (project-name (projectile-project-name project)))
+      (org-ql-search org-github-issues-org-file
+                     `(and (property "GH_URL")
+                           (string-match (regexp-quote ,project-name) (org-entry-get (point) "GH_URL")))
+                     :title (format "Github issues for %s" project-name))
+      (goto-char (point-min))
+      (org-agenda-next-line)))
+
+  (defun my/org-github-issues-show-open-workspace-issues (workspace)
+    "Show all the workspace issues currently assigned to me."
+    (let* ((name (treemacs-project->name workspace))
+           (projects (treemacs-workspace->projects workspace))
+           (project-names (mapcar (lambda (p) (treemacs-project->name p)) projects))
+           (main-project (car project-names)))
+      (when main-project
+        (org-ql-search org-github-issues-org-file
+                       `(and (property "GH_URL")
+                             (or (string-match (regexp-quote ,main-project) (org-entry-get (point) "GH_URL"))
+                                 (seq-filter (lambda (p) (string-match (regexp-quote p) (org-entry-get (point) "GH_URL"))) project-names)))
+                       :title (format "Github issues for %s" name))
+        (goto-char (point-min))
+        (org-agenda-next-line))))
+   )
+#+end_src
+
+**** Org Jira
+***** Package
+#+begin_src emacs-lisp
+  (use-package org-jira
+    :commands (my/org-jira-get-issues my/org-jira-hydra my/org-jira-get-issues)
+    :custom (org-jira-property-overrides '("CUSTOM_ID" "self"))
+    :init
+    ;;
+    ;;  Variables
+    ;;
+    (defvar my/org-jira-selected-board nil)
+    (defvar my/org-jira-selected-sprint nil)
+    (defvar my/org-jira-selected-epic nil)
+
+    (defvar my/org-jira-boards-cache ())
+    (defvar my/org-jira-sprint-by-board-cache ())
+    (defvar my/org-jira-epic-by-board-cache ())
+
+    :config
+    (setq jiralib-url "https://issues.redhat.com/"
+          jiralib-user-login-name "ikanello1@redhat.com"
+          jira-password nil
+          jira-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/redhat.com/ikanello1@redhat.com/token"))
+          org-jira-working-dir "~/Documents/org/jira/"
+          org-jira-projects-list '("ENTSBT" "SB" "QUARKUS"))
+    (setq jiralib-token `("Authorization" . ,(concat "Bearer " jira-token)))
+
+    (defun my/org-jira-get-issues ()
+      "Sync using org-jira and postprocess."
+      (interactive)
+      (org-jira-get-issues (org-jira-get-issue-list org-jira-get-issue-list-callback))
+      (my/org-jira-postprocess))
+
+    (defun my/org-jira-issue-id-at-point ()
+      "Returns the ID of the current issue."
+      (save-excursion
+        (org-previous-visible-heading 1)
+        (org-element-property :ID (org-element-at-point))))
+
+    (defun my/org-jira-update-issue-description()
+      "Move the selected issue to an active sprint."
+      (interactive)
+      (let* ((issue-id (org-jira-parse-issue-id))
+             (filename (buffer-file-name))
+             (org-issue-description (org-trim (org-jira-get-issue-val-from-org 'description)))
+             (update-fields (list (cons 'description org-issue-description))))
+        (jiralib-update-issue issue-id update-fields
+                              (org-jira-with-callback
+                               (message (format "Issue '%s' updated!" issue-id))
+                               (jiralib-get-issue
+                                issue-id
+                                (org-jira-with-callback
+                                 (org-jira-log "Update get issue for refresh callback hit.")
+                                 (-> cb-data list org-jira-get-issues)))))))
+
+
+    (defun my/org-jira-postprocess ()
+      "Postprocess the org-jira project files. It shcedules all jira issues so that they appear on agenda"
+      (interactive)
+      (mapcar (lambda (p)
+                (let ((scheduled (format "%s  SCHEDULED: <%s>\n" (make-string 2 32) (org-read-date nil nil "+0d") ))
+                      (github-project-file (concat (file-name-as-directory org-jira-working-dir) (format "%s.org" p))))
+                  (with-temp-buffer
+                    (insert-file jira-project-file)
+                    (goto-char (point-min))
+                    (while (re-search-forward "^\*\* TODO" nil t)
+                      (let* ((tags (org-get-tags)))
+                        (add-to-list 'tags "jira")
+                        (org-set-tags tags)
+                        (org-set-property "SCHEDULED" scheduled)
+                        (write-file jira-project-file)))))) '("QUARKUS" "SB" "ENTSBT"))))
+#+end_src
+
+***** Boards, Sprints and Epic
+
+When I originally started playing with org-jira the was absolutely no support for any of these (I think).
+So, I rolled my own.
+
+#+begin_src emacs-lisp
+  ;;
+  ;; Boards
+  ;;
+  (defun my/org-jira-get-boards-list()
+    "List all boards."
+    (unless my/org-jira-boards-cache
+      (setq my/org-jira-boards-cache (jiralib--agile-call-sync "/rest/agile/1.0/board" 'values)))
+    my/org-jira-boards-cache)
+
+  (defun my/org-jira-get-board-id()
+    "Select a board if one not already selected."
+    (unless my/org-jira-selected-board
+      (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
+    (cdr (assoc 'id my/org-jira-selected-board)))
+
+  (defun my/org-jira-get-board()
+    "Select a board if one not already selected."
+    (unless my/org-jira-selected-board
+      (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
+    my/org-jira-selected-board)
+
+  (defun my/org-jira-board-completing-read()
+    "Select a board by name."
+    (when (not (file-exists-p (my/org-jira--get-boards-file)))
+      (my/org-jira-get-boards-list))
+
+    (let* ((boards (with-current-buffer (org-jira--get-boards-buffer)
+                          (org-map-entries (lambda()
+                                             `((id . ,(org-entry-get nil "id"))
+                                               (self . ,(org-entry-get nil "url"))
+                                               (name . ,(org-entry-get nil "name")))) t  'file)))
+            (board-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) boards))
+           (board-name (completing-read "Choose board:" board-names)))
+      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) board-name)) boards))))
+
+  (defun my/org-jira-select-board()
+    "Select a board."
+    (interactive)
+    (setq my/org-jira-selected-board (cdr (assoc 'name (my/org-jira-board-completing-read)))))
+
+  ;;
+  ;; Sprint
+  ;;
+  (defun my/org-jira-get-project-boards(project-id)
+    "Find the board of the project.")
+
+  (defun my/org-jira-get-sprints-by-board(board-id &optional filter)
+    "List all sprints by BOARD-ID."
+    (let ((board-sprints-cache (cdr (assoc board-id my/org-jira-sprint-by-board-cache))))
+      (unless board-sprints-cache
+        (setq board-sprints-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/sprint" board-id)'values)))
+
+      (add-to-list 'my/org-jira-sprint-by-board-cache `(,board-id . ,board-sprints-cache))
+      (if filter
+          (seq-filter filter board-sprints-cache)
+        board-sprints-cache)))
+
+  (defun my/org-jira--active-sprint-p(sprint)
+    "Predicate that checks if SPRINT is active."
+    (not (assoc 'completeDate sprint)))
+
+  (defun my/org-jira-sprint-completing-read(board-id)
+    "Select an active sprint by name."
+    (let* ((sprints (my/org-jira-get-sprints-by-board board-id 'my/org-jira--active-sprint-p))
+           (sprint-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) sprints))
+           (sprint-name (completing-read "Choose sprint:" sprint-names)))
+      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) sprint-name)) sprints))))
+
+  (defun my/org-jira-move-issue-to-sprint(issue-id sprint-id)
+    "Move issue with ISSUE-ID to sprint with SPRINT-ID."
+    (jiralib--rest-call-it (format "/rest/agile/1.0/sprint/%s/issue" sprint-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
+
+  (defun my/org-jira-assign-current-issue-to-sprint()
+    "Move the selected issue to an active sprint."
+    (interactive)
+    (let* ((issue-id (my/org-jira-parse-issue-id))
+           (board-id (cdr (assoc 'id (my/org-jira-get-board))))
+           (sprint-id (cdr (assoc 'id (my/org-jira-sprint-completing-read board-id)))))
+
+      (my/org-jira-move-issue-to-sprint issue-id sprint-id)))
+
+  (defun my/org-jira-get-sprint-id()
+    "Select a sprint id if one not already selected."
+    (unless my/org-jira-selected-sprint
+      (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read)))
+    (cdr (assoc 'id my/org-jira-selected-sprint)))
+
+  (defun my/org-jira-get-sprint()
+    "Select a sprint if one not already selected."
+    (unless my/org-jira-selected-sprint
+      (setq my/org-jira-selected-sprint (my/org-jira-select-sprint)))
+    my/org-jira-selected-sprint)
+
+  (defun my/org-jira-select-sprint()
+    "Select a sprint."
+    (interactive)
+    (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read (my/org-jira-get-board-id))))
+
+  ;;
+  ;; Epics
+  ;;
+  (defun my/org-jira-get-epics-by-board(board-id &optional filter)
+    "List all epics by BOARD-ID."
+    (interactive)
+    (let ((board-epics-cache (cdr (assoc board-id my/org-jira-epic-by-board-cache))))
+      (unless board-epics-cache
+        (setq board-epics-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/epic" board-id)'values)))
+
+      (add-to-list 'my/org-jira-epic-by-board-cache `(,board-id . ,board-epics-cache))
+      (if filter
+          (seq-filter filter board-epics-cache)
+        board-epics-cache)))
+
+  (defun my/org-jira--active-epic-p(epic)
+    "Predicate that checks if EPIC is active."
+    (not (equal (assoc 'done epic) 'false)))
+
+
+  (defun my/org-jira-epic-completing-read(board-id)
+    "Select an active epic by name."
+    (let* ((epics (my/org-jira-get-epics-by-board board-id 'my/org-jira--active-epic-p))
+           (epic-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) epics))
+           (epic-name (completing-read "Choose epic:" epic-names)))
+      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) epic-name)) epics))))
+
+  (defun my/org-jira-move-issue-to-epic(issue-id epic-id)
+    "Move issue with ISSUE-ID to epic with SPRINT-ID."
+    (jiralib--rest-call-it (format "/rest/agile/1.0/epic/%s/issue" epic-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
+
+  (defun my/org-jira-assign-current-issue-to-epic()
+    "Move the selected issue to an active epic."
+    (interactive)
+    (let* ((issue-id (my/org-jira-parse-issue-id))
+           (board-id (cdr (assoc 'id (my/org-jira-get-board))))
+           (epic-id (cdr (assoc 'id (my/org-jira-epic-completing-read board-id)))))
+
+      (my/org-jira-move-issue-to-epic issue-id epic-id)))
+
+  (defun my/org-jira-get-epic-id()
+    "Select a epic id if one not already selected."
+    (unless my/org-jira-selected-epic
+      (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read)))
+    (cdr (assoc 'id my/org-jira-selected-epic)))
+
+  (defun my/org-jira-get-epic()
+    "Select a epic if one not already selected."
+    (unless my/org-jira-selected-epic
+      (setq my/org-jira-selected-epic (my/org-jira-select-epic)))
+    my/org-jira-selected-epic)
+
+  (defun my/org-jira-select-epic()
+    "Select a epic."
+    (interactive)
+    (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read (my/org-jira-get-board-id))))
+
+  (defun my/org-jira-create-issue-with-defaults()
+    "Create an issue and assign to default sprint and epic."
+    (org-jira-create-issue)
+    (my/org-jira-move-issue-to-epic)
+    (my/org-jira-move-issue-to-sprint))
+
+#+end_src
+
+***** Hydra
+#+begin_src emacs-lisp
+  (defun my/org-jira-hydra ()
+    "Define (if not already defined org-jira hydra and invoke it."
+    (interactive)
+    (unless (boundp 'org-jira-hydra/body)
+      (defhydra org-jira-hydra (:hint none :exit t)
+        ;; The '_' character is not displayed. This affects columns alignment.
+        ;; Remove s many spaces as needed to make up for the '_' deficit.
+        "
+         ^Actions^           ^Issue^              ^Buffer^                         ^Defaults^
+                           ?I?
+         ^^^^^^-----------------------------------------------------------------------------------------------
+          _L_ist issues      _u_pdate issue       _R_efresh issues in buffer       Select _B_oard ?B?
+          _C_reate issue     update _c_omment                                    Select _E_pic ?E?
+                           assign _s_print                                     Select _S_print ?S?
+                           assign _e_print                                     Create issue with _D_efaults
+                           _b_rowse issue
+                           _r_efresh issue
+                           _p_rogress issue
+  [_q_]: quit
+"
+        ("I" nil (or (my/org-jira-issue-id-at-point) ""))
+        ("L" my/org-jira-get-issues)
+        ("C" org-jira-create-issue)
+
+        ("u" org-jira-update-issue)
+        ("c" org-jira-update-comment)
+        ("b" org-jira-browse-issue)
+        ("s" my/org-jira-assign-current-issue-to-sprint)
+        ("e" my/org-jira-assign-current-issue-to-epic)
+        ("r" org-jira-refresh-issue)
+        ("p" org-jira-progress-issue)
+
+        ("R" org-jira-refresh-issues-in-buffer)
+
+        ("B" my/org-jira-select-board (format "[%s]" (or my/org-jira-selected-board "")) :exit nil)
+        ("E" my/org-jira-select-epic (format "[%s]" (or my/org-jira-selected-epic "")) :exit nil)
+        ("S" my/org-jira-select-sprint (format "[%s]" (or my/org-jira-selected-sprint "")) :exit nil)
+        ("D" my/org-jira-create-with-defaults)
+
+        ("q" nil "quit")))
+    (org-jira-hydra/body))
+
+#+end_src
+
+**** Org Tree Slide
+#+begin_src emacs-lisp
+;;;###autoload
+(defun +org-present-hide-blocks-h ()
+  "Hide org #+ constructs."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
+      (org-flag-region (match-beginning 1)
+                       (match-end 0)
+                       org-tree-slide-mode
+                       'block))))
+
+;;;###autoload
+(defun +org-present-hide-leading-stars-h ()
+  "Hide leading stars in headings."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^\\(\\*+\\)" nil t)
+      (org-flag-region (match-beginning 1)
+                       (match-end 1)
+                       org-tree-slide-mode
+                       'headline))))
+#+end_src
+
+**** Org Asciidoc
+#+begin_src emacs-lisp
+(use-package adoc-mode)
+#+end_src
+
+**** Org Hugo
+***** Configuration
+
+#+begin_src emacs-lisp
+(setq org-hugo-base-dir "~/workspace/src/github.com/iocanel/iocanel.github.io")
+#+end_src
+
+***** Customization
+
+#+begin_src emacs-lisp
+(defun my/org-hugo-set-export-file-name ()
+  "Set the export file name to index.md."
+  (interactive)
+  (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
+    (save-excursion
+      (goto-char 0)
+      (if (re-search-forward "^#\\+EXPORT_FILE_NAME" nil t)
+          (progn
+            (move-beginning-of-line 1)
+            (kill-line))
+        (progn
+          (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
+            (next-line 1))
+          (previous-line 1)
+          (move-end-of-line 1)
+          (insert "\n")))
+        (insert "#+EXPORT_FILE_NAME: index.md"))))
+
+(defun my/org-hugo-set-bundle ()
+  "Set the hugo bundle property to match the directory."
+  (interactive)
+  (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
+    (save-excursion
+      (goto-char 0)
+      (if (re-search-forward "^#\\+HUGO_BUNDLE" nil t)
+          (progn
+            (move-beginning-of-line 1)
+            (kill-line))
+        (progn
+          (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
+            (next-line 1))
+          (previous-line 1)
+          (move-end-of-line 1)
+          (insert "\n")))
+        (insert (format! "#+HUGO_BUNDLE: %s" name)))))
+
+(defun my/org-hugo-prepare()
+  "Prepare document for export via ox-hugo."
+  (interactive)
+  (my/org-hugo-set-bundle)
+  (my/org-hugo-set-export-file-name))
+#+end_src
+
+*** Java
+**** Eglot
+#+begin_src emacs-lisp
+    (use-package eglot-java
+      :commands (eglot-java-project-new eglot-java-project-build-refresh eglot-jva-file-new eglot-java-run-main eglot-java-run-test)
+      :hook (java-mode . eglot-java-mode))
+
+#+end_src
+** Completion
+*** COMMENT Helm
+**** Package
+#+begin_src emacs-lisp
+  (use-package helm
+  :defer 1
+  :custom
+   (helm-candidate-number-limit 150)
+        ;; Remove extraineous helm UI elements
+        (helm-display-header-line nil)
+        (helm-ff-auto-update-initial-value nil)
+        (helm-find-files-doc-header nil)
+        ;; Default helm window sizes
+        (helm-display-buffer-default-width nil)
+        (helm-display-buffer-default-height 0.25)
+        ;; When calling `helm-semantic-or-imenu', don't immediately jump to
+        ;; symbol at point.
+        (helm-imenu-execute-action-at-once-if-one nil)
+        ;; Disable special behavior for left/right, M-left/right keys.
+        (helm-ff-lynx-style-map nil)
+  :config
+  (add-hook 'helm-after-initialize-hook (lambda () (with-helm-buffer (visual-line-mode))))
+   ;; Hide minibuffer if `helm-echo-input-in-header-line'
+  (add-hook 'helm-minibuffer-set-up-hook #'helm-hide-minibuffer-maybe)
+  (helm-mode))
+#+end_src
+**** Helm AG
+#+begin_src emacs-lisp
+  (use-package helm-ag)
+  (use-package helm-projectile
+  :commands (helm-ag helm-projectile-ag))
+#+end_src
+*** Vertico
+**** Pacakge
+#+begin_src emacs-lisp
+  (use-package vertico
+    :elpaca (vertico :host github :repo "minad/vertico" :files (:defaults "extensions/*"))
+    :init
+    (vertico-mode)
+    :config
+    (setq vertico-cycle t))
+#+end_src
+
+*** Consult
+#+begin_src emacs-lisp
+    (use-package consult
+    ;; Replace bindings. Lazily loaded due by `use-package'.
+    :bind (;; C-c bindings in `mode-specific-map'
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x C-b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ;; M-s bindings in `search-map'
+           ("C-s" . consult-line)
+           ;; Isearch integration
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+
+    ;; The :init configuration is always executed (Not lazy)
+    :init
+
+    ;; Optionally configure the register formatting. This improves the register
+    ;; preview for `consult-register', `consult-register-load',
+    ;; `consult-register-store' and the Emacs built-ins.
+    (setq register-preview-delay 0.5
+          register-preview-function #'consult-register-format)
+
+    ;; Optionally tweak the register preview window.
+    ;; This adds thin lines, sorting and hides the mode line of the window.
+    (advice-add #'register-preview :override #'consult-register-window)
+
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
+
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
+
+    ;; Optionally configure preview. The default value
+    ;; is 'any, such that any key triggers the preview.
+    ;; (setq consult-preview-key 'any)
+    ;; (setq consult-preview-key "M-.")
+    ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+    ;; For some commands and buffer sources it is useful to configure the
+    ;; :preview-key on a per-command basis using the `consult-customize' macro.
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     ;; :preview-key "M-."
+     :preview-key '(:debounce 0.4 any))
+
+    ;; Optionally configure the narrowing key.
+    ;; Both < and C-+ work reasonably well.
+    (setq consult-narrow-key "<") ;; "C-+"
+
+    ;; Optionally make narrowing help available in the minibuffer.
+    ;; You may want to use `embark-prefix-help-command' or which-key instead.
+    ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+
+    ;; By default `consult-project-function' uses `project-root' from project.el.
+    ;; Optionally configure a different project root function.
+    ;;;; 1. project.el (the default)
+    ;; (setq consult-project-function #'consult--default-project--function)
+    ;;;; 2. vc.el (vc-root-dir)
+    ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+    ;;;; 3. locate-dominating-file
+    ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+    ;;;; 4. projectile.el (projectile-project-root)
+    ;; (autoload 'projectile-project-root "projectile")
+    ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+    ;;;; 5. No project support
+    ;; (setq consult-project-function nil)
+  )
+#+end_src
+*** Marginalia
+#+begin_src emacs-lisp
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be actived in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+#+end_src
+*** Icons
+**** All icons completion
+These icons require GUI so let's only enable them when its available.
+#+begin_src emacs-lisp
+  (use-package all-the-icons-completion
+  :config
+  (when (display-graphic-p) (all-the-icons-completion-mode)))
+#+end_src
+
+**** Nerd icons completion
+These icons can also run on terminal so let's optionally enable them.
+#+begin_src emacs-lisp
+  (use-package nerd-icons-completion
+  :config
+  (unless (display-graphic-p) (nerd-icons-completion-mode)))
+#+end_src
+** Tools
+*** Magit
+#+begin_src emacs-lisp
+  (use-package magit
+  :defer t
+  :after (general)
+  :general
+  (+general-global-git/version-control
+    "b"  'magit-branch
+    "B"  'magit-blame
+    "c"  'magit-clone
+    "f"  '(:ignore t :which-key "file")
+    "ff" 'magit-find-file
+    "fh" 'magit-log-buffer-file
+    "i"  'magit-init
+    "L"  'magit-list-repositories
+    "m"  'magit-dispatch
+    "S"  'magit-stage-file
+    "s"  'magit-status
+    "U"  'magit-unstage-file)
+  :config
+  (transient-bind-q-to-quit))
+#+end_src
+*** Which Key
+#+begin_src emacs-lisp
+  (use-package which-key
+  :demand t
+  :init
+  (setq which-key-enable-extended-define-key t)
+  :config
+  (which-key-mode)
+  :custom
+  (which-key-side-window-location 'bottom)
+  (which-key-sort-order 'which-key-key-order-alpha)
+  (which-key-side-window-max-width 0.33)
+  (which-key-idle-delay 0.05)
+  :diminish which-key-mode)
+#+end_src
+** Term
+*** vterm
+#+begin_src emacs-lisp 
+  (use-package vterm
+  :elpaca (vterm :post-build
+                 (progn
+                   (setq vterm-always-compile-module t)
+                   (require 'vterm)
+                   ;;print compilation info for elpaca
+                   (with-current-buffer (get-buffer-create vterm-install-buffer-name)
+                     (goto-char (point-min))
+                     (while (not (eobp))
+                       (message "%S"
+                                (buffer-substring (line-beginning-position)
+                                                  (line-end-position)))
+                       (forward-line)))
+                   (when-let ((so (expand-file-name "./vterm-module.so"))
+                              ((file-exists-p so)))
+                     (make-symbolic-link
+                      so (expand-file-name (file-name-nondirectory so)
+                                           "../../builds/vterm")
+                      'ok-if-already-exists))))
+  :commands (vterm vterm-other-window)
+  :general
+  (+general-global-application
+    "t" '(:ignore t :which-key "terminal")
+    "tt" 'vterm-other-window
+    "t." 'vterm)
+  :config
+  (evil-set-initial-state 'vterm-mode 'emacs))
+#+end_src
+
+** Key Bindings
+
+*** Binding functions
+
+To decouple the binding definition from specific packages that may come and go, let's create some abstraction commands.
+These commands should check if the desired function / command is available and delegate to it.
+Using `cond` it should be simply to easily change priorites.
+
+**** Macro
+#+begin_src emacs-lisp
+  (defmacro alternatives! (name type &rest alts)
+      `(defun ,(intern (concat "my/" (symbol-name name))) (&rest args)
+         (interactive ,(when type type))
+         (cond ,@(mapcar (lambda (arg)
+                           `((fboundp (quote ,(intern (symbol-name arg)))) (if args (,arg args) (,arg))))
+                           alts)
+               (t (if args (,name args) (,name))))))
+#+end_src
+
+**** Buffers list ::function::
+#+begin_src emacs-lisp
+  (alternatives! list-buffers nil helm-buffers-list)
+#+end_src
+
+**** Find files                                               ::function::
+#+begin_src emacs-lisp
+  (alternatives! find-file "P" helm-find-files)
+#+end_src
+
+**** Recent files                                             ::function::
+#+begin_src emacs-lisp
+  (alternatives! recentf nil helm-recentf)
+#+end_src
+
+
+*** Binding definition
+Let's configure here all our keybindings to keep things tidy!
+#+begin_src emacs-lisp
+      (leader-key!
+        ;; 
+        ;; Open
+        ;;
+        "o" '(:ignore t :wk "open")
+        "of" '(find-file :wk "open file")
+        "ob" '(consult-buffer :wk "open buffer")
+        "oc" '(vterm :wk "open console")
+        "or" '(recentf :wk "open buffer")
+
+        ;; 
+        ;; Buffer
+        ;;
+        "b" '(:ignore t :wk "buffer")
+        "bb" '(switch-to-buffer :wk "buffer switch")
+        "bk" '(kill-this-buffer :wk "buffer kill")
+        "bn" '(next-buffer :wk "next buffer")
+        "bp" '(previous-buffer :wk "previous buffer")
+        "br" '(revert-buffer :wk "peload buffer")
+        "bs" '(consult-line :wk "buffer search")
+
+
+        ;;
+        ;; Search
+        ;;
+        "s" '(:ignore t :wk "search")
+        "sg" '(consult-git-grep :wk "search git grep")
+        "sr" '(consult-ripgrep :wk "search rip grep")
+        "sb" '(consult-line :wk "search buffer")
+
+  )
+#+end_src
+
