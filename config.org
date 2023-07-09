@@ -256,38 +256,52 @@ Persists history over Emacs restarts
 #+end_src
 *** Snippets
 #+begin_src emacs-lisp
-  (use-package yasnippet
-    :after org
-    :init
-    (setq yas-snippet-dirs `(
-                             ,(concat my/local-dir "snippets") ;; personal snippets
-                             "~/.config/emacs/snippets"
-                             "~/.config/emacs/templates")
-          yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
-          yas-prompt-functions '(yas-completing-prompt))
+        (use-package yasnippet
+          :after org
+          :ensure t
+          :init
+          (defvar my/yas-snippets-loaded nil "Variable to track wether snippets have been loaded")
+          (setq yas-snippet-dirs `(
+                                   ,(concat my/local-dir "snippets") ;; personal snippets
+                                   "~/.config/emacs/snippets"
+                                   "~/.config/emacs/templates")
+                yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
+                yas-prompt-functions '(yas-completing-prompt))
 
-    (defun my/yas-set-org-buffer-local ()
-      "Prevent org-mode snippets shadowing mode snippets in src blocks."
-      (interactive)
-      (setq-local yas-buffer-local-condition
-                  '(not (org-in-src-block-p t)))) 
+          (defun my/yas-set-org-buffer-local ()
+            "Prevent org-mode snippets shadowing mode snippets in src blocks."
+            (interactive)
+            (setq-local yas-buffer-local-condition
+                        '(not (org-in-src-block-p t)))) 
 
-    ;;
-    ;; Configure org-src mode as extra mode for yassnippet
-    ;;
-    (defun my/yas-maybe-activate-org-src-mode (orig-func &rest args)
-      "Enrich yas-extra-mode with mode from org-src block"
-      (when (org-in-src-block-p)
-        (let* ((yas-extra-modes (list (intern (concat (my/get-org-src-mode) "-mode")))))
-          (apply orig-func args))))
+          ;;
+          ;; Configure org-src mode as extra mode for yassnippet
+          ;;
+          (defun my/yas-maybe-activate-org-src-mode (orig-func &rest args)
+            "Enrich yas-extra-mode with mode from org-src block"
+            (message "maybe active org src mode")
+              (let* ((mode (if (and (fboundp 'org-in-src-block-p) (org-in-src-block-p)) (my/get-org-src-mode) nil))
+                     (yas-extra-modes (if mode (list (intern (concat mode "-mode"))) nil)))
+                (apply orig-func args)))
 
-    (advice-add 'yas--modes-to-activate :around #'my/yas-maybe-activate-org-src-mode)
+          (advice-add 'yas--modes-to-activate :around #'my/yas-maybe-activate-org-src-mode)
 
-    ;; Globally enable yas snippet
-    (yas-global-mode 1)
-    :config
-    (yas-reload-all)
-    :commands (yas-recompile-all yas-reload-all))
+          ;;
+          ;; Ensure snippets loaded
+          ;;
+          (defun my/yas-ensure-snippets-loaded ()
+            "Ensure that snippets have been loaded."
+            (interactive)
+            (when (not my/yas-snippets-loaded)
+              (setq my/yas-snippets-loaded  t)
+              (message "Loading yassnippets")
+              (yas-reload-all))
+            (yas-minor-mode-on))
+
+          :commands (yas-reload-all yas-recompile-all yas-expand yas-insert-snippet)
+          :hook ((prog-mode
+                  plantuml-mode
+                  org-mode) . my/yas-ensure-snippets-loaded))
 #+end_src
 ** UI
 *** Appearance
@@ -1869,6 +1883,38 @@ These icons can also run on terminal so let's optionally enable them.
   (use-package nerd-icons-completion
   :config
   (unless (display-graphic-p) (nerd-icons-completion-mode)))
+#+end_src
+*** At point completion
+**** Company
+#+begin_src emacs-lisp
+  (use-package company
+  :defer t
+  :config
+  (setq company-tooltip-limit 20                      ; bigger popup window
+        company-idle-delay 0.5                        ; decrease delay before autocompletion popup shows
+        company-echo-delay 0                          ; remove annoying blinking
+        company-begin-commands '(self-insert-command) ; start autocompletion only after typing
+        company-tooltip-align-annotations t           ; aligns annotation to the right hand side
+        company-dabbrev-downcase nil)                 ; don't downcase
+  :hook (prog-mode-hook . company-mode-hook))
+#+end_src
+**** Smart Tab
+#+begin_src emacs-lisp
+  (use-package smart-tab
+  :config
+  (progn
+    (setq hippie-expand-try-functions-list '(yas-hippie-try-expand
+                                             try-complete-file-name-partially))
+                                        ;try-expand-dabbrev
+                                        ;try-expand-dabbrev-visible
+                                        ;try-expand-dabbrev-all-buffers
+                                        ;try-complete-lisp-symbol-partially
+                                        ;try-complete-lisp-symbol
+
+     smart-tab-user-provided-completion-function 'company-complete
+     smart-tab-using-hippie-expand t
+     smart-tab-disabled-major-modes '(org-mode term-mode eshell-mode inferior-python-mode)
+    (global-smart-tab-mode 1)))
 #+end_src
 ** Tools
 *** Magit
