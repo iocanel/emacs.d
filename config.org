@@ -1797,7 +1797,7 @@ So, I rolled my own.
   (use-package consult
     ;; Replace bindings. Lazily loaded due by `use-package'.
     :general 
-    (:keymaps 'global-mode-map
+    (;; global
               "C-x b" 'consult-buffer                ;; orig. switch-to-buffer
               "C-x C-b" 'consult-buffer              ;; orig. switch-to-buffer-other-window
               "C-x r b" 'consult-bookmark            ;; orig. bookmark-jump
@@ -1872,6 +1872,15 @@ So, I rolled my own.
   ;; (setq consult-project-function nil)
   )
 #+end_src
+*** Orderless
+Make consult and friends work with partical matches, multi part words etc.
+#+begin_src emacs-lisp
+  (use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
 *** Marginalia
 #+begin_src emacs-lisp
 (use-package marginalia
@@ -1912,12 +1921,12 @@ These icons can also run on terminal so let's optionally enable them.
   :defer t
   :config
   (setq company-tooltip-limit 20                      ; bigger popup window
-        company-idle-delay 0.5                        ; decrease delay before autocompletion popup shows
+        company-idle-delay 0.2                        ; decrease delay before autocompletion popup shows
         company-echo-delay 0                          ; remove annoying blinking
         company-begin-commands '(self-insert-command) ; start autocompletion only after typing
         company-tooltip-align-annotations t           ; aligns annotation to the right hand side
         company-dabbrev-downcase nil)                 ; don't downcase
-  :hook (prog-mode-hook . company-mode-hook))
+  :hook (prog-mode . company-mode))
 #+end_src
 **** Smart Tab
 #+begin_src emacs-lisp
@@ -2080,6 +2089,7 @@ Let's configure here all our keybindings to keep things tidy!
         "oc" '(vterm :wk "open console")
         "or" '(recentf :wk "open buffer")
         "op" '(project-switch-project :wk "open project")
+        "SPC" '(project-find-file :wk "open project file")
 
         ;; 
         ;; Buffer
@@ -2129,6 +2139,7 @@ Let's configure here all our keybindings to keep things tidy!
         "wsh" '(split-window-horizontally :wk "window split horizontally")
         "wsv" '(split-window-vertically :wk "window split vertically")
         "wp" '(ace-select-window :wk "window pick")
+        "wn" '(other-window :wk "window next")
         "wo" '(other-window :wk "window other")
         "wk" '(ace-delete-window :wk "window kill")
         "wu" '(winner-undo :wk "window undo")
