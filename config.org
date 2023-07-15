@@ -1583,16 +1583,39 @@ So, I rolled my own.
 *** Java
 **** Java Mode
 #+begin_src emacs-lisp
-  (use-feature java-mode
-  :after eglot
-  :init
-  (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
-  :hook (((java-mode java-ts-mode) . eglot-ensure))
-  :config
-    (add-to-list 'eglot-server-programs
-                 `(java-mode "jdtls"
-                             "-configuration" "/opt/eclipse.jdt.ls/config_linux"
-                             "-data" ,lsp-java-workspace-dir)))
+    (use-feature java-mode
+    :after eglot
+    :init
+    (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
+
+  (defun my/java-setup-project-workspace ()
+    "Setup a local java workspace for the current project."
+    (interactive)
+    (let* ((project-root (project-root (project-current)))
+           (file-path (concat project-root ".dir-locals.el"))
+           (content '((java-mode
+                       (eval . (progn
+                                 (setq lsp-session-file (concat (project-root (project-current)) ".lsp/session")
+                                       lsp-java-workspace-dir (concat (project-root (project-current)) ".lsp/workspace/data")
+                                       lsp-java-workspace-cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))))))))
+      (with-temp-buffer
+        (setq-local enable-local-variables :all)
+        (insert (format "%s\n" (pp-to-string content)))
+        (write-file file-path))))
+
+  (defun my/java-clear-project-workspace ()
+    "Setup a local java workspace for the current project."
+    (interactive)
+    (let ((directory lsp-java-workspace-dir))
+      (when (file-exists-p directory)
+        (delete-directory directory 'recursive))
+      (make-directory directory t)))
+    :hook (((java-mode java-ts-mode) . eglot-ensure))
+    :config
+      (add-to-list 'eglot-server-programs
+                   `(java-mode "jdtls"
+                               "-configuration" "/opt/eclipse.jdt.ls/config_linux"
+                               "-data" ,lsp-java-workspace-dir)))
 #+end_src
 *** UML
 **** PlantUML
@@ -2146,5 +2169,3 @@ Let's configure here all our keybindings to keep things tidy!
         "wr" '(winner-redo :wk "window redo")
   )
 #+end_src
-
-
