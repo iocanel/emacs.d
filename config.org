@@ -1579,7 +1579,7 @@ So, I rolled my own.
           ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
           ;;      its popup rule causes eglot to steal focus too often.
           eglot-auto-display-help-buffer nil)
-    :hook ((java-mode . eglot-ensure))
+    :hook (((java-mode java-ts-mode) . eglot-ensure))
     :config
     (add-to-list 'eglot-server-programs
                  `(java-mode "jdtls"
