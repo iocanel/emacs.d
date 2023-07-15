@@ -397,6 +397,18 @@ The default font is good enough so let's not define additonal configuration here
   (use-package hydra)
 #+end_src
 ** Language
+*** Eglot
+#+begin_src emacs-lisp
+  (use-feature eglot
+    :init
+    (setq eglot-sync-connect 1
+          eglot-connect-timeout 10
+          eglot-autoshutdown t
+          eglot-send-changes-idle-time 0.5
+          ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
+          ;;      its popup rule causes eglot to steal focus too often.
+          eglot-auto-display-help-buffer nil))
+  #+end_src
 *** Org Mode
 **** Package
 #+begin_src emacs-lisp
@@ -1569,20 +1581,14 @@ So, I rolled my own.
 #+end_src
 
 *** Java
-**** Eglot
+**** Java Mode
 #+begin_src emacs-lisp
-  (use-feature eglot
-    :init
-    (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
-    (setq eglot-sync-connect 1
-          eglot-connect-timeout 10
-          eglot-autoshutdown t
-          eglot-send-changes-idle-time 0.5
-          ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
-          ;;      its popup rule causes eglot to steal focus too often.
-          eglot-auto-display-help-buffer nil)
-    :hook (((java-mode java-ts-mode) . eglot-ensure))
-    :config
+  (use-feature java-mode
+  :after eglot
+  :init
+  (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
+  :hook (((java-mode java-ts-mode) . eglot-ensure))
+  :config
     (add-to-list 'eglot-server-programs
                  `(java-mode "jdtls"
                              "-configuration" "/opt/eclipse.jdt.ls/config_linux"
