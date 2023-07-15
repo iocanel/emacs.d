@@ -293,7 +293,7 @@ Persists history over Emacs restarts
           ;;
           (defun my/yas-maybe-activate-org-src-mode (orig-func &rest args)
             "Enrich yas-extra-mode with mode from org-src block"
-              (let* ((mode (if (and (fboundp 'org-in-src-block-p) (org-in-src-block-p)) (my/get-org-src-mode) nil))
+              (let* ((mode (if (and (eq major-mode 'org-mode) (fboundp 'org-in-src-block-p) (org-in-src-block-p)) (my/get-org-src-mode) nil))
                      (yas-extra-modes (if mode (list (intern (concat mode "-mode"))) nil)))
                 (apply orig-func args)))
 
