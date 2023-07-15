@@ -381,10 +381,11 @@ The default font is good enough so let's not define additonal configuration here
 *** Window Management
 **** Ace Window
 #+begin_src emacs-lisp
-  (use-package ace-window
-    :custom
-    (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-    (aw-scope 'global))
+    (use-package ace-window
+      :custom
+      (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (aw-scope 'global)
+      :general ("M-o" 'other-window))
 #+end_src
 **** Winner
 #+begin_src emacs-lisp
