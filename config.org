@@ -2,9 +2,9 @@
 * EMACS
 ** Bootstrap
 *** Lexical binding
- #+begin_src emacs-lisp
-;;; -*- lexical-binding: t; -*-
- #+end_src
+#+begin_src emacs-lisp
+  ;;; -*- lexical-binding: t; -*-
+#+end_src
 ** Core
 *** Settings
 #+begin_src emacs-lisp
@@ -12,28 +12,28 @@
 #+end_src
 *** Warnings
 #+begin_src emacs-lisp
-(setq warning-minimum-level :emergency)
+  (setq warning-minimum-level :emergency)
 #+end_src
 *** Package Manager
 **** Installer 
 #+begin_src emacs-lisp
- (defvar elpaca-installer-version 0.5)
- (defvar elpaca-directory (expand-file-name "elpaca/" my/local-dir))
- (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
- (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
- (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+  (defvar elpaca-installer-version 0.5)
+  (defvar elpaca-directory (expand-file-name "elpaca/" my/local-dir))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
                                 :ref nil
                                 :files (:defaults (:exclude "extensions"))
                                 :build (:not elpaca--activate-package)))
- (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
          (build (expand-file-name "elpaca/" elpaca-builds-directory))
          (order (cdr elpaca-order))
          (default-directory repo))
-   (add-to-list 'load-path (if (file-exists-p build) build repo))
-   (unless (file-exists-p repo)
-     (make-directory repo t)
-     (when (< emacs-major-version 28) (require 'subr-x))
-     (condition-case-unless-debug err
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (< emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
           (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
                    ((zerop (call-process "git" nil buffer t "clone"
                                          (plist-get order :repo) repo)))
@@ -47,12 +47,12 @@
               (kill-buffer buffer)
             (error "%s" (with-current-buffer buffer (buffer-string))))
         ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-   (unless (require 'elpaca-autoloads nil t)
-     (require 'elpaca)
-     (elpaca-generate-autoloads "elpaca" repo)
-     (load "./elpaca-autoloads")))
- (add-hook 'after-init-hook #'elpaca-process-queues)
- (elpaca `(,@elpaca-order))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (load "./elpaca-autoloads")))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order))
 #+end_src
 
 **** use-package
@@ -66,7 +66,7 @@ Configure elpace `use-package` integration so that the rest of the configuration
 
   ;; Block until current queue processed.
   (elpaca-wait)
-  #+end_src
+#+end_src
 
 **** use-feature
 There are cases where we want to use `use-package` with internal packages.
@@ -76,13 +76,13 @@ that combines `use-package` with `:elpaca nil` nicely.
 Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
 
 #+begin_src emacs-lisp
-(defmacro use-feature (name &rest args)
-  "Like `use-package' but accounting for asynchronous installation.
-  NAME and ARGS are in `use-package'."
-  (declare (indent defun))
-  `(use-package ,name
-     :elpaca nil
-     ,@args))
+  (defmacro use-feature (name &rest args)
+    "Like `use-package' but accounting for asynchronous installation.
+    NAME and ARGS are in `use-package'."
+    (declare (indent defun))
+    `(use-package ,name
+       :elpaca nil
+       ,@args))
 #+end_src
 
 *** General
@@ -135,6 +135,23 @@ Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
     (evil-collection-init))
 #+end_src
 
+*** Utilities
+**** Mark
+Credits: https://emacs.stackexchange.com/questions/15033/how-to-mark-current-line-and-move-cursor-to-next-line
+
+#+begin_src emacs-lisp
+(defun my/mark-line (&optional arg)
+  "Select the current line and move the cursor by ARG lines IF no region is selected.
+If a region is already selected when calling this command, only move
+the cursor by ARG lines."
+  (interactive "p")
+  (let ((lines (or arg 1)))
+    (when (not (use-region-p))
+      (forward-line 0)
+      (set-mark-command nil))
+    (forward-line lines)))
+#+end_src
+
 ** Libraries
 *** f.el
 #+begin_src emacs-lisp
@@ -184,26 +201,26 @@ Ensure that we always see the actual file content.
 Persists history over Emacs restarts
 #+begin_src emacs-lisp
   (use-feature savehist
-  :init
-  (savehist-mode))
+    :init
+    (savehist-mode))
 #+end_src
 *** Identation
 #+begin_src emacs-lisp
-(setq-default indent-tabs-mode nil)
-(setq electric-indent-inhibit t)
+  (setq-default indent-tabs-mode nil)
+  (setq electric-indent-inhibit t)
 #+end_src
 *** Undo
 #+begin_src emacs-lisp
-   (use-package undo-tree
-     :config
-     (setq undo-tree-auto-save-history t
-           undo-tree-history-directory-alist `(("." . ,(concat my/local-dir "undo/"))))
-     :hook ((text-mode . undo-tree-mode)
-            (prog-mode . undo-tree-mode))
-  :general
-  (:states 'normal
-              "u" 'undo-tree-undo
-              "U" 'undo-tree-redo))
+  (use-package undo-tree
+    :config
+    (setq undo-tree-auto-save-history t
+          undo-tree-history-directory-alist `(("." . ,(concat my/local-dir "undo/"))))
+    :hook ((text-mode . undo-tree-mode)
+           (prog-mode . undo-tree-mode))
+    :general
+    (:states 'normal
+             "u" 'undo-tree-undo
+             "U" 'undo-tree-redo))
 #+end_src
 *** Popup buffers
 #+begin_src emacs-lisp
@@ -228,40 +245,40 @@ Persists history over Emacs restarts
             "\\*undo-tree*\\*")
           popper-mode-line (propertize " π " 'face 'mode-line-emphasis))
     :config
-      (defun my/shell-pop-up-frame-enable()
-        "Make shell windows pop-up frame."
-        (interactive)
-        (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
-                                                                        (display-buffer-reuse-window display-buffer-pop-up-frame)
-                                                                        (reusable-frames . visible)
-                                                                        (window-height . 0.40)
-                                                                        (side . bottom)
-                                                                        (slot . 0)))))
+    (defun my/shell-pop-up-frame-enable()
+      "Make shell windows pop-up frame."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                                      (display-buffer-reuse-window display-buffer-pop-up-frame)
+                                                                      (reusable-frames . visible)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
 
-      (defun my/shell-pop-up-frame-dissable()
-        "Make shell windows pop-up use window."
-        (interactive)
-        (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
-                                                                        (display-buffer-in-side-window)
-                                                                        (window-height . 0.40)
-                                                                        (side . bottom)
-                                                                        (slot . 0)))))
-      ;;
-      ;; The command below is used to kill popup buffers.
-      ;; The idea is that the function will bind to `q` and 
-      ;; kill the buffer is buffer is a popup or otherwise record marco.
-      ;;
-      (defun my/kill-if-popup (register)
-        "If the buffer is a pop-up buffer kill it, or record a macro using REGISTER otherwise."
-        (interactive
-         (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
-                 (or evil-this-register (evil-read-key)))))
-        "Kill the currently selected window if its a popup."
-        (if (popper-popup-p (current-buffer))
-            (popper-kill-latest-popup)
-          (evil-record-macro register)))
-      :general (:states 'normal
-                "q" 'my/kill-if-popup)
+    (defun my/shell-pop-up-frame-dissable()
+      "Make shell windows pop-up use window."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
+                                                                      (display-buffer-in-side-window)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
+    ;;
+    ;; The command below is used to kill popup buffers.
+    ;; The idea is that the function will bind to `q` and 
+    ;; kill the buffer is buffer is a popup or otherwise record marco.
+    ;;
+    (defun my/kill-if-popup (register)
+      "If the buffer is a pop-up buffer kill it, or record a macro using REGISTER otherwise."
+      (interactive
+       (list (unless (or (popper-popup-p (current-buffer)) (and evil-this-macro defining-kbd-macro))
+               (or evil-this-register (evil-read-key)))))
+      "Kill the currently selected window if its a popup."
+      (if (popper-popup-p (current-buffer))
+          (popper-kill-latest-popup)
+        (evil-record-macro register)))
+    :general (:states 'normal
+                      "q" 'my/kill-if-popup)
     :hook ((eshell-mode . popper-mode)
            (vterm-mode . popper-mode)
            (undo-tree-mode . popper-mode)
@@ -271,51 +288,51 @@ Persists history over Emacs restarts
 #+end_src
 *** Snippets
 #+begin_src emacs-lisp
-        (use-package yasnippet
-          :after org
-          :ensure t
-          :init
-          (defvar my/yas-snippets-loaded nil "Variable to track wether snippets have been loaded")
-          (setq yas-snippet-dirs `(
-                                   ,(concat my/local-dir "snippets") ;; personal snippets
-                                   "~/.config/emacs/snippets"
-                                   "~/.config/emacs/templates")
-                yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
-                yas-prompt-functions '(yas-completing-prompt))
+  (use-package yasnippet
+    :after org
+    :ensure t
+    :init
+    (defvar my/yas-snippets-loaded nil "Variable to track wether snippets have been loaded")
+    (setq yas-snippet-dirs `(
+                             ,(concat my/local-dir "snippets") ;; personal snippets
+                             "~/.config/emacs/snippets"
+                             "~/.config/emacs/templates")
+          yas-indent-line 'fixed  ;; Use yas-indent-line fixed in yaml-mode. This fixes issues with parameter mirroring breaking indentation
+          yas-prompt-functions '(yas-completing-prompt))
 
-          (defun my/yas-set-org-buffer-local ()
-            "Prevent org-mode snippets shadowing mode snippets in src blocks."
-            (interactive)
-            (setq-local yas-buffer-local-condition
-                        '(not (org-in-src-block-p t)))) 
+    (defun my/yas-set-org-buffer-local ()
+      "Prevent org-mode snippets shadowing mode snippets in src blocks."
+      (interactive)
+      (setq-local yas-buffer-local-condition
+                  '(not (org-in-src-block-p t)))) 
 
-          ;;
-          ;; Configure org-src mode as extra mode for yassnippet
-          ;;
-          (defun my/yas-maybe-activate-org-src-mode (orig-func &rest args)
-            "Enrich yas-extra-mode with mode from org-src block"
-              (let* ((mode (if (and (eq major-mode 'org-mode) (fboundp 'org-in-src-block-p) (org-in-src-block-p)) (my/get-org-src-mode) nil))
-                     (yas-extra-modes (if mode (list (intern (concat mode "-mode"))) nil)))
-                (apply orig-func args)))
+    ;;
+    ;; Configure org-src mode as extra mode for yassnippet
+    ;;
+    (defun my/yas-maybe-activate-org-src-mode (orig-func &rest args)
+      "Enrich yas-extra-mode with mode from org-src block"
+      (let* ((mode (if (and (eq major-mode 'org-mode) (fboundp 'org-in-src-block-p) (org-in-src-block-p)) (my/get-org-src-mode) nil))
+             (yas-extra-modes (if mode (list (intern (concat mode "-mode"))) nil)))
+        (apply orig-func args)))
 
-          (advice-add 'yas--modes-to-activate :around #'my/yas-maybe-activate-org-src-mode)
+    (advice-add 'yas--modes-to-activate :around #'my/yas-maybe-activate-org-src-mode)
 
-          ;;
-          ;; Ensure snippets loaded
-          ;;
-          (defun my/yas-ensure-snippets-loaded ()
-            "Ensure that snippets have been loaded."
-            (interactive)
-            (when (not my/yas-snippets-loaded)
-              (setq my/yas-snippets-loaded  t)
-              (message "Loading yassnippets")
-              (yas-reload-all))
-            (yas-minor-mode-on))
+    ;;
+    ;; Ensure snippets loaded
+    ;;
+    (defun my/yas-ensure-snippets-loaded ()
+      "Ensure that snippets have been loaded."
+      (interactive)
+      (when (not my/yas-snippets-loaded)
+        (setq my/yas-snippets-loaded  t)
+        (message "Loading yassnippets")
+        (yas-reload-all))
+      (yas-minor-mode-on))
 
-          :commands (yas-reload-all yas-recompile-all yas-expand yas-insert-snippet)
-          :hook ((prog-mode
-                  plantuml-mode
-                  org-mode) . my/yas-ensure-snippets-loaded))
+    :commands (yas-reload-all yas-recompile-all yas-expand yas-insert-snippet)
+    :hook ((prog-mode
+            plantuml-mode
+            org-mode) . my/yas-ensure-snippets-loaded))
 #+end_src
 ** UI
 *** Appearance
@@ -338,7 +355,7 @@ Persists history over Emacs restarts
 Disable the annoying bell
 #+begin_src emacs-lisp
   (setq visible-bell nil)
-  (setq ring-bell-function 'silent)
+  (setq ring-bell-function 'ignore)
 #+end_src
 
 *** Display Settings
@@ -381,15 +398,15 @@ The default font is good enough so let's not define additonal configuration here
 *** Window Management
 **** Ace Window
 #+begin_src emacs-lisp
-    (use-package ace-window
-      :custom
-      (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-      (aw-scope 'global)
-      :general ("M-o" 'other-window))
+  (use-package ace-window
+    :custom
+    (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+    (aw-scope 'global)
+    :general ("M-o" 'other-window))
 #+end_src
 **** Winner
 #+begin_src emacs-lisp
-    (winner-mode)
+  (winner-mode)
 #+end_src
 *** Hydra
 **** Package
@@ -408,7 +425,7 @@ The default font is good enough so let's not define additonal configuration here
           ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
           ;;      its popup rule causes eglot to steal focus too often.
           eglot-auto-display-help-buffer nil))
-  #+end_src
+#+end_src
 *** Org Mode
 **** Package
 #+begin_src emacs-lisp
@@ -422,7 +439,7 @@ The default font is good enough so let's not define additonal configuration here
           org-src-fontify-natively t)
 
     :general (:states 'normal
-              :keymaps 'org-mode-map
+                      :keymaps 'org-mode-map
                       "<tab>"  'org-cycle
                       "<backtab>"  'org-shiftab))
 
@@ -455,15 +472,15 @@ We have two challenges to solve:
 ****** Functions
 ******* Refile item ::function::
 #+begin_src emacs-lisp
-    (defun my/org-refile (file headline &optional new-state)
-      "Refile item to the target FILE under the HEADLINE and set the NEW-STATE."
-      (let ((pos (save-excursion
-                   (find-file file)
-                   (org-find-exact-headline-in-buffer headline))))
-        (save-excursion
-          (org-refile nil nil (list headline file nil pos))
-          (org-refile-goto-last-stored)
-          (when new-state (org-todo new-state)))))
+  (defun my/org-refile (file headline &optional new-state)
+    "Refile item to the target FILE under the HEADLINE and set the NEW-STATE."
+    (let ((pos (save-excursion
+                 (find-file file)
+                 (org-find-exact-headline-in-buffer headline))))
+      (save-excursion
+        (org-refile nil nil (list headline file nil pos))
+        (org-refile-goto-last-stored)
+        (when new-state (org-todo new-state)))))
 
 #+end_src
 
@@ -479,24 +496,24 @@ We have two challenges to solve:
     (or (car
          (car
           (org-ql-query
-            :select '(list (substring-no-properties (org-get-heading t t)))
-            :from my/archive-file
-            :where `(tags "archive" ,tag))))
+           :select '(list (substring-no-properties (org-get-heading t t)))
+           :from my/archive-file
+           :where `(tags "archive" ,tag))))
         "Unsorted"))
 #+end_src
 
 ******* Archive item ::function::
 #+begin_src emacs-lisp
-    (defun my/org-archive ()
-      "Mark item as complete and refile to archieve."
-      (interactive)
-        (save-window-excursion
-          (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-goto))
-          (let* ((tags (org-get-tags))
-                 (headline (if tags (car (mapcar (lambda (tag) (my/org-find-archive-target tag)) tags)) nil)))
-            (my/org-refile my/archive-file headline "DONE")))
-          ;; Redo the agenda
-          (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-redo)))
+  (defun my/org-archive ()
+    "Mark item as complete and refile to archieve."
+    (interactive)
+    (save-window-excursion
+      (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-goto))
+      (let* ((tags (org-get-tags))
+             (headline (if tags (car (mapcar (lambda (tag) (my/org-find-archive-target tag)) tags)) nil)))
+        (my/org-refile my/archive-file headline "DONE")))
+    ;; Redo the agenda
+    (when (equal "*Org Agenda*" (buffer-name)) (org-agenda-redo)))
 
 #+end_src
 
@@ -505,31 +522,31 @@ We have two challenges to solve:
   (defun my/org-auto-archive ()
     "Archieve all completed items in my inbox."
     (interactive)
-      (save-window-excursion
-        (find-file my/inbox-file)
-        (goto-char 0)
-        (let ((pos))
-          (while (not (eq (point) pos))
-            (setq pos (point))
-            (outline-next-heading)
-            (let* ((line (buffer-substring-no-properties (bol) (eol)))
-                   (line-without-stars (replace-regexp-in-string "^[\\*]+ " "" line)))
+    (save-window-excursion
+      (find-file my/inbox-file)
+      (goto-char 0)
+      (let ((pos))
+        (while (not (eq (point) pos))
+          (setq pos (point))
+          (outline-next-heading)
+          (let* ((line (buffer-substring-no-properties (bol) (eol)))
+                 (line-without-stars (replace-regexp-in-string "^[\\*]+ " "" line)))
             (when (string-prefix-p "DONE" line-without-stars)
               (my/org-archive)
               (goto-char 0) ;; We need to go back from the beggining to avoid loosing entries
-        (save-buffer)))))))
+              (save-buffer)))))))
 
 #+end_src
 
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
-(setq org-agenda-files (append
-                        '("~/Documents/org/quickmarks.org"
-                          "~/Documents/org/github.org"
-                          "~/Documents/org/habits.org"
-                          "~/Documents/org/nutrition.org"
-                          "~/Documents/org/roam/Inbox.org")
+  (setq org-agenda-files (append
+                          '("~/Documents/org/quickmarks.org"
+                            "~/Documents/org/github.org"
+                            "~/Documents/org/habits.org"
+                            "~/Documents/org/nutrition.org"
+                            "~/Documents/org/roam/Inbox.org")
                           (directory-files-recursively "~/Documents/org/jira" "\.org$")))
 #+end_src
 ***** Functions
@@ -603,17 +620,17 @@ Requires:
                                ("~/Documents/org/roam/Archives.org" :maxlevel . 10)))
     :hook (org-agenda-mode . org-super-agenda-mode)
     :general (:keymaps 'org-agenda-mode-map
-                "C-a" 'my/org-agenda-archive-at-point
-                "C-b" 'my/org-agenda-browse-at-point))
+                       "C-a" 'my/org-agenda-archive-at-point
+                       "C-b" 'my/org-agenda-browse-at-point))
 
- #+end_src
+#+end_src
 
 **** Bullets
 #+begin_src emacs-lisp
   (use-package org-bullets
-  :after (org)
-  :hook (org-mode . org-bullets-mode)
-  :custom (org-bullets-bullet-list '("◇" "◉" "○" "✸" "✿" "✚" "★" "►")))
+    :after (org)
+    :hook (org-mode . org-bullets-mode)
+    :custom (org-bullets-bullet-list '("◇" "◉" "○" "✸" "✿" "✚" "★" "►")))
 #+end_src
 
 **** Indent
@@ -633,21 +650,21 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
-      (use-package org-roam
-        :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
-        :custom (org-roam-completion-everywhere t)
-                (org-roam-directory "~/Documents/org/roam"))
+  (use-package org-roam
+    :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
+    :custom (org-roam-completion-everywhere t)
+    (org-roam-directory "~/Documents/org/roam"))
 #+end_src
 ***** Capture templates
 #+begin_src emacs-lisp
-(setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}\n") :unnarrowed t)))
-(setq org-roam-dailies-capture-templates `(("d" "default" entry "* %?" :target (file+head "%<%Y-%m-%d>.org"
-                                                                                 ,(concat "#+title: %<%Y-%m-%d>\n"
-                                                                                         "* Daily Checklist\n"
-                                                                                         "** TODO Log weight\n"
-                                                                                         "** TODO Check emails\n"
-                                                                                         "** TODO Check github issues / pull requests"
-                                                                                         )))))
+  (setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}\n") :unnarrowed t)))
+  (setq org-roam-dailies-capture-templates `(("d" "default" entry "* %?" :target (file+head "%<%Y-%m-%d>.org"
+                                                                                            ,(concat "#+title: %<%Y-%m-%d>\n"
+                                                                                                     "* Daily Checklist\n"
+                                                                                                     "** TODO Log weight\n"
+                                                                                                     "** TODO Check emails\n"
+                                                                                                     "** TODO Check github issues / pull requests"
+                                                                                                     )))))
 
 #+end_src
 
@@ -665,49 +682,49 @@ One of the pieces of functionality I am missing is the ability to move a subtree
 Inspiration drawn from logseq plugin: https://github.com/vipzhicheng/logseq-plugin-move-block
 
 #+begin_src emacs-lisp
-(defun my/org-roam-extract-subtree-and-insert ()
-  "Convert current subtree at point to a node, extract it into a new file and insert a ref to it."
-  (interactive)
-  (save-excursion
-    (org-back-to-heading-or-point-min t)
-    ;; Get the stars of the heading
-    (let ((stars (car (split-string (buffer-substring (bol) (eol))))))
-      (when (bobp) (user-error "Already a top-level node"))
-      (org-id-get-create)
-      (save-buffer)
-      (org-roam-db-update-file)
-      (let* ((template-info nil)
-             (node (org-roam-node-at-point))
-             (template (org-roam-format-template
-                        (string-trim (org-capture-fill-template org-roam-extract-new-file-path))
-                        (lambda (key default-val)
-                          (let ((fn (intern key))
-                                (node-fn (intern (concat "org-roam-node-" key)))
-                                (ksym (intern (concat ":" key))))
-                            (cond
-                             ((fboundp fn)
-                              (funcall fn node))
-                             ((fboundp node-fn)
-                              (funcall node-fn node))
-                             (t (let ((r (read-from-minibuffer (format "%s: " key) default-val)))
-                                  (plist-put template-info ksym r)
-                                  r)))))))
-             (file-path
-              (expand-file-name
-               (read-file-name "Extract node to: " (file-name-as-directory org-roam-directory) template nil template)
-               org-roam-directory)))
-        (when (file-exists-p file-path)
-          (user-error "%s exists. Aborting" file-path))
-        (org-cut-subtree)
+  (defun my/org-roam-extract-subtree-and-insert ()
+    "Convert current subtree at point to a node, extract it into a new file and insert a ref to it."
+    (interactive)
+    (save-excursion
+      (org-back-to-heading-or-point-min t)
+      ;; Get the stars of the heading
+      (let ((stars (car (split-string (buffer-substring (bol) (eol))))))
+        (when (bobp) (user-error "Already a top-level node"))
+        (org-id-get-create)
         (save-buffer)
-        (with-current-buffer (find-file-noselect file-path)
-          (org-paste-subtree)
-          (while (> (org-current-level) 1) (org-promote-subtree))
+        (org-roam-db-update-file)
+        (let* ((template-info nil)
+               (node (org-roam-node-at-point))
+               (template (org-roam-format-template
+                          (string-trim (org-capture-fill-template org-roam-extract-new-file-path))
+                          (lambda (key default-val)
+                            (let ((fn (intern key))
+                                  (node-fn (intern (concat "org-roam-node-" key)))
+                                  (ksym (intern (concat ":" key))))
+                              (cond
+                               ((fboundp fn)
+                                (funcall fn node))
+                               ((fboundp node-fn)
+                                (funcall node-fn node))
+                               (t (let ((r (read-from-minibuffer (format "%s: " key) default-val)))
+                                    (plist-put template-info ksym r)
+                                    r)))))))
+               (file-path
+                (expand-file-name
+                 (read-file-name "Extract node to: " (file-name-as-directory org-roam-directory) template nil template)
+                 org-roam-directory)))
+          (when (file-exists-p file-path)
+            (user-error "%s exists. Aborting" file-path))
+          (org-cut-subtree)
           (save-buffer)
-          (org-roam-promote-entire-buffer)
-          (save-buffer))
-        ;; Insert a link to the extracted node
-        (insert (format "%s [[id:%s][%s]]\n" stars (org-roam-node-id node) (org-roam-node-title node)))))))
+          (with-current-buffer (find-file-noselect file-path)
+            (org-paste-subtree)
+            (while (> (org-current-level) 1) (org-promote-subtree))
+            (save-buffer)
+            (org-roam-promote-entire-buffer)
+            (save-buffer))
+          ;; Insert a link to the extracted node
+          (insert (format "%s [[id:%s][%s]]\n" stars (org-roam-node-id node) (org-roam-node-title node)))))))
 #+end_src
 
 ***** Logseq Integration
@@ -720,17 +737,16 @@ Requires:
 - [[f.el]]
 
 #+begin_src emacs-lisp
-    (defvar my/logseq-folder "~/Documents/logseq/" "The logseq folder")
+  (defvar my/logseq-folder "~/Documents/logseq/" "The logseq folder")
 
-    ;; You probably don't need to change these values
-    (defvar my/logseq-pages (f-expand (f-join my/logseq-folder "pages")))
-    (defvar my/logseq-journals (f-expand (f-join my/logseq-folder "journals")))
-    (defvar my/rich-text-types '(bold italic subscript link strike-through superscript underline inline-src-block))
+  ;; You probably don't need to change these values
+  (defvar my/logseq-pages (f-expand (f-join my/logseq-folder "pages")))
+  (defvar my/logseq-journals (f-expand (f-join my/logseq-folder "journals")))
+  (defvar my/rich-text-types '(bold italic subscript link strike-through superscript underline inline-src-block))
 
 #+end_src
 
 ***** Functions
-
 ****** Utilities
 
 #+begin_src emacs-lisp
@@ -867,8 +883,8 @@ Requires:
 
   (defun my/modified-logseq-files ()
     (emacsql-with-transaction (org-roam-db)
-                              (seq-filter 'my/roam-file-modified-p
-                                          (org-roam--list-files my/logseq-folder))))
+      (seq-filter 'my/roam-file-modified-p
+                  (org-roam--list-files my/logseq-folder))))
 #+end_src
 
 ****** Check Logseq ::function::
@@ -959,58 +975,58 @@ It turns out that this was caused by doomemacs file template functionality that 
 
 #+begin_src emacs-lisp
   (setq org-capture-templates
-          '(
-            ("c" "Calendar")
-            ("cw" "Work Event" entry (file  "~/Documents/org/calendars/work.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
-            ("cp" "Personal Event" entry (file  "~/Documents/org/calendars/personal.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+        '(
+          ("c" "Calendar")
+          ("cw" "Work Event" entry (file  "~/Documents/org/calendars/work.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+          ("cp" "Personal Event" entry (file  "~/Documents/org/calendars/personal.org") "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
 
-            ("i" "Inbox")
-            ("iw" "Work Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
-            ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+          ("i" "Inbox")
+          ("iw" "Work Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Work") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
+          ("ip" "Personal Inbox" entry (file+olp "~/Documents/org/roam/Inbox.org" "Personal") "* TODO %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n" :prepend t)
 
-            ("e" "Email Workflow")
-            ("ef" "Follow Up" entry (file+olp "~/Documents/org/raom/Inbox.org" "Email" "Follow Up") "* TODO Follow up with %:fromname on %a :email:\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
-            ("er" "Read Later" entry (file+olp "~/Documents/org/roam/Inbox.org" "Email" "Read Later") "* TODO Read %:subject :email: \nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t)
+          ("e" "Email Workflow")
+          ("ef" "Follow Up" entry (file+olp "~/Documents/org/raom/Inbox.org" "Email" "Follow Up") "* TODO Follow up with %:fromname on %a :email:\nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
+          ("er" "Read Later" entry (file+olp "~/Documents/org/roam/Inbox.org" "Email" "Read Later") "* TODO Read %:subject :email: \nSCHEDULED:%t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t)
 
-            ("p" "Project" entry (file+headline "~/Documents/org/roam/Projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
-            ("d" "System design" entry (file+headline "~/Documents/org/system-design/system-design.org" "System Design") (file "~/Documents/org/templates/system-design.orgtmpl"))
+          ("p" "Project" entry (file+headline "~/Documents/org/roam/Projects.org" "Projects")(file "~/Documents/org/templates/project.orgtmpl"))
+          ("d" "System design" entry (file+headline "~/Documents/org/system-design/system-design.org" "System Design") (file "~/Documents/org/templates/system-design.orgtmpl"))
 
-            ("b" "BJJ")
-            ("bm" "Moves" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
-            ("bs" "Submission" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
-            ("bc" "Choke" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
-            ("bw" "Sweeps" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
-            ("be" "Escapes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
-            ("bt" "Takedowns" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
-            ("bp" "Passes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
-            ("bf" "FAQ" entry (file+olp "~/Documents/org/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
+          ("b" "BJJ")
+          ("bm" "Moves" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Moves")(file "~/Documents/org/templates/bjj-move.orgtmpl"))
+          ("bs" "Submission" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Submissions")(file "~/Documents/org/templates/bjj-submission.orgtmpl"))
+          ("bc" "Choke" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Chokes")(file "~/Documents/org/templates/bjj-choke.orgtmpl"))
+          ("bw" "Sweeps" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Sweeps")(file "~/Documents/org/templates/bjj-sweep.orgtmpl"))
+          ("be" "Escapes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Escapes")(file "~/Documents/org/templates/bjj-escape.orgtmpl"))
+          ("bt" "Takedowns" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Takedowns")(file "~/Documents/org/templates/bjj-takedown.orgtmpl"))
+          ("bp" "Passes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
+          ("bf" "FAQ" entry (file+olp "~/Documents/org/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
 
-            ("h" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
+          ("h" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
 
-            ("f" "Flashcards")
-            ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
-            ("fS" "Stories"  entry (file+headline "~/Documents/org/flashcards/stories.org" "Stories") "* Story :drill:\n %t\n %^{The story}\n")
-            ("fe" "Emacs")
-            ("fef" "Emacs facts"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("feq" "Emacs questions"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fh" "History")
-            ("fhf" "History facts"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("fhq" "History questions"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fm" "Maths")
-            ("fmf" "Math facts"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("fmq" "Math questions"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fc" "Computer Science")
-            ("fcf" "Computer Science facts"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("fcq" "Computer Science questions"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fs" "Sports")
-            ("fsf" "Sports facts"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("fsq" "Sports questions"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fn" "Nutrition")
-            ("ft" "Trading")
-            ("ftf" "Trading facts"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Fact :drill:\n %t\n %^{The fact}\n")
-            ("ftq" "Trading questions"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
-            ("fl" "Languages")
-            ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
+          ("f" "Flashcards")
+          ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
+          ("fS" "Stories"  entry (file+headline "~/Documents/org/flashcards/stories.org" "Stories") "* Story :drill:\n %t\n %^{The story}\n")
+          ("fe" "Emacs")
+          ("fef" "Emacs facts"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("feq" "Emacs questions"  entry (file+headline "~/Documents/org/flashcards/emacs.org" "Emacs") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fh" "History")
+          ("fhf" "History facts"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("fhq" "History questions"  entry (file+headline "~/Documents/org/flashcards/history.org" "History") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fm" "Maths")
+          ("fmf" "Math facts"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("fmq" "Math questions"  entry (file+headline "~/Documents/org/flashcards/maths.org" "Maths") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fc" "Computer Science")
+          ("fcf" "Computer Science facts"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("fcq" "Computer Science questions"  entry (file+headline "~/Documents/org/flashcards/computer-science.org" "Computer Science") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fs" "Sports")
+          ("fsf" "Sports facts"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("fsq" "Sports questions"  entry (file+headline "~/Documents/org/flashcards/sports.org" "Sports") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fn" "Nutrition")
+          ("ft" "Trading")
+          ("ftf" "Trading facts"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Fact :drill:\n %t\n %^{The fact}\n")
+          ("ftq" "Trading questions"  entry (file+headline "~/Documents/org/flashcards/trading.org" "Trading") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")
+          ("fl" "Languages")
+          ("fls" "Spanish"  entry (file+headline "~/Documents/org/flashcards/languages/spanish.org" "Spanish") "* Question :drill:\n %t\n %^{The question} \n** Answer: \n%^{The answer}")))
 #+end_src
 ***** Window Manager Integration
 
@@ -1018,59 +1034,59 @@ To use org-capture directly from window manager it's handy to close side frames 
 Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
 
 #+begin_src emacs-lisp
-(defadvice org-switch-to-buffer-other-window
-    (after supress-window-splitting activate)
-  "Delete the extra window if we're in a capture frame"
-  (if (equal "org-capture" (frame-parameter nil 'name))
-      (delete-other-windows)))
+  (defadvice org-switch-to-buffer-other-window
+      (after supress-window-splitting activate)
+    "Delete the extra window if we're in a capture frame"
+    (if (equal "org-capture" (frame-parameter nil 'name))
+        (delete-other-windows)))
 
-(defadvice org-capture-finalize
-    (after delete-capture-frame activate)
-  "Advise capture-finalize to close the frame"
-  (when (and (equal "org-capture" (frame-parameter nil 'name))
-             (not (eq this-command 'org-capture-refile)))
-    (delete-frame)))
+  (defadvice org-capture-finalize
+      (after delete-capture-frame activate)
+    "Advise capture-finalize to close the frame"
+    (when (and (equal "org-capture" (frame-parameter nil 'name))
+               (not (eq this-command 'org-capture-refile)))
+      (delete-frame)))
 
-(defadvice org-capture-refile
-    (after delete-capture-frame activate)
-  "Advise org-refile to close the frame"
-  (delete-frame))
+  (defadvice org-capture-refile
+      (after delete-capture-frame activate)
+    "Advise org-refile to close the frame"
+    (delete-frame))
 #+end_src
 
 **** Org Drill
 #+begin_src emacs-lisp
-;;;###autoload
-(defun my/org-drill ()
-  "Require, configure and call org-drill."
-  (interactive)
-  (require 'org-drill)
-  (let ((org-drill-scope 'directory))
-    (find-file "~/Documents/org/roam/index.org")
-    (org-drill)
-    (org-save-all-org-buffers)))
+  ;;;###autoload
+  (defun my/org-drill ()
+    "Require, configure and call org-drill."
+    (interactive)
+    (require 'org-drill)
+    (let ((org-drill-scope 'directory))
+      (find-file "~/Documents/org/roam/index.org")
+      (org-drill)
+      (org-save-all-org-buffers)))
 
-;;;###autoload
-(defun my/org-drill-buffer ()
-  "Require, configure and call org-drill."
-  (interactive)
-  (require 'org-drill)
-  (let  ((org-drill-scope 'file))
-    (org-drill)
-    (org-save-all-org-buffers)))
-:init (setq org-drill-scope 'directory)
+  ;;;###autoload
+  (defun my/org-drill-buffer ()
+    "Require, configure and call org-drill."
+    (interactive)
+    (require 'org-drill)
+    (let  ((org-drill-scope 'file))
+      (org-drill)
+      (org-save-all-org-buffers)))
+  :init (setq org-drill-scope 'directory)
 
-;;;###autoload
-(defun my/org-drill-match ()
-  "Require, configure and call org-drill."
-  (interactive)
-  (require 'org-drill)
-  (let ((org-drill-scope 'directory)
-        (org-drill-match (read-string "Please specify a filter (e.g. tag, property etc) for the drill: ")))
-    (find-file "~/Documents/org/roam/index.org")
-    (org-drill)
-    (org-save-all-org-buffers)))
+  ;;;###autoload
+  (defun my/org-drill-match ()
+    "Require, configure and call org-drill."
+    (interactive)
+    (require 'org-drill)
+    (let ((org-drill-scope 'directory)
+          (org-drill-match (read-string "Please specify a filter (e.g. tag, property etc) for the drill: ")))
+      (find-file "~/Documents/org/roam/index.org")
+      (org-drill)
+      (org-save-all-org-buffers)))
 
-(use-package org-drill :after org)
+  (use-package org-drill :after org)
 #+end_src
 
 **** Org Habit
@@ -1086,127 +1102,127 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
     (defvar my/org-habit-capture-alist '() "An association list that maps capture keys to habit headings")
 
     (defun my/org-habit-check-captured ()
-          "Check if there is a habit matching that latest captured item and mark it as done."
-          (let* ((key  (plist-get org-capture-plist :key))
-                 (habit (cdr (assoc key my/org-habit-capture-alist))))
-            (if habit
-                (progn
-                  (message "Found linked habit:%s" habit)
-                  (when (not org-note-abort) (my/org-habit-mark habit))))))
+      "Check if there is a habit matching that latest captured item and mark it as done."
+      (let* ((key  (plist-get org-capture-plist :key))
+             (habit (cdr (assoc key my/org-habit-capture-alist))))
+        (if habit
+            (progn
+              (message "Found linked habit:%s" habit)
+              (when (not org-note-abort) (my/org-habit-mark habit))))))
 
-  (defun my/org-habit-mark (heading)
-    (save-excursion
-      (let* ((habits-file "/home/iocanel/Documents/org/habits.org")
-             (original (current-buffer))
-             (buf (find-file habits-file)))
-        (with-current-buffer buf
-          (goto-char (point-min))
-          (re-search-forward (concat "TODO " heading ".*:habit:"))
-          (org-habit-parse-todo)
-          (org-todo 'done)
-          (save-buffer t))
-      (switch-to-buffer original t t))))
+    (defun my/org-habit-mark (heading)
+      (save-excursion
+        (let* ((habits-file "/home/iocanel/Documents/org/habits.org")
+               (original (current-buffer))
+               (buf (find-file habits-file)))
+          (with-current-buffer buf
+            (goto-char (point-min))
+            (re-search-forward (concat "TODO " heading ".*:habit:"))
+            (org-habit-parse-todo)
+            (org-todo 'done)
+            (save-buffer t))
+          (switch-to-buffer original t t))))
 
-      (advice-add 'org-drill :after (lambda() (my/org-habit-mark "Org Drill")))
-      (add-hook 'org-capture-after-finalize-hook 'my/org-habit-check-captured))
-   #+end_src
+    (advice-add 'org-drill :after (lambda() (my/org-habit-mark "Org Drill")))
+    (add-hook 'org-capture-after-finalize-hook 'my/org-habit-check-captured))
+#+end_src
 **** Org Links
 
 #+begin_src emacs-lisp
-(defun my/dired-file-as-plantuml-link-to-clipboard ()
-  "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
-  (interactive)
-  (let* ((file (dired-get-filename))
-         (name (file-name-base file))
-         (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
-         (extension (file-name-extension file))
-         (link (format "[[\"file:%s\" %s]]"  file cleaned-name)))
-    (kill-new link)
-    (message "Plantuml link to file copied to clipboard: %s" file)))
+  (defun my/dired-file-as-plantuml-link-to-clipboard ()
+    "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
+    (interactive)
+    (let* ((file (dired-get-filename))
+           (name (file-name-base file))
+           (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
+           (extension (file-name-extension file))
+           (link (format "[[\"file:%s\" %s]]"  file cleaned-name)))
+      (kill-new link)
+      (message "Plantuml link to file copied to clipboard: %s" file)))
 
-(defun my/dired-file-as-org-link-to-clipboard ()
-  "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
-  (interactive)
-  (let* ((file (dired-get-filename))
-         (name (file-name-base file))
-         (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
-         (extension (file-name-extension file))
-         (protocol (if (string-match-p "\\(\\.\\(mp4\\|mkv\\|avi\\)\\)$" file) "mpv" "file"))
-         (link (format "[[%s:%s][%s]]" protocol file cleaned-name)))
-    (kill-new link)
-    (message "Org link to file copied to clipboard: %s" file)))
+  (defun my/dired-file-as-org-link-to-clipboard ()
+    "Create an Org link to the currently selected file in Dired and copy it to the clipboard."
+    (interactive)
+    (let* ((file (dired-get-filename))
+           (name (file-name-base file))
+           (cleaned-name (replace-regexp-in-string "^[0-9]+\\(\\.\\)[[:blank:]]+" "" name))
+           (extension (file-name-extension file))
+           (protocol (if (string-match-p "\\(\\.\\(mp4\\|mkv\\|avi\\)\\)$" file) "mpv" "file"))
+           (link (format "[[%s:%s][%s]]" protocol file cleaned-name)))
+      (kill-new link)
+      (message "Org link to file copied to clipboard: %s" file)))
 
-(define-key dired-mode-map (kbd "C-c o l") 'my/dired-file-as-org-link-to-clipboard)
-(define-key dired-mode-map (kbd "C-c u l") 'my/dired-file-as-plantuml-link-to-clipboard)
+  (define-key dired-mode-map (kbd "C-c o l") 'my/dired-file-as-org-link-to-clipboard)
+  (define-key dired-mode-map (kbd "C-c u l") 'my/dired-file-as-plantuml-link-to-clipboard)
 #+end_src
 
 **** Org Github Issues
 ***** Package
 #+begin_src emacs-lisp
-     (use-package org-github-issues
-       :elpaca (org-github-issues :host github :repo "iensu/org-github-issues")
-       :init
-       (defvar my/github-repositories nil "The list of watch repositories by org-github-issues")
-       :commands (org-github-issues-sync-all my/org-github-issues-eww-at-point my/org-github-issues-show-open-project-issues my/org-github-issues-show-open-workspace-issues)
-       :config
-       (setq
-        gh-user "iocanel"
-        org-github-issues-user "iocanel"
-        org-github-issues-org-file "~/Documents/org/github.org"
-        org-github-issues-tags '("github")
-        org-github-issues-issue-tags '("issue")
-        org-github-issues-pull-tags '("pull")
-        org-github-issues-tag-transformations '((".*" "")) ;; force all labels to empty string so that they can be ommitted.
-        org-github-issues-auto-schedule "+0d"
-        org-github-issues-filter-by-assignee t
-        org-github-issues-headline-prefix t)
+  (use-package org-github-issues
+    :elpaca (org-github-issues :host github :repo "iensu/org-github-issues")
+    :init
+    (defvar my/github-repositories nil "The list of watch repositories by org-github-issues")
+    :commands (org-github-issues-sync-all my/org-github-issues-eww-at-point my/org-github-issues-show-open-project-issues my/org-github-issues-show-open-workspace-issues)
+    :config
+    (setq
+     gh-user "iocanel"
+     org-github-issues-user "iocanel"
+     org-github-issues-org-file "~/Documents/org/github.org"
+     org-github-issues-tags '("github")
+     org-github-issues-issue-tags '("issue")
+     org-github-issues-pull-tags '("pull")
+     org-github-issues-tag-transformations '((".*" "")) ;; force all labels to empty string so that they can be ommitted.
+     org-github-issues-auto-schedule "+0d"
+     org-github-issues-filter-by-assignee t
+     org-github-issues-headline-prefix t)
 
-  (defun my/org-github-issues-url-at-point ()
-     "Utility that fetches the url of the issue at point."
-     (save-excursion
-       (let ((origin (current-buffer)))
-         (when (eq major-mode 'org-agenda-mode) (org-agenda-switch-to))
-         (let* ((p (point))
-                (url (string-trim (org-entry-get nil "GH_URL"))))
-           (when (not (equal origin (current-buffer))) (switch-to-buffer origin))
-           url))))
+    (defun my/org-github-issues-url-at-point ()
+      "Utility that fetches the url of the issue at point."
+      (save-excursion
+        (let ((origin (current-buffer)))
+          (when (eq major-mode 'org-agenda-mode) (org-agenda-switch-to))
+          (let* ((p (point))
+                 (url (string-trim (org-entry-get nil "GH_URL"))))
+            (when (not (equal origin (current-buffer))) (switch-to-buffer origin))
+            url))))
 
-  (defun my/org-github-issues-eww-at-point ()
-    "Browse the issue that corresponds to the org entry at point."
-    (interactive)
-    (let ((url (my/org-github-issues-url-at-point)))
-      (when url
-        (other-window 1)
-        ;(idee/jump-to-non-ide-window)
-        (split-window-horizontally)
-        (eww url))))
+    (defun my/org-github-issues-eww-at-point ()
+      "Browse the issue that corresponds to the org entry at point."
+      (interactive)
+      (let ((url (my/org-github-issues-url-at-point)))
+        (when url
+          (other-window 1)
+                                          ;(idee/jump-to-non-ide-window)
+          (split-window-horizontally)
+          (eww url))))
 
-  (defun my/org-github-issues-show-open-project-issues (root)
-    "Show all the project issues currently assigned to me."
-    (let* ((project (projectile-ensure-project root))
-           (project-name (projectile-project-name project)))
-      (org-ql-search org-github-issues-org-file
-                     `(and (property "GH_URL")
-                           (string-match (regexp-quote ,project-name) (org-entry-get (point) "GH_URL")))
-                     :title (format "Github issues for %s" project-name))
-      (goto-char (point-min))
-      (org-agenda-next-line)))
-
-  (defun my/org-github-issues-show-open-workspace-issues (workspace)
-    "Show all the workspace issues currently assigned to me."
-    (let* ((name (treemacs-project->name workspace))
-           (projects (treemacs-workspace->projects workspace))
-           (project-names (mapcar (lambda (p) (treemacs-project->name p)) projects))
-           (main-project (car project-names)))
-      (when main-project
+    (defun my/org-github-issues-show-open-project-issues (root)
+      "Show all the project issues currently assigned to me."
+      (let* ((project (projectile-ensure-project root))
+             (project-name (projectile-project-name project)))
         (org-ql-search org-github-issues-org-file
                        `(and (property "GH_URL")
-                             (or (string-match (regexp-quote ,main-project) (org-entry-get (point) "GH_URL"))
-                                 (seq-filter (lambda (p) (string-match (regexp-quote p) (org-entry-get (point) "GH_URL"))) project-names)))
-                       :title (format "Github issues for %s" name))
+                             (string-match (regexp-quote ,project-name) (org-entry-get (point) "GH_URL")))
+                       :title (format "Github issues for %s" project-name))
         (goto-char (point-min))
-        (org-agenda-next-line))))
-   )
+        (org-agenda-next-line)))
+
+    (defun my/org-github-issues-show-open-workspace-issues (workspace)
+      "Show all the workspace issues currently assigned to me."
+      (let* ((name (treemacs-project->name workspace))
+             (projects (treemacs-workspace->projects workspace))
+             (project-names (mapcar (lambda (p) (treemacs-project->name p)) projects))
+             (main-project (car project-names)))
+        (when main-project
+          (org-ql-search org-github-issues-org-file
+                         `(and (property "GH_URL")
+                               (or (string-match (regexp-quote ,main-project) (org-entry-get (point) "GH_URL"))
+                                   (seq-filter (lambda (p) (string-match (regexp-quote p) (org-entry-get (point) "GH_URL"))) project-names)))
+                         :title (format "Github issues for %s" name))
+          (goto-char (point-min))
+          (org-agenda-next-line))))
+    )
 #+end_src
 
 **** Org Jira
@@ -1315,11 +1331,11 @@ So, I rolled my own.
       (my/org-jira-get-boards-list))
 
     (let* ((boards (with-current-buffer (org-jira--get-boards-buffer)
-                          (org-map-entries (lambda()
-                                             `((id . ,(org-entry-get nil "id"))
-                                               (self . ,(org-entry-get nil "url"))
-                                               (name . ,(org-entry-get nil "name")))) t  'file)))
-            (board-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) boards))
+                     (org-map-entries (lambda()
+                                        `((id . ,(org-entry-get nil "id"))
+                                          (self . ,(org-entry-get nil "url"))
+                                          (name . ,(org-entry-get nil "name")))) t  'file)))
+           (board-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) boards))
            (board-name (completing-read "Choose board:" board-names)))
       (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) board-name)) boards))))
 
@@ -1415,7 +1431,7 @@ So, I rolled my own.
 
   (defun my/org-jira-move-issue-to-epic(issue-id epic-id)
     "Move issue with ISSUE-ID to epic with SPRINT-ID."
-    (jiralib--rest-call-it (format "/rest/agile/1.0/epic/%s/issue" epic-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
+    (jiralib--rest-call-it (format "/rest/agile/1.0/epmy/%s/issue" epic-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
 
   (defun my/org-jira-assign-current-issue-to-epic()
     "Move the selected issue to an active epic."
@@ -1461,18 +1477,18 @@ So, I rolled my own.
         ;; The '_' character is not displayed. This affects columns alignment.
         ;; Remove s many spaces as needed to make up for the '_' deficit.
         "
-         ^Actions^           ^Issue^              ^Buffer^                         ^Defaults^
-                           ?I?
-         ^^^^^^-----------------------------------------------------------------------------------------------
-          _L_ist issues      _u_pdate issue       _R_efresh issues in buffer       Select _B_oard ?B?
-          _C_reate issue     update _c_omment                                    Select _E_pic ?E?
-                           assign _s_print                                     Select _S_print ?S?
-                           assign _e_print                                     Create issue with _D_efaults
-                           _b_rowse issue
-                           _r_efresh issue
-                           _p_rogress issue
-  [_q_]: quit
-"
+           ^Actions^           ^Issue^              ^Buffer^                         ^Defaults^
+                             ?I?
+           ^^^^^^-----------------------------------------------------------------------------------------------
+            _L_ist issues      _u_pdate issue       _R_efresh issues in buffer       Select _B_oard ?B?
+            _C_reate issue     update _c_omment                                    Select _E_pic ?E?
+                             assign _s_print                                     Select _S_print ?S?
+                             assign _e_print                                     Create issue with _D_efaults
+                             _b_rowse issue
+                             _r_efresh issue
+                             _p_rogress issue
+    [_q_]: quit
+  "
         ("I" nil (or (my/org-jira-issue-id-at-point) ""))
         ("L" my/org-jira-get-issues)
         ("C" org-jira-create-issue)
@@ -1499,277 +1515,277 @@ So, I rolled my own.
 
 **** Org Tree Slide
 #+begin_src emacs-lisp
-;;;###autoload
-(defun +org-present-hide-blocks-h ()
-  "Hide org #+ constructs."
-  (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
-      (org-flag-region (match-beginning 1)
-                       (match-end 0)
-                       org-tree-slide-mode
-                       'block))))
+  ;;;###autoload
+  (defun +org-present-hide-blocks-h ()
+    "Hide org #+ constructs."
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
+        (org-flag-region (match-beginning 1)
+                         (match-end 0)
+                         org-tree-slide-mode
+                         'block))))
 
-;;;###autoload
-(defun +org-present-hide-leading-stars-h ()
-  "Hide leading stars in headings."
-  (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward "^\\(\\*+\\)" nil t)
-      (org-flag-region (match-beginning 1)
-                       (match-end 1)
-                       org-tree-slide-mode
-                       'headline))))
+  ;;;###autoload
+  (defun +org-present-hide-leading-stars-h ()
+    "Hide leading stars in headings."
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(\\*+\\)" nil t)
+        (org-flag-region (match-beginning 1)
+                         (match-end 1)
+                         org-tree-slide-mode
+                         'headline))))
 #+end_src
 
 **** Org Asciidoc
 #+begin_src emacs-lisp
-(use-package adoc-mode)
+  (use-package adoc-mode)
 #+end_src
 
 **** Org Hugo
 ***** Configuration
 
 #+begin_src emacs-lisp
-(setq org-hugo-base-dir "~/workspace/src/github.com/iocanel/iocanel.github.io")
+  (setq org-hugo-base-dir "~/workspace/src/github.com/iocanel/iocanel.github.io")
 #+end_src
 
 ***** Customization
 
 #+begin_src emacs-lisp
-(defun my/org-hugo-set-export-file-name ()
-  "Set the export file name to index.md."
-  (interactive)
-  (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
-    (save-excursion
-      (goto-char 0)
-      (if (re-search-forward "^#\\+EXPORT_FILE_NAME" nil t)
+  (defun my/org-hugo-set-export-file-name ()
+    "Set the export file name to index.md."
+    (interactive)
+    (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
+      (save-excursion
+        (goto-char 0)
+        (if (re-search-forward "^#\\+EXPORT_FILE_NAME" nil t)
+            (progn
+              (move-beginning-of-line 1)
+              (kill-line))
           (progn
-            (move-beginning-of-line 1)
-            (kill-line))
-        (progn
-          (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
-            (next-line 1))
-          (previous-line 1)
-          (move-end-of-line 1)
-          (insert "\n")))
+            (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
+              (next-line 1))
+            (previous-line 1)
+            (move-end-of-line 1)
+            (insert "\n")))
         (insert "#+EXPORT_FILE_NAME: index.md"))))
 
-(defun my/org-hugo-set-bundle ()
-  "Set the hugo bundle property to match the directory."
-  (interactive)
-  (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
-    (save-excursion
-      (goto-char 0)
-      (if (re-search-forward "^#\\+HUGO_BUNDLE" nil t)
+  (defun my/org-hugo-set-bundle ()
+    "Set the hugo bundle property to match the directory."
+    (interactive)
+    (let ((name (file-name-nondirectory (directory-file-name (file-name-directory buffer-file-name)))))
+      (save-excursion
+        (goto-char 0)
+        (if (re-search-forward "^#\\+HUGO_BUNDLE" nil t)
+            (progn
+              (move-beginning-of-line 1)
+              (kill-line))
           (progn
-            (move-beginning-of-line 1)
-            (kill-line))
-        (progn
-          (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
-            (next-line 1))
-          (previous-line 1)
-          (move-end-of-line 1)
-          (insert "\n")))
+            (while (string-prefix-p "#+" (buffer-substring (bol) (eol)))
+              (next-line 1))
+            (previous-line 1)
+            (move-end-of-line 1)
+            (insert "\n")))
         (insert (format! "#+HUGO_BUNDLE: %s" name)))))
 
-(defun my/org-hugo-prepare()
-  "Prepare document for export via ox-hugo."
-  (interactive)
-  (my/org-hugo-set-bundle)
-  (my/org-hugo-set-export-file-name))
+  (defun my/org-hugo-prepare()
+    "Prepare document for export via ox-hugo."
+    (interactive)
+    (my/org-hugo-set-bundle)
+    (my/org-hugo-set-export-file-name))
 #+end_src
 
 *** Java
 **** Java Mode
 #+begin_src emacs-lisp
-    (use-feature java-mode
+  (use-feature java-mode
     :after eglot
     :init
     (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
 
-  (defun my/java-setup-project-workspace ()
-    "Setup a local java workspace for the current project."
-    (interactive)
-    (let* ((project-root (project-root (project-current)))
-           (file-path (concat project-root ".dir-locals.el"))
-           (content '((java-mode
-                       (eval . (progn
-                                 (setq lsp-session-file (concat (project-root (project-current)) ".lsp/session")
-                                       lsp-java-workspace-dir (concat (project-root (project-current)) ".lsp/workspace/data")
-                                       lsp-java-workspace-cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))))))))
-      (with-temp-buffer
-        (setq-local enable-local-variables :all)
-        (insert (format "%s\n" (pp-to-string content)))
-        (write-file file-path))))
+    (defun my/java-setup-project-workspace ()
+      "Setup a local java workspace for the current project."
+      (interactive)
+      (let* ((project-root (project-root (project-current)))
+             (file-path (concat project-root ".dir-locals.el"))
+             (content '((java-mode
+                         (eval . (progn
+                                   (setq lsp-session-file (concat (project-root (project-current)) ".lsp/session")
+                                         lsp-java-workspace-dir (concat (project-root (project-current)) ".lsp/workspace/data")
+                                         lsp-java-workspace-cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))))))))
+        (with-temp-buffer
+          (setq-local enable-local-variables :all)
+          (insert (format "%s\n" (pp-to-string content)))
+          (write-file file-path))))
 
-  (defun my/java-clear-project-workspace ()
-    "Setup a local java workspace for the current project."
-    (interactive)
-    (let ((directory lsp-java-workspace-dir))
-      (when (file-exists-p directory)
-        (delete-directory directory 'recursive))
-      (make-directory directory t)))
+    (defun my/java-clear-project-workspace ()
+      "Setup a local java workspace for the current project."
+      (interactive)
+      (let ((directory lsp-java-workspace-dir))
+        (when (file-exists-p directory)
+          (delete-directory directory 'recursive))
+        (make-directory directory t)))
     :hook (((java-mode java-ts-mode) . eglot-ensure))
     :config
-      (add-to-list 'eglot-server-programs
-                   `(java-mode "jdtls"
-                               "-configuration" "/opt/eclipse.jdt.ls/config_linux"
-                               "-data" ,lsp-java-workspace-dir)))
+    (add-to-list 'eglot-server-programs
+                 `(java-mode "jdtls"
+                             "-configuration" "/opt/eclipse.jdt.ls/config_linux"
+                             "-data" ,lsp-java-workspace-dir)))
 #+end_src
 *** UML
 **** PlantUML
 ***** Package
 #+begin_src emacs-lisp
   (use-package plantuml-mode
-  :after org
-  :commands (plantuml-mode plantuml-download-jar)
-  :init
-  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml)
-               (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
-                     org-plantuml-jar-path plantuml-jar-path))
-  :hook (plantuml-mode . yas/minor-mode))
+    :after org
+    :commands (plantuml-mode plantuml-download-jar)
+    :init
+    (add-to-list 'org-src-lang-modes '("plantuml" . plantuml)
+                 (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
+                       org-plantuml-jar-path plantuml-jar-path))
+    :hook (plantuml-mode . yas/minor-mode))
 #+end_src
 ***** Flycheck
 #+begin_src emacs-lisp 
   (use-package flycheck-plantuml
-  :after plantuml-mode
-  :config (flycheck-plantuml-setup))
+    :after plantuml-mode
+    :config (flycheck-plantuml-setup))
 #+end_src
 ***** Snippets
- This section contains snippets to ease the development of planuml diagrams.
+This section contains snippets to ease the development of planuml diagrams.
 ****** Start
-     #+begin_src snippet :tangle (concat my/local-dir "snippets/plantuml-mode/start")
-       # -*- mode: snippet -*-
-       # name: start
-       # key: start 
-       # --
-       @startuml
-       start
-       $0
-       end
-       @enduml
-     #+end_src
+#+begin_src snippet :tangle (concat my/local-dir "snippets/plantuml-mode/start")
+  # -*- mode: snippet -*-
+  # name: start
+  # key: start 
+  # --
+  @startuml
+  start
+  $0
+  end
+  @enduml
+#+end_src
 
 ****** Conditionals
 ******* TODO If then else
-      #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/ite")
-        # -*- mode: snippet -*-
-        # name: if then else
-        # key: ite
-        # --
-        if ($1) then (yes)
-        $0
-        else
-        endif
-      #+end_src
+#+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/ite")
+  # -*- mode: snippet -*-
+  # name: if then else
+  # key: ite
+  # --
+  if ($1) then (yes)
+  $0
+  else
+  endif
+#+end_src
 
 ****** Notes
 ******* Left
-      #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/ln")
-        # -*- mode: snippet -*-
-        # name: left note
-        # key: ln 
-        # --
-        note left
-        $0
-        end note
-      #+end_src
+#+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/ln")
+  # -*- mode: snippet -*-
+  # name: left note
+  # key: ln 
+  # --
+  note left
+  $0
+  end note
+#+end_src
 
 ******* Right
-      #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/rn")
-        # -*- mode: snippet -*-
-        # name: right note
-        # key: rn 
-        # --
-        note right
-        $0
-        end note
-      #+end_src
+#+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/rn")
+  # -*- mode: snippet -*-
+  # name: right note
+  # key: rn 
+  # --
+  note right
+  $0
+  end note
+#+end_src
 
 ****** Splits
 
 ******* Single split
-      #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/split")
-        # -*- mode: snippet -*-
-        # name: split
-        # key: split 
-        # --
-        split
-        -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
-        $0
-        split again
-        -[#${3:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$4;
-        end split
-      #+end_src
+#+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/split")
+  # -*- mode: snippet -*-
+  # name: split
+  # key: split 
+  # --
+  split
+  -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
+  $0
+  split again
+  -[#${3:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$4;
+  end split
+#+end_src
 
 ******* Split again
-      #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/sa")
-        # -*- mode: snippet -*-
-        # name: split again
-        # key: sa
-        # --
-        split again
-        -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
-        $0
-      #+end_src
+#+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/sa")
+  # -*- mode: snippet -*-
+  # name: split again
+  # key: sa
+  # --
+  split again
+  -[#${1:$$(yas-choose-value '("blue" "green" "red" "yellow"))}]->$2;
+  $0
+#+end_src
 
 **** eyuml and flowchart.js
 
 #+begin_src emacs-lisp
   (use-package eyuml
-  :after org
-  :init
-  (add-to-list 'org-src-lang-modes '("yuml" . yuml))
-  (add-to-list 'org-src-lang-modes '("flowchart-js" . flowchart-js))
-  :commands (org-babel-execute:yuml)
-  :config
-  ;;
-  ;; Flowchart.js
-  ;;
-  (defun org-babel-execute:flowchart-js (body params)
-    "Execute a block of flowchartjs code with org-babel."
-    (let* ((in-file (org-babel-temp-file "" ".flowchart-js"))
-           (out-file (or (cdr (assq :file params))
-                         (error "flowchart-js requires a \":file\" header argument")))
-           (cmd (format "diagrams flowchart %s %s" in-file out-file))
-           (verbosity (or (cdr (assq :verbosity params)) 0)))
-      (with-temp-buffer
-        (insert body)
-        (goto-char (point-min))
-        (write-region nil nil in-file))
-      (shell-command cmd)
-      nil))
+    :after org
+    :init
+    (add-to-list 'org-src-lang-modes '("yuml" . yuml))
+    (add-to-list 'org-src-lang-modes '("flowchart-js" . flowchart-js))
+    :commands (org-babel-execute:yuml)
+    :config
+    ;;
+    ;; Flowchart.js
+    ;;
+    (defun org-babel-execute:flowchart-js (body params)
+      "Execute a block of flowchartjs code with org-babel."
+      (let* ((in-file (org-babel-temp-file "" ".flowchart-js"))
+             (out-file (or (cdr (assq :file params))
+                           (error "flowchart-js requires a \":file\" header argument")))
+             (cmd (format "diagrams flowchart %s %s" in-file out-file))
+             (verbosity (or (cdr (assq :verbosity params)) 0)))
+        (with-temp-buffer
+          (insert body)
+          (goto-char (point-min))
+          (write-region nil nil in-file))
+        (shell-command cmd)
+        nil))
 
-  (defun org-babel-execute:yuml (body params)
-    "Execute a block of yuml code with org-babel."
-    (let ((in-file (org-babel-temp-file "" ".yuml"))
-          (type (or (cdr (assq :type params))
-                    (error "yuml requires a \":type\" header argument")))
-          (out-file (or (cdr (assq :file params))
-                        (error "yuml requires a \":file\" header argument")))
-          (verbosity (or (cdr (assq :verbosity params)) 0)))
-      (with-temp-buffer
-        (insert body)
-        (goto-char (point-min))
-        (while (search-forward "\n" nil t) (replace-match "," nil t))
-        (write-region nil nil in-file)
-        (message (buffer-substring (point-min) (point-max)))
-        (eyuml-create-document type out-file))
-      (format "[[file:%s]]" out-file)))
+    (defun org-babel-execute:yuml (body params)
+      "Execute a block of yuml code with org-babel."
+      (let ((in-file (org-babel-temp-file "" ".yuml"))
+            (type (or (cdr (assq :type params))
+                      (error "yuml requires a \":type\" header argument")))
+            (out-file (or (cdr (assq :file params))
+                          (error "yuml requires a \":file\" header argument")))
+            (verbosity (or (cdr (assq :verbosity params)) 0)))
+        (with-temp-buffer
+          (insert body)
+          (goto-char (point-min))
+          (while (search-forward "\n" nil t) (replace-match "," nil t))
+          (write-region nil nil in-file)
+          (message (buffer-substring (point-min) (point-max)))
+          (eyuml-create-document type out-file))
+        (format "[[file:%s]]" out-file)))
 
-  (defun eyuml-create-document (type &optional out-file)
-    "Fetch remote document, TYPE could be class,usecase or activity."
-    (let ((out-file (or out-file (eyuml-create-file-name))))
-      (request (eyuml-create-url type)
-        :parser 'buffer-string
-        :success (cl-function
-                  (lambda (&key data &allow-other-keys)
-                    (when data
-                      (with-temp-buffer 
-                        (set-buffer-file-coding-system 'raw-text)
-                        (insert data)
-                        (write-region nil nil out-file)))))))))
+    (defun eyuml-create-document (type &optional out-file)
+      "Fetch remote document, TYPE could be class,usecase or activity."
+      (let ((out-file (or out-file (eyuml-create-file-name))))
+        (request (eyuml-create-url type)
+          :parser 'buffer-string
+          :success (cl-function
+                    (lambda (&key data &allow-other-keys)
+                      (when data
+                        (with-temp-buffer 
+                          (set-buffer-file-coding-system 'raw-text)
+                          (insert data)
+                          (write-region nil nil out-file)))))))))
 
 #+end_src
 ** Completion
@@ -1777,32 +1793,32 @@ So, I rolled my own.
 **** Package
 #+begin_src emacs-lisp
   (use-package helm
-  :defer 1
-  :custom
-   (helm-candidate-number-limit 150)
-        ;; Remove extraineous helm UI elements
-        (helm-display-header-line nil)
-        (helm-ff-auto-update-initial-value nil)
-        (helm-find-files-doc-header nil)
-        ;; Default helm window sizes
-        (helm-display-buffer-default-width nil)
-        (helm-display-buffer-default-height 0.25)
-        ;; When calling `helm-semantic-or-imenu', don't immediately jump to
-        ;; symbol at point.
-        (helm-imenu-execute-action-at-once-if-one nil)
-        ;; Disable special behavior for left/right, M-left/right keys.
-        (helm-ff-lynx-style-map nil)
-  :config
-  (add-hook 'helm-after-initialize-hook (lambda () (with-helm-buffer (visual-line-mode))))
-   ;; Hide minibuffer if `helm-echo-input-in-header-line'
-  (add-hook 'helm-minibuffer-set-up-hook #'helm-hide-minibuffer-maybe)
-  (helm-mode))
+    :defer 1
+    :custom
+    (helm-candidate-number-limit 150)
+    ;; Remove extraineous helm UI elements
+    (helm-display-header-line nil)
+    (helm-ff-auto-update-initial-value nil)
+    (helm-find-files-doc-header nil)
+    ;; Default helm window sizes
+    (helm-display-buffer-default-width nil)
+    (helm-display-buffer-default-height 0.25)
+    ;; When calling `helm-semantic-or-imenu', don't immediately jump to
+    ;; symbol at point.
+    (helm-imenu-execute-action-at-once-if-one nil)
+    ;; Disable special behavior for left/right, M-left/right keys.
+    (helm-ff-lynx-style-map nil)
+    :config
+    (add-hook 'helm-after-initialize-hook (lambda () (with-helm-buffer (visual-line-mode))))
+    ;; Hide minibuffer if `helm-echo-input-in-header-line'
+    (add-hook 'helm-minibuffer-set-up-hook #'helm-hide-minibuffer-maybe)
+    (helm-mode))
 #+end_src
 **** Helm AG
 #+begin_src emacs-lisp
   (use-package helm-ag)
   (use-package helm-projectile
-  :commands (helm-ag helm-projectile-ag))
+    :commands (helm-ag helm-projectile-ag))
 #+end_src
 *** Vertico
 **** Pacakge
@@ -1821,231 +1837,835 @@ So, I rolled my own.
     ;; Replace bindings. Lazily loaded due by `use-package'.
     :general 
     (;; global
-              "C-x b" 'consult-buffer                ;; orig. switch-to-buffer
-              "C-x C-b" 'consult-buffer              ;; orig. switch-to-buffer-other-window
-              "C-x r b" 'consult-bookmark            ;; orig. bookmark-jump
-              "C-x p b" 'consult-project-buffer      ;; orig. project-switch-to-buffer
-              "M-y" 'consult-yank-pop                ;; orig. yank-pop
-              ;; M-s bindings in `search-map'
-              "C-s" 'consult-line)
+     "C-x b" 'consult-buffer                ;; orig. switch-to-buffer
+     "C-x C-b" 'consult-buffer              ;; orig. switch-to-buffer-other-window
+     "C-x r b" 'consult-bookmark            ;; orig. bookmark-jump
+     "C-x p b" 'consult-project-buffer      ;; orig. project-switch-to-buffer
+     "M-y" 'consult-yank-pop                ;; orig. yank-pop
+     ;; M-s bindings in `search-map'
+     "C-s" 'consult-line)
     (:keymaps 'minibuffer-local-map
               "M-s" 'consult-history                 ;; orig. next-matching-history-element
               "M-r" 'consult-history)                ;; orig. previous-matching-history-element
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
 
-  ;; The :init configuration is always executed (Not lazy)
-  :init
+    ;; The :init configuration is always executed (Not lazy)
+    :init
 
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
+    ;; Optionally configure the register formatting. This improves the register
+    ;; preview for `consult-register', `consult-register-load',
+    ;; `consult-register-store' and the Emacs built-ins.
+    (setq register-preview-delay 0.5
+          register-preview-function #'consult-register-format)
 
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
-  (advice-add #'register-preview :override #'consult-register-window)
+    ;; Optionally tweak the register preview window.
+    ;; This adds thin lines, sorting and hides the mode line of the window.
+    (advice-add #'register-preview :override #'consult-register-window)
 
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
 
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
-  :config
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
 
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key "M-.")
-  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
-  (consult-customize
-   consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
-   ;; :preview-key "M-."
-   :preview-key '(:debounce 0.4 any))
+    ;; Optionally configure preview. The default value
+    ;; is 'any, such that any key triggers the preview.
+    ;; (setq consult-preview-key 'any)
+    ;; (setq consult-preview-key "M-.")
+    ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+    ;; For some commands and buffer sources it is useful to configure the
+    ;; :preview-key on a per-command basis using the `consult-customize' macro.
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     ;; :preview-key "M-."
+     :preview-key '(:debounce 0.4 any))
 
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; "C-+"
+    ;; Optionally configure the narrowing key.
+    ;; Both < and C-+ work reasonably well.
+    (setq consult-narrow-key "<") ;; "C-+"
 
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+    ;; Optionally make narrowing help available in the minibuffer.
+    ;; You may want to use `embark-prefix-help-command' or which-key instead.
+    ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
 
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
+    ;; By default `consult-project-function' uses `project-root' from project.el.
+    ;; Optionally configure a different project root function.
     ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
+    ;; (setq consult-project-function #'consult--default-project--function)
     ;;;; 2. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+    ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
     ;;;; 3. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+    ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
     ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+    ;; (autoload 'projectile-project-root "projectile")
+    ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
     ;;;; 5. No project support
-  ;; (setq consult-project-function nil)
-  )
+    ;; (setq consult-project-function nil)
+    )
 #+end_src
 *** Orderless
 Make consult and friends work with partical matches, multi part words etc.
 #+begin_src emacs-lisp
   (use-package orderless
-  :ensure t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+    :ensure t
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 *** Marginalia
 #+begin_src emacs-lisp
-(use-package marginalia
-  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
-  ;; available in the *Completions* buffer, add it to the
-  ;; `completion-list-mode-map'.
-  :general (:keymaps 'minibuffer-local-map
-         "M-A" 'marginalia-cycle)
+  (use-package marginalia
+    ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+    ;; available in the *Completions* buffer, add it to the
+    ;; `completion-list-mode-map'.
+    :general (:keymaps 'minibuffer-local-map
+                       "M-A" 'marginalia-cycle)
 
-  ;; The :init section is always executed.
-  :init
+    ;; The :init section is always executed.
+    :init
 
-  ;; Marginalia must be actived in the :init section of use-package such that
-  ;; the mode gets enabled right away. Note that this forces loading the
-  ;; package.
-  (marginalia-mode))
+    ;; Marginalia must be actived in the :init section of use-package such that
+    ;; the mode gets enabled right away. Note that this forces loading the
+    ;; package.
+    (marginalia-mode))
 #+end_src
 *** Icons
 **** All icons completion
 These icons require GUI so let's only enable them when its available.
 #+begin_src emacs-lisp
   (use-package all-the-icons-completion
-  :config
-  (when (display-graphic-p) (all-the-icons-completion-mode)))
+    :config
+    (when (display-graphic-p) (all-the-icons-completion-mode)))
 #+end_src
 
 **** Nerd icons completion
 These icons can also run on terminal so let's optionally enable them.
 #+begin_src emacs-lisp
   (use-package nerd-icons-completion
-  :config
-  (unless (display-graphic-p) (nerd-icons-completion-mode)))
+    :config
+    (unless (display-graphic-p) (nerd-icons-completion-mode)))
 #+end_src
 *** At point completion
 **** Company
 #+begin_src emacs-lisp
   (use-package company
-  :defer t
-  :config
-  (setq company-tooltip-limit 20                      ; bigger popup window
-        company-idle-delay 0.2                        ; decrease delay before autocompletion popup shows
-        company-echo-delay 0                          ; remove annoying blinking
-        company-begin-commands '(self-insert-command) ; start autocompletion only after typing
-        company-tooltip-align-annotations t           ; aligns annotation to the right hand side
-        company-dabbrev-downcase nil)                 ; don't downcase
-  :hook (prog-mode . company-mode))
+    :defer t
+    :config
+    (setq company-tooltip-limit 20                      ; bigger popup window
+          company-idle-delay 0.2                        ; decrease delay before autocompletion popup shows
+          company-echo-delay 0                          ; remove annoying blinking
+          company-begin-commands '(self-insert-command) ; start autocompletion only after typing
+          company-tooltip-align-annotations t           ; aligns annotation to the right hand side
+          company-dabbrev-downcase nil)                 ; don't downcase
+    :hook (prog-mode . company-mode))
 #+end_src
 **** Smart Tab
 #+begin_src emacs-lisp
   (use-package smart-tab
-  :config
-  (progn
-    (setq hippie-expand-try-functions-list '(yas-hippie-try-expand
-                                             try-complete-file-name-partially))
-                                        ;try-expand-dabbrev
-                                        ;try-expand-dabbrev-visible
-                                        ;try-expand-dabbrev-all-buffers
-                                        ;try-complete-lisp-symbol-partially
-                                        ;try-complete-lisp-symbol
+    :config
+    (progn
+      (setq hippie-expand-try-functions-list '(yas-hippie-try-expand
+                                               try-complete-file-name-partially))
+                                          ;try-expand-dabbrev
+                                          ;try-expand-dabbrev-visible
+                                          ;try-expand-dabbrev-all-buffers
+                                          ;try-complete-lisp-symbol-partially
+                                          ;try-complete-lisp-symbol
 
-     smart-tab-user-provided-completion-function 'company-complete
-     smart-tab-using-hippie-expand t
-     smart-tab-disabled-major-modes '(org-mode term-mode eshell-mode inferior-python-mode)
-    (global-smart-tab-mode 1)))
+      smart-tab-user-provided-completion-function 'company-complete
+      smart-tab-using-hippie-expand t
+      smart-tab-disabled-major-modes '(org-mode term-mode eshell-mode inferior-python-mode)
+      (global-smart-tab-mode 1)))
 #+end_src
 ** Tools
-*** Magit
+*** Git
+**** Magit
 #+begin_src emacs-lisp
   (use-package magit
-  :defer t
-  :after (general)
-  :general
-  (+general-global-git/version-control
-    "b"  'magit-branch
-    "B"  'magit-blame
-    "c"  'magit-clone
-    "f"  '(:ignore t :which-key "file")
-    "ff" 'magit-find-file
-    "fh" 'magit-log-buffer-file
-    "i"  'magit-init
-    "L"  'magit-list-repositories
-    "m"  'magit-dispatch
-    "S"  'magit-stage-file
-    "s"  'magit-status
-    "U"  'magit-unstage-file)
-  :config
-  (transient-bind-q-to-quit))
+    :defer t
+    :after (general)
+    :general
+    (+general-global-git/version-control
+     "b"  'magit-branch
+     "B"  'magit-blame
+     "c"  'magit-clone
+     "f"  '(:ignore t :which-key "file")
+     "ff" 'magit-find-file
+     "fh" 'magit-log-buffer-file
+     "i"  'magit-init
+     "L"  'magit-list-repositories
+     "m"  'magit-dispatch
+     "S"  'magit-stage-file
+     "s"  'magit-status
+     "U"  'magit-unstage-file)
+    :config
+    (transient-bind-q-to-quit))
+#+end_src
+**** Git timemachine
+#+begin_src emacs-lisp
+  (use-package git-timemachine)
+#+end_src
+**** Code review
+#+begin_src emacs-lisp
+  (use-package code-review
+    :commands (code-review-at-point))
 #+end_src
 *** Which Key
 #+begin_src emacs-lisp
   (use-package which-key
-  :demand t
-  :init
-  (setq which-key-enable-extended-define-key t)
-  :config
-  (which-key-mode)
-  :custom
-  (which-key-side-window-location 'bottom)
-  (which-key-sort-order 'which-key-key-order-alpha)
-  (which-key-side-window-max-width 0.33)
-  (which-key-idle-delay 0.05)
-  :diminish which-key-mode)
+    :demand t
+    :init
+    (setq which-key-enable-extended-define-key t)
+    :config
+    (which-key-mode)
+    :custom
+    (which-key-side-window-location 'bottom)
+    (which-key-sort-order 'which-key-key-order-alpha)
+    (which-key-side-window-max-width 0.33)
+    (which-key-idle-delay 0.05)
+    :diminish which-key-mode)
 #+end_src
 ** Term
 *** vterm
 #+begin_src emacs-lisp 
   (use-package vterm
-  :elpaca (vterm :post-build
-                 (progn
-                   (setq vterm-always-compile-module t)
-                   (require 'vterm)
-                   ;;print compilation info for elpaca
-                   (with-current-buffer (get-buffer-create vterm-install-buffer-name)
-                     (goto-char (point-min))
-                     (while (not (eobp))
-                       (message "%S"
-                                (buffer-substring (line-beginning-position)
-                                                  (line-end-position)))
-                       (forward-line)))
-                   (when-let ((so (expand-file-name "./vterm-module.so"))
-                              ((file-exists-p so)))
-                     (make-symbolic-link
-                      so (expand-file-name (file-name-nondirectory so)
-                                           "../../builds/vterm")
-                      'ok-if-already-exists))))
-  :commands (vterm vterm-other-window)
-  :general
-  (+general-global-application
-    "t" '(:ignore t :which-key "terminal")
-    "tt" 'vterm-other-window
-    "t." 'vterm)
-  :config
-  (evil-set-initial-state 'vterm-mode 'emacs))
+    :elpaca (vterm :post-build
+                   (progn
+                     (setq vterm-always-compile-module t)
+                     (require 'vterm)
+                     ;;print compilation info for elpaca
+                     (with-current-buffer (get-buffer-create vterm-install-buffer-name)
+                       (goto-char (point-min))
+                       (while (not (eobp))
+                         (message "%S"
+                                  (buffer-substring (line-beginning-position)
+                                                    (line-end-position)))
+                         (forward-line)))
+                     (when-let ((so (expand-file-name "./vterm-module.so"))
+                                ((file-exists-p so)))
+                       (make-symbolic-link
+                        so (expand-file-name (file-name-nondirectory so)
+                                             "../../builds/vterm")
+                        'ok-if-already-exists))))
+    :commands (vterm vterm-other-window)
+    :general
+    (+general-global-application
+     "t" '(:ignore t :which-key "terminal")
+     "tt" 'vterm-other-window
+     "t." 'vterm)
+    :config
+    (evil-set-initial-state 'vterm-mode 'emacs))
+#+end_src
+** Applications
+*** Youtube DLP
+
+This section includes custom code for working with yt-dlp to download videos.
+There are existing plugins outhere that wrap around `yt-dlp` however they didn't fit my needs for all kinds of reasons.
+As my primary use case is integration with other applications like:
+- [[Bongo]]
+- [[Elfeed]]
+
+I created something tailored to my needs.
+
+The setup requires:
+- [[~/Downloads/Youtbue/by-id]]
+- [[~/Downloads/Youtbue/by-title]]
+
+#+begin_src emacs-lisp
+  (defconst my/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
+  (defvar my/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The path to the youtube download folder")
+  (defvar my/youtube-download-by-id-path "/home/iocanel/Downloads/Youtube/by-id/" "The path to the youtube by-id folder")
+  (defvar my/youtube-download-by-title-path "/home/iocanel/Downloads/Youtube/by-title/" "The path to the youtube by-title folder")
+  (defvar my/yt-dlp-buffer-format "*Async yt-dlp: %s*" "The format of the buffer name that will be used to async download the video")
+  (defvar my/youtube-rencode-format "mkv" "The format that the downloaded video will be encoded into")
+  (defvar my/youtube-max-video-quality "480" "The maximum video quality")
+  (defvar my/youtube-max-audio-quality "480" "The maximum audio quality")
+  (defvar my/youtube-title-alist '())
+#+end_src
+
+***** Functions
+#+begin_src emacs-lisp
+  (defun my/youtube-setup-p ()
+    "Checks if youtube has been setup."
+    (and (file-directory-p my/youtube-download-by-id-path) (file-directory-p my/youtube-download-by-title-path)
+         (not (null (executable-find "yt-dlp")))))
+
+  (defun my/youtube-url-p (url)
+    "Predicate that checks if URL points to youtube."
+    (if (stringp url) (string-prefix-p my/youtube-watch-url-prefix url) nil))
+
+  (defun my/youtube-by-id-path (video-id-or-url)
+    "Return the output path (by-id) for the specified youtube url."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url))) video-id-or-url))
+      (concat my/youtube-download-by-id-path video-id "." my/youtube-rencode-format)))
+
+  (defun my/youtube-by-title-path (video-id-or-url)
+    "Return the output path (by-title) for the specified youtube url."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url))) video-id-or-url)
+           (title (replace-regexp-in-string "[^[:alnum:]]-" "_" (my/youtube-get-title video-id))))
+      (concat my/youtube-download-by-title-path title "." my/youtube-rencode-format)))
+
+  (defun my/youtube-local-path (url)
+    "Return the output path for the specified youtube url."
+    (concat my/youtube-download-path
+            (substring url (length my/youtube-watch-url-prefix) (length url))))
+
+  (defun my/youtube-get-by-id-prefix (video-id-or-url)
+    "Return the prefix (by-id) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+           (url (if (my/youtube-url-p video-id-or-url) video-id-or-url (concat my/youtube-watch-url-prefix video-id)))
+           (output-template (concat my/youtube-download-by-id-path video-id)))
+      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s" url output-template)))))
+
+  (defun my/youtube-get-by-title-prefix (video-id-or-url)
+    "Return the prefix (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+           (url (if (my/youtube-url-p video-id-or-url) video-id-or-url (concat my/youtube-watch-url-prefix video-id)))
+           (output-template (concat my/youtube-download-by-title-path video-id)))
+      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s" url output-template)))))
+
+  (defun my/youtube-get-by-id-filename (video-id-or-url)
+    "Return the filename (by-id) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url)))
+      (concat my/youtube-download-by-id-path video-id "." my/youtube-rencode-format)))
+
+  (defun my/youtube-get-by-title-filename (video-id-or-url)
+    "Return the filename (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+           (title (replace-regexp-in-string "[^[:alnum:]]" "_" (my/youtube-get-title video-id))))
+      (concat my/youtube-download-by-title-path title "." my/youtube-rencode-format )))
+
+  (defun my/youtube-get-title (video-id-or-url)
+    "Return the filename of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
+    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+           (url (if (my/youtube-url-p video-id-or-url) video-id-or-url (concat my/youtube-watch-url-prefix video-id)))
+           (entry (assoc video-id my/youtube-title-alist))
+           (output-template (concat my/youtube-download-path video-id)))
+      (if entry
+          (cdr entry)
+        (progn
+          (let ((title (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-title -o %s" url output-template)))))
+            (setq my/youtube-title-alist (cons `(,video-id . ,title) my/youtube-title-alist))
+            title)))))
+
+  (defun my/youtube-download (video-id-or-url &optional callback)
+    "Download the youtube video from VIDEO-ID-OR-URL to a temporary file and return the path to it."
+    (interactive "P")
+    (when (not video-id-or-url)
+      (setq video-id-or-url (read-string "Enter a youtube video id or URL: ")))
+    (if (string-blank-p video-id-or-url)
+        (message "No video id or URL provided. Aborting")
+      (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+             (template (my/youtube-get-by-id-prefix video-id-or-url))
+             (output-buffer (generate-new-buffer (format my/yt-dlp-buffer-format video-id)))
+             (proc (progn
+                     (message "Downloading video into: %s" template)
+                     (async-shell-command (format "yt-dlp \"%s\" --no-part --hls-prefer-ffmpeg --recode-video %s -f 'bestvideo[height<=%s]+bestaudio/best[height<=%s]' -o %s" video-id-or-url my/youtube-rencode-format my/youtube-max-video-quality my/youtube-max-audio-quality template) output-buffer)
+                     (get-buffer-process output-buffer))))
+        (when callback (set-process-sentinel  proc callback))
+        template)))
+
+  (defun my/youtube-callback (video-id-or-url &optional func)
+    "Create a callback for the specified VIDEO-ID-OR-URL"
+    (lambda (p s) (when (memq (process-status p) `(exit signal))
+                    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
+                           (by-id-filename (my/youtube-get-by-id-filename video-id))
+                           (by-title-filename (my/youtube-get-by-title-filename video-id)))
+                      (message "Linking %s to %s" by-id-filename by-title-filename)
+                      (shell-command-to-string (format "ln -s %s %s" by-id-filename by-title-filename))
+                      (cond
+                       ((stringp func) (funcall (intern func) by-title-filename))
+                       ((symbolp func) (funcall func by-title-filename))
+                       (t "video downloaded and linked")))
+                    (shell-command-sentinel p s))))
+#+end_src
+***** COMMENT Burry yt-dlp buffer
+#+begin_src emacs-lisp
+  (setq display-buffer-alist (add-to-list 'display-buffer-alist (cons "\\*Async yt-dlp: .*\\*" (cons #'display-buffer-no-window nil))))
+#+end_src
+
+*** Bongo
+**** Package
+#+begin_src emacs-lisp
+  (use-package bongo
+    :ensure t
+    :init
+    (defvar my/bongo-yt-dlp-enabled t "Download videos using yt-dlp and play them as local files, instead of streaming them")
+    (setq bongo-mpv-initialization-period 1
+          popper-reference-buffers (add-to-list 'popper-reference-buffers  "\\*Bongo.*\\*")
+          display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(Bongo.*\\)\\*"
+                                                                    (display-buffer-in-side-window)
+                                                                    (window-height . 0.40)
+                                                                    (side . bottom)
+                                                                    (slot . 0))))
+    :config
+    (setq bongo-enabled-backends '(mpv)
+          bongo-backend-matchers '((mpv (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")))
+    (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
+    :custom
+    (bongo-default-directory "~/Documents/music")
+    (bongo-mplayer-extra-arguments '("-af" "scaletempo" "-vf" "scale"))
+    :commands (bongo bongo-playlist)
+    :general (:keymaps 'bongo-mode-map
+                       "C-x i" 'bongo-insert-file
+                       "C-x I" 'bongo-insert-special
+                       "C-x u" 'bongo-insert-uri
+                       "C-x e" 'bongo-append-enqueue
+                       "C-x h" 'bongo-switch-buffers))
+#+end_src
+
+**** Filename Mappings
+Bongo filename mampings
+Some podcasts do use redirects, that are not supported by all backends. In these cases we want to apply the redirects upfront.
+hacky solution
+#+begin_src emacs-lisp
+  (defvar my/bongo-filename-mapping-alist '(("http://dts.podtrac.com/redirect.mp3/feeds.soundcloud.com" . "https://feeds.soundcloud.com")))
+#+end_src
+**** Bluetooth
+Utilities to query bluetooth devices so that we pass the right arguemtns to player.
+Requires: https://www.nirsoft.net/utils/bluetoothcl.html
+On archlinux this is installed by:
+
+#+begin_src sh
+  sudo pacman -Sy bluez bluez-utils
+#+end_src
+
+#+begin_src emacs-lisp
+  (defun my/bluetooth-setup-p()
+    "Check if required blueetooth tools are available"
+    (not (null (executable-find "bluetoothcl"))))
+
+  (defun my/bluetooth-device-connected-p (device-id)
+    "Predicate that checks if bluetooth device with DEVICE-ID is currently connected"
+    (if (my/bluetooth-setup-p)
+        (not (= (length (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "bluetoothctl info %s | grep 'Connected: yes'" device-id)))) 0))
+      nil))
+
+  (defun my/get-bluetooth-audio-devices (&optional connected)
+    "Returns the the bluetooth audio devices that are available. Optional flag CONNECTED can filter out devices that are/aren't currently connected"
+    (if (my/bluetooth-setup-p)
+        (let ((device-ids (split-string (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "bluetoothctl paired-devices | cut -d ' ' -f2")) "\n")))
+          (if connected
+              (seq-filter 'my/bluetooth-device-connected-p device-ids)
+            device-ids)) nil))
+
+  (defadvice bongo-play-line (around bongo-play-line-around activate)
+    "Check if bluetooth is connected and use pulse audio driver."
+    (interactive)
+    (if (my/get-bluetooth-audio-devices t)
+        (let ((bongo-mplayer-audio-driver "pulse")) ad-do-it)
+      (let ((bongo-mplayer-audio-driver nil)) ad-do-it)))
+#+end_src
+**** Youtube callback
+
+A callback for yt-dlp (see [[Youtube DLP]])
+
+#+begin_src emacs-lisp
+  (defun my/bongo-start-callback (process signal)
+    "Callback to be called when a youtube video gets downloaded."
+    (when (memq (process-status process) '(exit signal))
+      (message "Video finished!")
+      (with-bongo-playlist-buffer
+       (when (not (bongo-playing-p)) (bongo-start/stop)))
+      (shell-command-sentinel process signal)))
+#+end_src
+**** Extras
+
+#+begin_src emacs-lisp
+  (defun my/apply-string-mappings (source mappings)
+    "Apply MAPPINGS to the SOURCE string"
+    (let ((result source))
+      (dolist (mapping mappings)
+        (let ((key (car mapping))
+              (value (cdr mapping)))
+          (setq result (replace-regexp-in-string (regexp-quote key) value result))))
+      result))
+
+  (defun my/bongo-enqueue-file (filename &rest ignored)
+    "Enqueue media from FILENAME to playlist."
+    (let ((f (my/apply-string-mappings filename my/bongo-filename-mapping-alist)))
+      (bongo-playlist)
+      (goto-char (point-max))
+      (bongo-insert-file filename)
+      (goto-char (point-max))
+      (search-backward filename)))
+
+  (defun my/bongo-enqueue-file-and-play (filename &rest ignored)
+    "Enqueue media from FILENAME to playlist."
+    (my/bongo-enqueue-file filename)
+    (when (not (bongo-playing-p)) (bongo-start/stop)))
+
+  (defun my/bongo-play-file (filename &rest ignored)
+    "Play media from FILENAME."
+    (require 'bongo)
+    (with-temp-bongo-playlist-buffer
+     (bongo-insert-file filename)
+     (backward-char)
+     (bongo-play-line))) 
+
+  (defun my/bongo-play (file-or-url)
+    "Play the FILE-OR-URL in the bongo player."
+    (interactive "P")
+    (when (not file-or-url)
+      (setq file-or-url (read-string "Enter media File or URL: ")))
+    (if (not (string-blank-p file-or-url))
+        (if (and my/bongo-yt-dlp-enabled (my/youtube-url-p file-or-url))
+            (let* ((video-id (substring file-or-url (length my/youtube-watch-url-prefix) (length file-or-url)))
+                   (template (concat my/youtube-download-path video-id))
+                   (existing-file-name (my/youtube-get-by-title-filename file-or-url))
+                   (output-path (my/youtube-local-path file-or-url)))
+              (if (and existing-file-name (file-exists-p existing-file-name))
+                  (progn 
+                    (message "Youtube video:%s already exists, playing ..." existing-file-name)
+                    (my/bongo-play-file existing-file-name))
+                (progn
+                  (message "Youtube video file:%s does not exist, donwloading ..." output-path)
+                  (my/youtube-download file-or-url (my/youtube-callback video-id 'my/bongo-play-file)))))
+          (my/bongo-play-file file-or-url))
+      (message "No File or URL! Aborting playback.")))
+
+  (defun my/bongo-play-url-at-point ()
+    "Play the url at point in the bonog player."
+    (interactive)
+    (let* ((url (or (thing-at-point-url-at-point) (my/org-link-url-at-point))))
+      (when url (my/bongo-play url))))
+
+  (defun my/org-link-url-at-point ()
+    "Fetch the url of the org link at point."
+    (let* ((org-link (org-element-context))
+           (raw-link (org-element-property :raw-link org-link)))
+      raw-link))
+#+end_src
+**** Capturing
+
+#+begin_src emacs-lisp
+  (defun my/bongo-currently-playing-elapsed-time()
+    (interactive)
+    "Log the elapsed time"
+    (format "%s" (bongo-elapsed-time)))
+
+  (defun my/bongo-currently-playing-url ()
+    (interactive)
+    "Return the file name of the file currently playing."
+    (with-bongo-playlist-buffer
+     (cdr (assoc 'file-name (cdr bongo-player)))))
+
+  (defun my/bongo-play-org-entry-at-point ()
+    "Play the media file that corresponds to the currently selected org entry."
+    (interactive)
+    "Play the play the media file at point."
+    (let* ((p (point))
+           (url  (org-entry-get nil "URL"))
+           (time (org-entry-get nil "ELAPSED")))
+      (with-bongo-playlist-buffer
+       (bongo-insert-uri url)
+       (bongo-previous-object)
+       (bongo-play)
+       (when (stringp time) (bongo-seek-to (string-to-number time))))))
+#+end_src
+
+**** Advices
+#+begin_src emacs-lisp
+  (defadvice shr-browse-url (around shr-browse-url-around (&optional external mouse-event new-window) activate)
+    "Open mp3 URLs using bongo"
+    (let ((url (get-text-property (point) 'shr-url)))
+      (if (s-suffix? ".mp3" url)
+          (my/bongo-enqueue-file url)
+        ad-do-it))) 
+#+end_src
+
+*** EWW
+**** Package
+#+begin_src emacs-lisp
+  (use-feature eww
+    :defer t
+    :commands  (eww)
+    :init
+    (defvar my/eww-ignore-tag-nav-enabled t "Ignore navigation tag")
+    :config
+    (defun my/eww-ignore-tag-nav (dom)
+      "Ignores navigation tag."
+      (when (not my/eww-ignore-tag-nav-enabled) (shr-generic dom)))
+    (add-to-list 'shr-external-rendering-functions '(nav . my/eww-ignore-tag-nav)))
+#+end_src
+**** Ace Link 
+#+begin_src emacs-lisp
+  (use-package ace-link
+    :after eww
+    :defer t
+    :commands (eww-back-url eww-forward-url ace-link-eww)
+    :general  (:keyamps eww-mode-map
+                        "<" 'eww-back-url
+                        ">" 'eww-forward-url
+                        "C-c f" 'ace-link-eww))
+#+end_src
+
+*** Elfeed
+**** Package
+#+begin_src emacs-lisp
+  (defvar my/elfeed-presenter-alist nil "An alist that contains predicates and presenter fucntions")
+  (use-package elfeed
+    :after (popper)
+    :init
+    (defvar my/elfeed-external-mode-map (make-sparse-keymap))
+    (define-minor-mode my/elfeed-external-mode "A minor mode to add external modes `showing` elfeed entry content" (use-local-map my/elfeed-external-mode-map))
+    :config
+    (setq elfeed-show-entry-switch #'pop-to-buffer
+          elfeed-search-remain-on-entry t
+          popper-reference-buffers (add-to-list 'popper-reference-buffers  "\\*elfeed-entry\\*")
+          display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(elfeed-entry\\)\\*"
+                                                                    (display-buffer-in-side-window)
+                                                                    (window-height . 0.40)
+                                                                    (side . bottom)
+                                                                    (slot . 0))))
+    (evil-set-initial-state 'elfeed-search-mode 'emacs) 
+    (evil-set-initial-state 'elfeed-show-mode 'emacs) 
+
+    (defun my/elfeed-next-entry (&optional visited)
+      (interactive)
+      "Moves to next elfeed entry."
+      (select-window (get-buffer-window "*elfeed-search*") 'mark-for-redisplay)
+      (when elfeed-search-remain-on-entry
+        (elfeed-goto-line (+ (current-line) elfeed-search--offset 1)))
+      (let ((current (elfeed-search-selected :ignore-region)))
+        (elfeed-untag current 'unread)
+        (elfeed-search-update-entry current)
+        (elfeed-search-show-entry current))
+      (select-window (previous-window)))
+
+    (defun my/elfeed-prev-entry (&optional visited)
+      (interactive)
+      "Moves to next elfeed entry."
+      (select-window (get-buffer-window "*elfeed-search*"))
+      (if elfeed-search-remain-on-entry
+          (elfeed-goto-line (- (current-line) (- elfeed-search--offset 1)))
+        (elfeed-goto-line (- (current-line) (abs (- 2 elfeed-search--offset)))))
+      (redisplay)
+      (let ((current (elfeed-search-selected :ignore-region)))
+        (elfeed-untag current 'unread)
+        (elfeed-search-update-entry current)
+        (elfeed-search-show-entry current))
+      (select-window (previous-window)))
+
+    (defun my/elfeed-show-dwim ()
+      "Open feed in the most fitting mode."
+      (interactive)
+      (cl-loop for (predicate . presenter) in my/elfeed-presenter-alist
+             when (funcall predicate elfeed-show-entry)
+             return (funcall presenter elfeed-show-entry)))
+
+  (defun my/elfeed-open-in-dwim (entry)
+    "Open feed in the most fitting mode."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+      (cl-loop for (predicate . presenter) in my/elfeed-presenter-alist
+             when (funcall predicate entry)
+             return (funcall presenter entry)))
+
+    :general (general-define-key :keymaps 'elfeed-search-mode-map
+                                 "j" 'next-line
+                                 "k" 'previous-line
+                                 "d" 'my/elfeed-open-in-dwim
+                                 "<tab>" 'my/elfeed-next-entry
+                                 "C-<tab>" 'my/elfeed-prev-entry
+                                 "E" 'my/elfeed-enqueue-media-url
+                                 "Q" 'my/elfeed-save-and-quit
+                                 "r" 'my/elfeed-mark-as-read
+                                 "R" 'my/elfeed-mark-all-as-read)
+    (general-define-key :keymaps 'elfeed-show-mode-map
+                        "<tab>" 'my/elfeed-next-entry
+                        "C-<tab>" 'my/elfeed-prev-entry
+                        "d" 'my/elfeed-show-dwim)
+    (general-define-key :keymaps 'my/elfeed-external-mode-map
+                        "<tab>" 'my/elfeed-next-entry
+                        "C-<tab>" 'my/elfeed-prev-entry))
+#+end_src
+
+**** Org
+#+begin_src emacs-lisp
+  (use-package elfeed-org
+    :after (elfeed org)
+    :custom (rmh-elfeed-org-files '("~/Documents/org/blogs.org"))
+    :config (elfeed-org))
+#+end_src
+
+**** Mark
+#+begin_src emacs-lisp
+  (defun my/elfeed-mark-as-read ()
+    "Mark all items in the elfeed buffer as read."
+    (interactive)
+    (my/mark-line 0)
+    (elfeed-search-untag-all-unread))
+
+  (defun my/elfeed-mark-all-as-read ()
+    "Mark all items in the elfeed buffer as read."
+    (interactive)
+    (mark-whole-buffer)
+    (elfeed-search-untag-all-unread))
+
+  (defun my/elfeed-mark-current-as-read ()
+    (interactive)
+    "Mark current entry as read."
+    (let ((current (elfeed-search-selected :ignore-region)))
+      (elfeed-untag current 'unread)
+      (elfeed-search-update-entry current)
+      (elfeed-db-save-safe)))
+#+end_src
+**** Youtube
+#+begin_src emacs-lisp
+    (defun my/elfeed-start-bongo-callback (process signal)
+      "Callback to be called when a youtube video gets downloaded."
+      (when (memq (process-status process) '(exit signal))
+        (message "Video download finished!")
+        (when (not (bongo-playing-p)) (bongo-start/stop)))
+      (shell-command-sentinel process signal))
+
+  (defun my/elfeed-entry-youtube-p (entry)
+    "Predicate that checks if ENTRY points to youtube."
+      (let ((link (elfeed-entry-link entry))
+            (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
+      (or (my/youtube-url-p link) (my/youtube-url-p enclosure))))
+
+    (defun my/elfeed-open-in-youtube (entry)
+      "Display the currently selected item in youtube."
+      (interactive (list (elfeed-search-selected :ignore-region)))
+      (require 'elfeed-show)
+      ;;(my/elfeed-mark-current-as-read)
+      (when (elfeed-entry-p entry)
+        (let* ((url (elfeed-entry-link entry)))
+          (my/bongo-play url)
+          (my/elfeed-external-mode 1))))
+
+    (defun my/elfeed-show-in-youtube ()
+      "Display the currently shown item in youtube."
+      (interactive)
+      (require 'elfeed-show)
+      (when (elfeed-entry-p elfeed-show-entry)
+        (let* ((link (elfeed-entry-link elfeed-show-entry))
+               (download-path (my/bongo-enqueue-file link)))
+          (my/bongo-enqueue-file-and-play (concat "file://" download-path)))))
+#+end_src
+***** Elfeed DWIM Registration
+#+begin_src emacs-lisp
+  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-youtube-p . my/elfeed-open-in-youtube)))
+#+end_src
+**** Bongo
+#+begin_src emacs-lisp
+  (defun my/mp3-url-p (url)
+    "Predicate that checks if URL points to mp3."
+    (if (stringp url) (string-match-p "\\.mp3(?.*)*$" url) nil))
+
+  (defun my/normalize-mp3-url (url)
+    "Strips query params from mp3 url"
+    (let ((index (string-match-p ".mp3?" url)))
+      (if index (concat (substring url 0 index) ".mp3")
+        url)))
+
+  (defun my/elfeed-start-bongo-callback (process signal)
+    "Callback to be called when a youtube video gets downloaded."
+    (when (memq (process-status process) '(exit signal))
+      (message "Video download finished!")
+      (when (not (bongo-playing-p)) (bongo-start/stop)))
+    (shell-command-sentinel process signal))
+
+  (defun my/elfeed-enqueue-media-url (entry)
+    "Enqueue media url for the specified ENTRY."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    (when (elfeed-entry-p entry)
+      (let ((link (elfeed-entry-link entry))
+            (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
+        (cond
+         ((my/mp3-url-p link) (my/bongo-enqueue-file-and-play (my/normalize-mp3-url link)))
+         ((my/mp3-url-p enclosure) (my/bongo-enqueue-file-and-play (my/normalize-mp3-url enclosure)))))))
+
+      (defun my/elfeed-entry-bongo-p (entry)
+        "Predicate that checks if ENTRY points to media file (mp3 etc)."
+        (let ((link (elfeed-entry-link entry))
+              (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
+          (or (my/mp3-url-p link) (my/mp3-url-p enclosure))))
+
+      (defun my/elfeed-open-in-bongo (entry)
+        "Display the currently selected item in bongo."
+        (interactive (list (elfeed-search-selected :ignore-region)))
+        (require 'elfeed-show)
+        (my/elfeed-mark-current-as-read)
+        (when (elfeed-entry-p entry)
+          (let ((link (elfeed-entry-link entry)))
+            ;;(when (derived-mode-p 'elfeed-search-mode) (my/split-and-follow-vertically))
+            (my/elfeed-enqueue-media-url entry))))
+
+      (defun my/elfeed-show-in-bongo ()
+        "Display the currently shown item in bongo."
+        (interactive)
+        (require 'elfeed-show)
+        (when (elfeed-entry-p elfeed-show-entry)
+          (let ((link (elfeed-entry-link elfeed-show-entry)))
+            (my/elfeed-enqueue-media-url elfeed-show-entry))))
+#+end_src
+***** Elfeed DWIM Registration
+#+begin_src emacs-lisp
+  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-bongo-p . my/elfeed-open-in-bongo)))
+#+end_src
+
+**** Browser
+***** EWW
+#+begin_src emacs-lisp
+  (defun my/elfeed-open-in-eww (entry)
+    "Display the currently selected item in eww."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    (my/elfeed-mark-current-as-read)
+    (when (elfeed-entry-p entry)
+      (let ((link (elfeed-entry-link entry)))
+        (when (derived-mode-p 'elfeed-search-mode) (my/split-and-follow-vertically))
+        (eww link)
+        (rename-buffer (format "*elfeed eww %s*" link)))))
+
+  (defun my/elfeed-show-in-eww ()
+    "Display the currently shown item in xwidget-webkit-browser."
+    (interactive)
+    (require 'elfeed-show)
+    (when (elfeed-entry-p elfeed-show-entry)
+      (let ((link (elfeed-entry-link elfeed-show-entry)))
+        (eww link)
+        (rename-buffer (format "*elfeed eww %s*" link)))))
+#+end_src
+***** Xwidget Webkit Broweser
+#+begin_src emacs-lisp
+  (defun my/elfeed-open-in-xwidget-webkit-browser (entry)
+    "Display the currently selected item in xwidget-webkit-browser."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    (my/elfeed-mark-current-as-read)
+    (when (elfeed-entry-p entry)
+      (let ((link (elfeed-entry-link entry)))
+        (when (derived-mode-p 'elfeed-search-mode) (my/split-and-follow-vertically))
+        (xwidget-webkit-browse-url link))))
+
+  (defun my/elfeed-show-in-xwidget-webkit-browser ()
+    "Display the currently shown item in xwidget-webkit-browser."
+    (interactive)
+    (require 'elfeed-show)
+    (when (elfeed-entry-p elfeed-show-entry)
+      (let ((link (elfeed-entry-link elfeed-show-entry)))
+        (xwidget-webkit-browse-url link))))
 #+end_src
 ** Additional Functions
 *** Troubleshooting
 **** Display Modes
 #+begin_src emacs-lisp
-(defun my/echo-major-mode ()
-  "Display the current major mode in a message."
-  (interactive)
-  (message "Major mode: %s" major-mode))
+  (defun my/echo-major-mode ()
+    "Display the current major mode in a message."
+    (interactive)
+    (message "Major mode: %s" major-mode))
 #+end_src
 **** Display Org Src Mode
 #+begin_src emacs-lisp
@@ -2075,12 +2695,12 @@ Using `cond` it should be simply to easily change priorites.
 **** Macro
 #+begin_src emacs-lisp
   (defmacro alternatives! (name type &rest alts)
-      `(defun ,(intern (concat "my/" (symbol-name name))) (&rest args)
-         (interactive ,(when type type))
-         (cond ,@(mapcar (lambda (arg)
-                           `((fboundp (quote ,(intern (symbol-name arg)))) (if args (,arg args) (,arg))))
-                           alts)
-               (t (if args (,name args) (,name))))))
+    `(defun ,(intern (concat "my/" (symbol-name name))) (&rest args)
+       (interactive ,(when type type))
+       (cond ,@(mapcar (lambda (arg)
+                         `((fboundp (quote ,(intern (symbol-name arg)))) (if args (,arg args) (,arg))))
+                       alts)
+             (t (if args (,name args) (,name))))))
 #+end_src
 
 **** Buffers list ::function::
@@ -2102,70 +2722,76 @@ Using `cond` it should be simply to easily change priorites.
 *** Binding definition
 Let's configure here all our keybindings to keep things tidy!
 #+begin_src emacs-lisp
-      (leader-key!
-        ;; 
-        ;; Open
-        ;;
-        "o" '(:ignore t :wk "open")
-        "of" '(find-file :wk "open file")
-        "ob" '(consult-buffer :wk "open buffer")
-        "oc" '(vterm :wk "open console")
-        "or" '(recentf :wk "open buffer")
-        "op" '(project-switch-project :wk "open project")
-        "SPC" '(project-find-file :wk "open project file")
+  (leader-key!
+    ;; 
+    ;; Open
+    ;;
+    "o" '(:ignore t :wk "open")
+    "of" '(find-file :wk "open file")
+    "ob" '(consult-buffer :wk "open buffer")
+    "oc" '(vterm :wk "open console")
+    "or" '(recentf :wk "open buffer")
+    "op" '(project-switch-project :wk "open project")
+    "SPC" '(project-find-file :wk "open project file")
 
-        ;; 
-        ;; Buffer
-        ;;
-        "b" '(:ignore t :wk "buffer")
-        "bb" '(switch-to-buffer :wk "buffer switch")
-        "bk" '(kill-this-buffer :wk "buffer kill")
-        "bn" '(next-buffer :wk "next buffer")
-        "bp" '(previous-buffer :wk "previous buffer")
-        "br" '(revert-buffer :wk "peload buffer")
-        "bs" '(consult-line :wk "buffer search")
+    ;; 
+    ;; Buffer
+    ;;
+    "b" '(:ignore t :wk "buffer")
+    "bb" '(switch-to-buffer :wk "buffer switch")
+    "bk" '(kill-this-buffer :wk "buffer kill")
+    "bn" '(next-buffer :wk "next buffer")
+    "bp" '(previous-buffer :wk "previous buffer")
+    "br" '(revert-buffer :wk "peload buffer")
+    "bs" '(consult-line :wk "buffer search")
 
+    ;;
+    ;; Magit
+    ;;
+    "g" '(:ignore t :wk "git")
+    "gg" '(magit :wk "magit")
+    "gt" '(git-timemachine :wk "git time machine")
 
-        ;;
-        ;; Search
-        ;;
-        "s" '(:ignore t :wk "search")
-        "sg" '(consult-git-grep :wk "search git grep")
-        "sr" '(consult-ripgrep :wk "search rip grep")
-        "sb" '(consult-line :wk "search buffer")
-        "so" '(:ignore t :wk "search org")
-        "sor" '(org-raom-node-find :wk "search org-roam")
+    ;;
+    ;; Search
+    ;;
+    "s" '(:ignore t :wk "search")
+    "sg" '(consult-git-grep :wk "search git grep")
+    "sr" '(consult-ripgrep :wk "search rip grep")
+    "sb" '(consult-line :wk "search buffer")
+    "so" '(:ignore t :wk "search org")
+    "sor" '(org-raom-node-find :wk "search org-roam")
 
-        ;;
-        ;; Insert
-        ;;
-        "i" '(:ignore t :wk "insert")
-        "io" '(:ignore t :wk "insert org")
-        "ior" '(org-roam-node-insert :wk "insert org-roam")
+    ;;
+    ;; Insert
+    ;;
+    "i" '(:ignore t :wk "insert")
+    "io" '(:ignore t :wk "insert org")
+    "ior" '(org-roam-node-insert :wk "insert org-roam")
 
-        ;;
-        ;; LSP
-        ;;
-        "l" '(:ignore t :wk "lsp")
-        "lgd" '(xref-find-definitions :wk "lsp goto definition")
-        "lgr" '(xref-find-references :wk "lsp find references")
-        "ltd" '(eglot-find-typeDefinition :wk "lsp type definition")
-        "lca" '(eglot-code-actions :wk "lsp go back")
-        "lb" '(xref-go-back :wk "lsp go back")
-        "lf" '(xref-go-forward :wk "lsp go forward")
+    ;;
+    ;; LSP
+    ;;
+    "l" '(:ignore t :wk "lsp")
+    "lgd" '(xref-find-definitions :wk "lsp goto definition")
+    "lgr" '(xref-find-references :wk "lsp find references")
+    "ltd" '(eglot-find-typeDefinition :wk "lsp type definition")
+    "lca" '(eglot-code-actions :wk "lsp go back")
+    "lb" '(xref-go-back :wk "lsp go back")
+    "lf" '(xref-go-forward :wk "lsp go forward")
 
-        ;;
-        ;; Window
-        ;;
-        "w" '(:ignore t :wk "window")
-        "ws" '(:ignore t :wk "window split")
-        "wsh" '(split-window-horizontally :wk "window split horizontally")
-        "wsv" '(split-window-vertically :wk "window split vertically")
-        "wp" '(ace-select-window :wk "window pick")
-        "wn" '(other-window :wk "window next")
-        "wo" '(other-window :wk "window other")
-        "wk" '(ace-delete-window :wk "window kill")
-        "wu" '(winner-undo :wk "window undo")
-        "wr" '(winner-redo :wk "window redo")
-  )
+    ;;
+    ;; Window
+    ;;
+    "w" '(:ignore t :wk "window")
+    "ws" '(:ignore t :wk "window split")
+    "wsh" '(split-window-horizontally :wk "window split horizontally")
+    "wsv" '(split-window-vertically :wk "window split vertically")
+    "wp" '(ace-select-window :wk "window pick")
+    "wn" '(other-window :wk "window next")
+    "wo" '(other-window :wk "window other")
+    "wk" '(ace-delete-window :wk "window kill")
+    "wu" '(winner-undo :wk "window undo")
+    "wr" '(winner-redo :wk "window redo")
+    )
 #+end_src
