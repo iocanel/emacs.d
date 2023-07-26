@@ -263,6 +263,20 @@ Persists history over Emacs restarts
                                                                       (window-height . 0.40)
                                                                       (side . bottom)
                                                                       (slot . 0)))))
+
+
+    (defadvice switch-to-buffer (around my/switch-to-buffer-pop-to-buffer (buffer-or-name &optional norecord force-same-window))
+      (pop-to-buffer buffer-or-name :norecord norecord))
+
+    (defmacro my/use-pop-to-buffer (&rest body)
+      "Intercept switch-to-buffer and delegate to pop-to-buffer while evaluating BODY."
+      (declare (indent 1) (debug t))
+      `(let ()
+        (ad-enable-advice 'switch-to-buffer 'around 'my/switch-to-buffer-pop-to-buffer)
+        (ad-activate 'switch-to-buffer)
+        ,@body
+        (ad-disable-advice 'switch-to-buffer 'around 'my/switch-to-buffer-pop-to-buffer)
+        (ad-activate 'switch-to-buffer)))
     ;;
     ;; The command below is used to kill popup buffers.
     ;; The idea is that the function will bind to `q` and 
@@ -2192,34 +2206,88 @@ The setup requires:
   (setq display-buffer-alist (add-to-list 'display-buffer-alist (cons "\\*Async yt-dlp: .*\\*" (cons #'display-buffer-no-window nil))))
 #+end_src
 
+*** Xwidget
+#+begin_src emacs-lisp
+  (use-feature xwidget-webkit
+    :after popper
+    :config
+    :commands (xwidget-webkit-browse-url)
+    (setq popper-reference-buffers (add-to-list 'popper-reference-buffers  "\\*xwidget-webkit.*\\*")))
+#+end_src
+**** COMMENT xwwp
+This is not working as expected so let's disable for now.
+#+begin_src emacs-lisp
+  (use-package xwwp
+    :after xwidget-webkit
+    :elpaca (xwwp :host github :repo "canatella/xwwp" :branch "consult-support")
+    :custom
+    (xwwp-follow-link-completion-system 'consult)
+    :commands (xwwp-follow-link)
+    :general (:keybindings xwidget-webkit-mode-map
+                ("v" . xwwp-follow-link)))
+#+end_src
+*** EWW
+**** Package
+#+begin_src emacs-lisp
+  (use-feature eww
+    :defer t
+    :commands  (eww)
+    :init
+    (defvar my/eww-ignore-tag-nav-enabled t "Ignore navigation tag")
+    :config
+    (defun my/eww-ignore-tag-nav (dom)
+      "Ignores navigation tag."
+      (when (not my/eww-ignore-tag-nav-enabled) (shr-generic dom)))
+    (add-to-list 'shr-external-rendering-functions '(nav . my/eww-ignore-tag-nav)))
+#+end_src
+**** Ace Link 
+#+begin_src emacs-lisp
+  (use-package ace-link
+    :after eww
+    :defer t
+    :commands (eww-back-url eww-forward-url ace-link-eww)
+    :general  (:keyamps eww-mode-map
+                        "<" 'eww-back-url
+                        ">" 'eww-forward-url
+                        "C-c f" 'ace-link-eww))
+#+end_src
+
 *** Bongo
 **** Package
 #+begin_src emacs-lisp
-  (use-package bongo
-    :ensure t
-    :init
-    (defvar my/bongo-yt-dlp-enabled t "Download videos using yt-dlp and play them as local files, instead of streaming them")
-    (setq bongo-mpv-initialization-period 1
-          popper-reference-buffers (add-to-list 'popper-reference-buffers  "\\*Bongo.*\\*")
-          display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(Bongo.*\\)\\*"
-                                                                    (display-buffer-in-side-window)
-                                                                    (window-height . 0.40)
-                                                                    (side . bottom)
-                                                                    (slot . 0))))
-    :config
-    (setq bongo-enabled-backends '(mpv)
-          bongo-backend-matchers '((mpv (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")))
-    (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
-    :custom
-    (bongo-default-directory "~/Documents/music")
-    (bongo-mplayer-extra-arguments '("-af" "scaletempo" "-vf" "scale"))
-    :commands (bongo bongo-playlist)
-    :general (:keymaps 'bongo-mode-map
-                       "C-x i" 'bongo-insert-file
-                       "C-x I" 'bongo-insert-special
-                       "C-x u" 'bongo-insert-uri
-                       "C-x e" 'bongo-append-enqueue
-                       "C-x h" 'bongo-switch-buffers))
+    (use-package bongo
+      :ensure t
+      :init
+      (defvar my/bongo-yt-dlp-enabled t "Download videos using yt-dlp and play them as local files, instead of streaming them")
+      (setq bongo-mpv-initialization-period 1
+            popper-reference-buffers (add-to-list 'popper-reference-buffers  "\\*Bongo.*\\*")
+            display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(Bongo.*\\)\\*"
+                                                                      (display-buffer-in-side-window)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 1))))
+      :config
+      (setq bongo-enabled-backends '(mpv)
+            bongo-backend-matchers '((mpv (local-file "file:" "http:" "https:" "ftp:") "ogg" "flac" "mp3" "mka" "wav" "wma" "mpg" "mpeg" "vob" "avi" "ogm" "mp4" "mkv" "mov" "asf" "wmv" "rm" "rmvb" "ts")))
+      (evil-set-initial-state 'bongo-mode 'emacs) ;; Let's disable evil mode for bongo
+      :custom
+      (bongo-default-directory "~/Documents/music")
+      (bongo-mplayer-extra-arguments '("-af" "scaletempo" "-vf" "scale"))
+
+      :commands (bongo bongo-playlist)
+      :general (:keymaps 'bongo-mode-map
+                         "i" 'bongo-insert-file
+                         "I" 'bongo-insert-special
+                         "u" 'bongo-insert-uri
+                         "e" 'bongo-append-enqueue
+                         "b" 'bongo-switch-buffers
+                         "x" 'bongo-delete-line
+                         "j" 'bongo-next-object-line
+                         "J" 'bongo-next-header-line
+                         "k" 'bongo-previous-object-line
+                         "K" 'bongo-previous-header-line
+                         "p" 'bongo-play-line
+                         "s" 'bongo-stop))
 #+end_src
 
 **** Filename Mappings
@@ -2380,32 +2448,6 @@ A callback for yt-dlp (see [[Youtube DLP]])
       (if (s-suffix? ".mp3" url)
           (my/bongo-enqueue-file url)
         ad-do-it))) 
-#+end_src
-
-*** EWW
-**** Package
-#+begin_src emacs-lisp
-  (use-feature eww
-    :defer t
-    :commands  (eww)
-    :init
-    (defvar my/eww-ignore-tag-nav-enabled t "Ignore navigation tag")
-    :config
-    (defun my/eww-ignore-tag-nav (dom)
-      "Ignores navigation tag."
-      (when (not my/eww-ignore-tag-nav-enabled) (shr-generic dom)))
-    (add-to-list 'shr-external-rendering-functions '(nav . my/eww-ignore-tag-nav)))
-#+end_src
-**** Ace Link 
-#+begin_src emacs-lisp
-  (use-package ace-link
-    :after eww
-    :defer t
-    :commands (eww-back-url eww-forward-url ace-link-eww)
-    :general  (:keyamps eww-mode-map
-                        "<" 'eww-back-url
-                        ">" 'eww-forward-url
-                        "C-c f" 'ace-link-eww))
 #+end_src
 
 *** Elfeed
@@ -2616,6 +2658,17 @@ A callback for yt-dlp (see [[Youtube DLP]])
 #+end_src
 
 **** Browser
+***** Common 
+#+begin_src emacs-lisp
+  (defun my/elfeed-entry-www-p (entry)
+        "Predicate that checks if ENTRY points to http(s)."
+        (let ((link (elfeed-entry-link entry))
+              (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
+          (and (s-starts-with-p "http" link t)
+               ;; Either youtube is not enabled or its not a youtube buffer
+               (or (not (fboundp 'my/elfeed-entry-youtube-p)) (not (my/elfeed-entry-youtube-p entry))))))
+#+end_src
+
 ***** EWW
 #+begin_src emacs-lisp
   (defun my/elfeed-open-in-eww (entry)
@@ -2625,12 +2678,11 @@ A callback for yt-dlp (see [[Youtube DLP]])
     (my/elfeed-mark-current-as-read)
     (when (elfeed-entry-p entry)
       (let ((link (elfeed-entry-link entry)))
-        (when (derived-mode-p 'elfeed-search-mode) (my/split-and-follow-vertically))
         (eww link)
         (rename-buffer (format "*elfeed eww %s*" link)))))
 
   (defun my/elfeed-show-in-eww ()
-    "Display the currently shown item in xwidget-webkit-browser."
+    "Display the currently shown item in eww."
     (interactive)
     (require 'elfeed-show)
     (when (elfeed-entry-p elfeed-show-entry)
@@ -2638,7 +2690,8 @@ A callback for yt-dlp (see [[Youtube DLP]])
         (eww link)
         (rename-buffer (format "*elfeed eww %s*" link)))))
 #+end_src
-***** Xwidget Webkit Broweser
+
+***** Xwidget Webkit Browser
 #+begin_src emacs-lisp
   (defun my/elfeed-open-in-xwidget-webkit-browser (entry)
     "Display the currently selected item in xwidget-webkit-browser."
@@ -2647,8 +2700,8 @@ A callback for yt-dlp (see [[Youtube DLP]])
     (my/elfeed-mark-current-as-read)
     (when (elfeed-entry-p entry)
       (let ((link (elfeed-entry-link entry)))
-        (when (derived-mode-p 'elfeed-search-mode) (my/split-and-follow-vertically))
-        (xwidget-webkit-browse-url link))))
+        (my/use-pop-to-buffer
+          (xwidget-webkit-browse-url link)))))
 
   (defun my/elfeed-show-in-xwidget-webkit-browser ()
     "Display the currently shown item in xwidget-webkit-browser."
@@ -2656,7 +2709,12 @@ A callback for yt-dlp (see [[Youtube DLP]])
     (require 'elfeed-show)
     (when (elfeed-entry-p elfeed-show-entry)
       (let ((link (elfeed-entry-link elfeed-show-entry)))
-        (xwidget-webkit-browse-url link))))
+        (my/use-pop-to-buffer
+          (xwidget-webkit-browse-url link)))))
+#+end_src
+****** Elfeed DWIM Registration
+#+begin_src emacs-lisp
+  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-www-p . my/elfeed-open-in-xwidget-webkit-browser)))
 #+end_src
 ** Additional Functions
 *** Troubleshooting
@@ -2723,6 +2781,22 @@ Using `cond` it should be simply to easily change priorites.
 Let's configure here all our keybindings to keep things tidy!
 #+begin_src emacs-lisp
   (leader-key!
+
+    ;;
+    ;; Apps
+    ;;
+
+    "a" '(:ignore t :wk "apps")
+    ;; Bongo
+    "ab" '(:ignore t :wk "bongo")
+    "abb" '(bongo t :wk "bongo show")
+    "abs" '(bongo-start/stop t :wk "bongo start/stop")
+    "abi" '(bongo-insert-special t :wk "bongo insert")
+    "abn" '(bongo-next t :wk "bongo next")
+    "abp" '(bongo-next t :wk "bongo previous")
+    "ae" '(elfeed t :wk "elfeed")
+
+  
     ;; 
     ;; Open
     ;;
