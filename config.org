@@ -1651,39 +1651,61 @@ So, I rolled my own.
 *** Java
 **** Java Mode
 #+begin_src emacs-lisp
-  (use-feature java-mode
-    :after eglot
-    :init
-    (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
+    (use-feature java-mode
+      :after eglot
+      :init
+      (defvar lsp-java-workspace-dir (expand-file-name "lsp/workspace/data" my/local-dir) "LSP data directory for Java")
 
-    (defun my/java-setup-project-workspace ()
-      "Setup a local java workspace for the current project."
-      (interactive)
-      (let* ((project-root (project-root (project-current)))
-             (file-path (concat project-root ".dir-locals.el"))
-             (content '((java-mode
-                         (eval . (progn
-                                   (setq lsp-session-file (concat (project-root (project-current)) ".lsp/session")
-                                         lsp-java-workspace-dir (concat (project-root (project-current)) ".lsp/workspace/data")
-                                         lsp-java-workspace-cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))))))))
-        (with-temp-buffer
-          (setq-local enable-local-variables :all)
-          (insert (format "%s\n" (pp-to-string content)))
-          (write-file file-path))))
+      (defvar java-home "/home/iocanel/.sdkman/candidates/java/current" "The home dir of the jdk")
+      (defvar java-bin (format "%s/bin/java" java-home) "The path to the java binary")
+      (defvar jdtls-home "/opt/eclipse.jdt.ls" "The path to eclipse.jdt.ls installation")
 
-    (defun my/java-clear-project-workspace ()
-      "Setup a local java workspace for the current project."
-      (interactive)
-      (let ((directory lsp-java-workspace-dir))
-        (when (file-exists-p directory)
-          (delete-directory directory 'recursive))
-        (make-directory directory t)))
-    :hook (((java-mode java-ts-mode) . eglot-ensure))
-    :config
-    (add-to-list 'eglot-server-programs
-                 `(java-mode "jdtls"
-                             "-configuration" "/opt/eclipse.jdt.ls/config_linux"
-                             "-data" ,lsp-java-workspace-dir)))
+      (defvar jdtls-config (format "%s/config_linux" jdtls-home) "The path to eclipse.jdt.ls installation")
+      (defvar jdtls-jar (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "find %s/plugins -iname '*launcher_*.jar'" jdtls-home)) "The jar file that starts jdtls"))
+      (defvar jdtls-command-list `(,java-bin
+                                   "-jar"
+                                   ,jdtls-jar
+                                   "-data"
+                                   ,lsp-java-workspace-dir
+                                   "-configuration"
+                                   ,jdtls-config
+                                   "-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms2G" "-Xverify:none") "Command to start jdtls")
+
+      (defun my/jdtls-start-command (arg)
+        "Creates the command to start jdtls"
+        `(,java-bin "-jar" ,jdtls-jar "-data" ,lsp-java-workspace-dir "-configuration" ,jdtls-config "-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms2G" "-Xverify:none"))
+
+      (defun my/java-setup-project-workspace ()
+        "Setup a local java workspace for the current project."
+        (interactive)
+        (let* ((project-root (project-root (project-current)))
+               (file-path (concat project-root ".dir-locals.el"))
+               (data-dir (concat (project-root (project-current)) ".lsp/workspace/data"))
+               (cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))
+               (content '((java-mode
+                           (eval . (progn
+                                     (setq lsp-session-file (concat (project-root (project-current)) ".lsp/session")
+                                           lsp-java-workspace-dir (concat (project-root (project-current)) ".lsp/workspace/data")
+                                           lsp-java-workspace-cache-dir (concat (project-root (project-current)) ".lsp/workspace/cache"))
+                                           (add-to-list 'eglot-server-programs (append '(java-mode) (my/jdtls-start-command nil)))))))))
+
+          (make-directory data-dir t)
+          (make-directory cache-dir t)
+          (with-temp-buffer
+            (setq-local enable-local-variables :all)
+            (insert (format "%s\n" (pp-to-string content)))
+            (write-file file-path))))
+
+      (defun my/java-clear-project-workspace ()
+        "Setup a local java workspace for the current project."
+        (interactive)
+        (let ((directory lsp-java-workspace-dir))
+          (when (file-exists-p directory)
+            (delete-directory directory 'recursive))
+          (make-directory directory t)))
+
+      (add-to-list 'eglot-server-programs (append '(java-mode) (my/jdtls-start-command nil)))
+      :hook (((java-mode java-ts-mode) . eglot-ensure)))
 #+end_src
 *** UML
 **** PlantUML
