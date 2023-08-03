@@ -2268,6 +2268,34 @@ The following code is a shell script that takes care of installing eclipse.jdt.l
     (advice-add 'eglot-java--init :after (lambda() (remove-hook 'project-find-functions  #'eglot-java--project-try)))
     :hook (java-mode . eglot-java-mode))
 #+end_src
+**** Example of project workspace configuration
+The file below can be added to `.dir-locals.el` at the project roto in order to tune the Eclipse JDT Language Server workspace.
+
+#+begin_example emacs-lisp
+((java-mode
+  . ((eglot-workspace-configuration
+      .
+       (:java
+        (:autobuild (:enabled :json-false)
+         :import  (:maven (:enabled t :downloadSources t)
+                   :exlusions ["**/node_modules/**"
+                                "**/.metadata/**"
+                                "**/archetype-resources/**"
+                                "**/META-INF/maven/**"]
+                   ;; end of import
+                   )
+         :configuration (:updateBuildConfiguration "automatic"
+                         :checkProjectSettingsExclusions t
+                         :project (:importHint t
+                                   :importOnFirstTimeStartup "automatic")
+                         :server (:launchMode "LightWeight")
+                         )
+                         ;; end of configuration
+
+         )
+         ;; end of java
+        )))))
+#+end_example
 *** UML
 **** PlantUML
 ***** Package
