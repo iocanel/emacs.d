@@ -8,6 +8,11 @@
 ;; Defer garbage collection further back in the startup process
 (setq gc-cons-threshold most-positive-fixnum)
 
+(add-hook 'emacs-startup-hook (lambda ()
+                                "Restore defalut values after startup."
+                                (setq gc-cons-threshold 536870912 ;; 512mb
+                                      gc-cons-percentage 0.1)))
+
 ;; In Emacs 27+, package initialization occurs before `user-init-file' is
 ;; loaded, but after `early-init-file'. Doom handles package initialization, so
 ;; we must prevent Emacs from doing it early!
