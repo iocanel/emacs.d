@@ -472,19 +472,28 @@ The default font is good enough so let's not define additonal configuration here
 #+end_src
 ** IDE 
 *** Eglot
+**** Package
 #+begin_src emacs-lisp
-      (use-feature eglot
-        :custom
-        (eglot-report-progress nil)
-        :init
-        (setq eglot-sync-connect 3
-              eglot-connect-timeout 30
-              eglot-autoshutdown t
-              eglot-send-changes-idle-time 0.5
-              ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
-              ;;      its popup rule causes eglot to steal focus too often.
-              eglot-auto-display-help-buffer nil))
+  (use-feature eglot
+    :custom
+    (eglot-report-progress nil)
+    :init
+    (setq eglot-sync-connect 3
+          eglot-connect-timeout 30
+          eglot-autoshutdown t
+          eglot-send-changes-idle-time 0.5
+          eglot-events-buffer-size 0
+          eglot-report-progress nil
+          eglot-ignored-server-capabilities '(:documentHighlightProvider
+                                              :foldingRangeProvider)
+          ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
+          ;;      its popup rule causes eglot to steal focus too often.
+          eglot-auto-display-help-buffer nil))
 
+#+end_src
+**** consult-eglot
+#+begin_src emacs-lisp
+  (use-package consult-eglot)
 #+end_src
 *** Tree Sitter
 **** Package
