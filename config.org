@@ -2741,10 +2741,10 @@ These icons can also run on terminal so let's optionally enable them.
     :config
     (which-key-mode)
     :custom
-    (which-key-side-window-location 'bottom)
+    (which-key-side-window-location 'top)
     (which-key-sort-order 'which-key-key-order-alpha)
-    (which-key-side-window-max-width 0.33)
-    (which-key-idle-delay 0.05)
+    (which-key-side-window-max-width 0.33) 
+    (which-key-idle-delay 2)
     :diminish which-key-mode)
 #+end_src
 *** IDEE
