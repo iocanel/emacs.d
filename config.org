@@ -1,12 +1,54 @@
 
 * EMACS
+
+This is possibly my 5th attempt to configuring Emacs. My previous attempts were around:
+
+- [[https://www.spacemacs.org/][Spacemacs]]
+- Own configuration based on [[https://github.com/jwiegley/use-package][use-package]] in literal mode.
+- Own configuration based on [[https://github.com/radian-software/straight.el][straight.el]] in pure elisp mode.
+- [[https://doomemacs.org/][Doom Emacs]]
+
+  I decided to move back to literate style configuration for the following reasons:
+  - Distros like [[https://www.spacemacs.org/][Spacemacs]] and [[https://doomemacs.org/][Doom Emacs]] are easy to start, but using but really hard to tune and troubleshoot.
+  - I am a `one file` kind of a person (vs multiple files scatered around).
+  - The literate style allows you to create and define more than `elsip`.
+    - Shell scripts
+    - Tangle other configuration files
+    - Examples
+  - Reads better
+  - Easiest to move things around.
+
+  The pillars of this build are the following:
+  - [[Elpaca]]
+    - It's supposed to be and I agree:
+      - More stable
+      - Faster on fresh environment
+      - Faster on day to day use
+  - [[https://github.com/noctuid/general.el][general.el]]
+    - It's the first time I feel I am in total control of my bindings
+    - Works great with [[Elpaca]] / [[use-package]]
+  - [[Eglot]]
+    - It's part of Emacs 29.x
+    - It's supposed to perform better that [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]]
+  - [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Projects.html][projet.el]]
+    - It's part of Emacs
+  - [[Vertico]] [[Consult]] [[Marginalia]] [[Embark]]
+    - It's the most modern approach to completion.
+
 ** Bootstrap
 *** Lexical binding
+
+[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Lexical-Binding.html][Lexical Binding]]
+
 #+begin_src emacs-lisp
   ;;; -*- lexical-binding: t; -*-
 #+end_src
 ** Core
 *** Settings
+
+One of the things like using [[https://doomemacs.org/][Doom Emacs]] is that all non-versioned files (caches, worskapces, runtime data) went under `.local`.
+Let's do the same and define `my/local-dir` that we'll use all across the board.
+
 #+begin_src emacs-lisp
   (defvar my/local-dir (concat user-emacs-directory ".local/") "Local state directory")
 #+end_src
@@ -15,7 +57,10 @@
   (setq warning-minimum-level :emergency)
 #+end_src
 *** Package Manager
-**** Installer 
+**** Elpaca
+Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el
+Github: https://github.com/progfolio/elpaca
+***** Installer 
 #+begin_src emacs-lisp
   (defvar elpaca-installer-version 0.5)
   (defvar elpaca-directory (expand-file-name "elpaca/" my/local-dir))
@@ -55,7 +100,7 @@
   (elpaca `(,@elpaca-order))
 #+end_src
 
-**** use-package
+***** use-package
 Configure elpace `use-package` integration so that the rest of the configuration just uses `use-package`.
 #+begin_src emacs-lisp
   (elpaca elpaca-use-package
@@ -68,7 +113,7 @@ Configure elpace `use-package` integration so that the rest of the configuration
   (elpaca-wait)
 #+end_src
 
-**** use-feature
+***** use-feature
 There are cases where we want to use `use-package` with internal packages.
 In these cases `:elpaca nil` needs to be set. Let's create a macro `use-feature`
 that combines `use-package` with `:elpaca nil` nicely.
