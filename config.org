@@ -2809,8 +2809,6 @@ The setup requires:
   (defvar my/youtube-download-by-title-path "/home/iocanel/Downloads/Youtube/by-title/" "The path to the youtube by-title folder")
   (defvar my/yt-dlp-buffer-format "*Async yt-dlp: %s*" "The format of the buffer name that will be used to async download the video")
   (defvar my/youtube-rencode-format "mkv" "The format that the downloaded video will be encoded into")
-  (defvar my/youtube-max-video-quality "480" "The maximum video quality")
-  (defvar my/youtube-max-audio-quality "480" "The maximum audio quality")
   (defvar my/youtube-title-alist '())
 #+end_src
 
@@ -2860,11 +2858,10 @@ The setup requires:
     (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url)))
       (concat my/youtube-download-by-id-path video-id "." my/youtube-rencode-format)))
 
-  (defun my/youtube-get-by-title-filename (video-id-or-url)
-    "Return the filename (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
-    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
-           (title (replace-regexp-in-string "[^[:alnum:]]" "_" (my/youtube-get-title video-id))))
-      (concat my/youtube-download-by-title-path title "." my/youtube-rencode-format )))
+  (defun my/youtube-get-by-title-filename (title)
+    "Return the filename (by-title) of the youtube video that corresponds to the specified TITLE."
+    (let* ((title-clean (replace-regexp-in-string "[^[:alnum:]]" "_" title)))
+      (concat my/youtube-download-by-title-path title-clean "." my/youtube-rencode-format )))
 
   (defun my/youtube-get-title (video-id-or-url)
     "Return the filename of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
@@ -2891,17 +2888,17 @@ The setup requires:
              (output-buffer (generate-new-buffer (format my/yt-dlp-buffer-format video-id)))
              (proc (progn
                      (message "Downloading video into: %s" template)
-                     (async-shell-command (format "yt-dlp \"%s\" --no-part --hls-prefer-ffmpeg --recode-video %s -f 'bestvideo[height<=%s]+bestaudio/best[height<=%s]' -o %s" video-id-or-url my/youtube-rencode-format my/youtube-max-video-quality my/youtube-max-audio-quality template) output-buffer)
+                     (async-shell-command (format "yt-dlp \"%s\" --no-part --hls-prefer-ffmpeg --recode-video %s -f 'bv*+ba/b' -o %s" video-id-or-url my/youtube-rencode-format template) output-buffer)
                      (get-buffer-process output-buffer))))
         (when callback (set-process-sentinel  proc callback))
         template)))
 
-  (defun my/youtube-callback (video-id-or-url &optional func)
+  (defun my/youtube-callback (video-id-or-url title &optional func)
     "Create a callback for the specified VIDEO-ID-OR-URL"
     (lambda (p s) (when (memq (process-status p) `(exit signal))
                     (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
                            (by-id-filename (my/youtube-get-by-id-filename video-id))
-                           (by-title-filename (my/youtube-get-by-title-filename video-id)))
+                           (by-title-filename (my/youtube-get-by-title-filename title)))
                       (message "Linking %s to %s" by-id-filename by-title-filename)
                       (shell-command-to-string (format "ln -s %s %s" by-id-filename by-title-filename))
                       (cond
@@ -3088,7 +3085,7 @@ A callback for yt-dlp (see [[Youtube DLP]])
      (backward-char)
      (bongo-play-line))) 
 
-  (defun my/bongo-play (file-or-url)
+  (defun my/bongo-play (file-or-url &optional title)
     "Play the FILE-OR-URL in the bongo player."
     (interactive "P")
     (when (not file-or-url)
@@ -3096,6 +3093,7 @@ A callback for yt-dlp (see [[Youtube DLP]])
     (if (not (string-blank-p file-or-url))
         (if (and my/bongo-yt-dlp-enabled (my/youtube-url-p file-or-url))
             (let* ((video-id (substring file-or-url (length my/youtube-watch-url-prefix) (length file-or-url)))
+                   (title (or title (my/youtube-get-title video-id)))
                    (template (concat my/youtube-download-path video-id))
                    (existing-file-name (my/youtube-get-by-title-filename file-or-url))
                    (output-path (my/youtube-local-path file-or-url)))
@@ -3105,7 +3103,7 @@ A callback for yt-dlp (see [[Youtube DLP]])
                     (my/bongo-play-file existing-file-name))
                 (progn
                   (message "Youtube video file:%s does not exist, donwloading ..." output-path)
-                  (my/youtube-download file-or-url (my/youtube-callback video-id 'my/bongo-play-file)))))
+                  (my/youtube-download file-or-url (my/youtube-callback video-id title 'my/bongo-play-file)))))
           (my/bongo-play-file file-or-url))
       (message "No File or URL! Aborting playback.")))
 
@@ -3290,8 +3288,9 @@ A callback for yt-dlp (see [[Youtube DLP]])
       (require 'elfeed-show)
       ;;(my/elfeed-mark-current-as-read)
       (when (elfeed-entry-p entry)
-        (let* ((url (elfeed-entry-link entry)))
-          (my/bongo-play url)
+        (let* ((url (elfeed-entry-link entry))
+               (title (elfeed-entry-title entry)))
+          (my/bongo-play url title)
           (my/elfeed-external-mode 1))))
 
     (defun my/elfeed-show-in-youtube ()
