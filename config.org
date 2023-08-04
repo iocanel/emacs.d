@@ -2125,7 +2125,7 @@ The configuration is based on: https://github.com/joaotavora/eglot/discussions/1
           },
           {
             "name": "JavaSE-17",
-            "path": "/home/iocanel/.sdkman/candidates/java/17.0.7-tem"
+            "path": "/home/iocanel/.sdkman/candidates/java/17.0.7-tem",
             "default": true
           },
           {
