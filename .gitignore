@@ -1,5 +1,5 @@
-eln-cache
-elpaca
-auto-save-list
-
-config.el
+*
+!.gitignore
+!init.el
+!early-init.el
+!config.org
