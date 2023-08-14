@@ -2794,11 +2794,15 @@ These icons can also run on terminal so let's optionally enable them.
 #+end_src
 *** IDEE
 #+begin_src emacs-lisp
-  (use-package idee :elpaca (idee :host github :repo "iocanel/idee" :files (:defaults "*.el"))
+  (use-package idee :elpaca (idee :host github :repo "iocanel/idee" :branch "next" :files (:defaults "*.el"))
+    :custom (idee/resources-dir (file-name-concat my/local-dir "idee"))
+    :init
+    (idee/init)
+    (idee/java-init)
     :config
     (require 'idee-maven)
     (require 'idee-vterm)
-    :commands (idee/maven-hydra/body))
+    :commands (idee/init idee/maven-hydra/body))
 
 #+end_src
 ** Term
