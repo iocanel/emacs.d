@@ -2715,16 +2715,66 @@ These icons can also run on terminal so let's optionally enable them.
 *** At point completion
 **** Company
 #+begin_src emacs-lisp
-  (use-package company
-    :defer t
+    (use-package company
+      :defer t
+      :config
+      (setq company-tooltip-limit 20                      ; bigger popup window
+            company-idle-delay 0.2                        ; decrease delay before autocompletion popup shows
+            company-echo-delay 0                          ; remove annoying blinking
+            company-begin-commands '(self-insert-command) ; start autocompletion only after typing
+            company-tooltip-align-annotations t           ; aligns annotation to the right hand side
+            company-dabbrev-downcase nil                  ; don't downcase
+            company-require-match nil
+            company-minimum-prefix-length 0
+            company-frontends '(company-pseudo-tooltip-frontend company-preview-frontend))
+      :general
+      :general (:keymaps 'company-mode-map
+                "C-c ."  'company-complete)
+      :hook (prog-mode . company-mode))
+#+end_src
+**** Codeium
+#+begin_src emacs-lisp
+  (defun my/codeium-enable()
+    "Enable codeium"
+    (interactive)
+    (add-to-list 'completion-at-point-functions #'codeium-completion-at-point))
+
+  (use-package codeium
+    :elpaca (codeium :host github :repo "Exafunction/codeium.el")
+    :hook (prog-mode . my/codeium-enable)
     :config
-    (setq company-tooltip-limit 20                      ; bigger popup window
-          company-idle-delay 0.2                        ; decrease delay before autocompletion popup shows
-          company-echo-delay 0                          ; remove annoying blinking
-          company-begin-commands '(self-insert-command) ; start autocompletion only after typing
-          company-tooltip-align-annotations t           ; aligns annotation to the right hand side
-          company-dabbrev-downcase nil)                 ; don't downcase
-    :hook (prog-mode . company-mode))
+    (setq codeium/metadata/api_key
+           (replace-regexp-in-string "\n\\'" ""
+                                     (shell-command-to-string "pass show services/codeium/iocanel/api-key-emacs")))
+
+    (setq use-dialog-box nil) ;; do not use popup boxes
+    ;; get codeium status in the modeline
+    (setq codeium-mode-line-enable
+          (lambda (api) (not (memq api '(CancelRequest Heartbeat AcceptCompletion)))))
+    (add-to-list 'mode-line-format '(:eval (car-safe codeium-mode-line)) t)
+    ;; alternatively for a more extensive mode-line
+    ;; (add-to-list 'mode-line-format '(-50 "" codeium-mode-line) t)
+
+    ;; use M-x codeium-diagnose to see apis/fields that would be sent to the local language server
+    (setq codeium-api-enabled
+          (lambda (api)
+            (memq api '(GetCompletions Heartbeat CancelRequest GetAuthToken RegisterUser auth-redirect AcceptCompletion))))
+    ;; you can also set a config for a single buffer like this:
+    ;; (add-hook 'python-mode-hook
+    ;;     (lambda ()
+    ;;         (setq-local codeium/editor_options/tab_size 4)))
+
+    ;; You can overwrite all the codeium configs!
+    ;; for example, we recommend limiting the string sent to codeium for better performance
+    (defun my-codeium/document/text ()
+      (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (min (+ (point) 1000) (point-max))))
+    ;; if you change the text, you should also change the cursor_offset
+    ;; warning: this is measured by UTF-8 encoded bytes
+    (defun my-codeium/document/cursor_offset ()
+      (codeium-utf8-byte-length
+       (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (point))))
+    (setq codeium/document/text 'my-codeium/document/text)
+    (setq codeium/document/cursor_offset 'my-codeium/document/cursor_offset))
 #+end_src
 **** Smart Tab
 #+begin_src emacs-lisp
