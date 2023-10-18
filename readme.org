@@ -130,6 +130,17 @@ Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
        ,@args))
 #+end_src
 
+**** COMMENT MELPA
+Sometimes I want to use package-xxx commands and query MELPA.
+Since I don't do that often I expect this to be commented out most of the time.
+
+#+begin_src emacs-lisp
+  (require 'package)
+  (add-to-list 'package-archives
+    '("MELPA" .
+      "http://melpa.org/packages/"))
+  (package-initialize)
+#+end_src
 *** File Manager
 **** Dired
 #+begin_src emacs-lisp
@@ -882,8 +893,6 @@ If completion does not work just call `org-roam-db-sync`.
                                                                                                      )))))
 
 #+end_src
-
-#+RESULTS:
 
 ***** Multi directory setup
 To have multiple different org roam directories, just add the following `.dir-local.el` file in the root of each roam root.
@@ -2733,7 +2742,6 @@ These icons can also run on terminal so let's optionally enable them.
             company-require-match nil
             company-minimum-prefix-length 0
             company-frontends '(company-pseudo-tooltip-frontend company-preview-frontend))
-      :general
       :general (:keymaps 'company-mode-map
                 "C-c ."  'company-complete)
       :hook (prog-mode . company-mode))
@@ -3228,13 +3236,13 @@ A callback for yt-dlp (see [[Youtube DLP]])
 
 #+begin_src emacs-lisp
   (defun my/bongo-currently-playing-elapsed-time()
-    (interactive)
     "Log the elapsed time"
+    (interactive)
     (format "%s" (bongo-elapsed-time)))
 
   (defun my/bongo-currently-playing-url ()
-    (interactive)
     "Return the file name of the file currently playing."
+    (interactive)
     (with-bongo-playlist-buffer
      (cdr (assoc 'file-name (cdr bongo-player)))))
 
