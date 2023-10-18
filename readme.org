@@ -2546,10 +2546,12 @@ This section contains snippets to ease the development of planuml diagrams.
     (setq-default TeX-master nil))
 #+end_src
 **** Preview pane
+#+begin_src emacs-lisp
 (use-package latex-preview-pane
   :defer t
   :commands  (latex-preview-pane-mode)
   :hook ((latex-mode . latex-preview-pane-mode)))
+#+end_src
 ** Completion
 *** COMMENT Helm
 **** Package
