@@ -2512,7 +2512,8 @@ This section contains snippets to ease the development of planuml diagrams.
 *** Latex
 **** auctex
 #+begin_src emacs-lisp
-  (use-package auctex
+
+(use-package auctex
     :defer t
     :commands (latex-mode plain-tex-mode)
     :mode "\\.tex\\'"
