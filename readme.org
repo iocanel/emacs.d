@@ -867,6 +867,9 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
     :custom (org-roam-completion-everywhere t)
     (org-roam-directory "~/Documents/org/roam"))
 #+end_src
+***** Troubleshooting
+****** Completion not working ?
+If completion does not work just call `org-roam-db-sync`.
 ***** Capture templates
 #+begin_src emacs-lisp
   (setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}\n") :unnarrowed t)))
