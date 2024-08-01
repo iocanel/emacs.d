@@ -775,6 +775,13 @@ We have two challenges to solve:
 
 #+end_src
 
+**** Tempo
+Use org-tempo in order to enable the good old <s to create src blocks.
+
+#+begin_src emacs-lisp
+  (require 'org-tempo)
+#+end_src
+
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
