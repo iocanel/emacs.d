@@ -199,19 +199,26 @@ Since I don't do that often I expect this to be commented out most of the time.
 **** Package
 
 #+begin_src emacs-lisp
-  (use-package evil
-    :custom
-    (evil-symbol-word-search t "search by symbol with * and #.")
-    (evil-shift-width 2 "Same behavior for vim's '<' and '>' commands")
-    (evil-want-C-i-jump t)
-    (evil-complete-all-buffers nil)
-    (evil-want-keybinding nil)
-    (evil-want-integration t)
-    (evil-search-module 'evil-search "use vim-like search instead of 'isearch")
-    (evil-undo-system 'undo-redo)
-    :config
-    (setq evil-want-fine-undo nil) ;; Fix issue with undo granularity (See: https://github.com/syl20bnr/spacemacs/issues/2675)
-    (evil-mode))
+    (use-package evil
+      :custom
+      (evil-symbol-word-search t "search by symbol with * and #.")
+      (evil-shift-width 2 "Same behavior for vim's '<' and '>' commands")
+      (evil-want-C-i-jump t)
+      (evil-complete-all-buffers nil)
+      (evil-want-keybinding nil)
+      (evil-want-integration t)
+      (evil-search-module 'evil-search "use vim-like search instead of 'isearch")
+      (evil-undo-system 'undo-redo)
+      :config
+      (setq evil-want-fine-undo nil) ;; Fix issue with undo granularity (See: https://github.com/syl20bnr/spacemacs/issues/2675)
+      (evil-mode)
+    ;; Remap < and > keys to self-insert in insert and normal states globally
+    (evil-define-key 'insert global-map
+      (kbd "<") 'self-insert-command
+      (kbd ">") 'self-insert-command)
+    (evil-define-key 'normal global-map
+      (kbd "<") 'self-insert-command
+      (kbd ">") 'self-insert-command))
 #+end_src
 **** Evil Collection
 
