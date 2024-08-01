@@ -503,9 +503,9 @@ The configured font needs to support the unicode characters that are used by the
 The default font is good enough so let's not define additonal configuration here.
 
 #+begin_src emaacs-lips
-  (push '(font . "Source Code Pro") default-frame-alist)
-(set-face-font 'default "Source Code Pro")
-(set-face-font 'variable-pitch "DejaVu Sans")
+  (push '(font . "JetBrains Mono Nerd Font") default-frame-alist)
+(set-face-font 'default "JetBrains Mono Nerd Font")
+(set-face-font 'variable-pitch "JetBrains Mono Nerd Font")
 (copy-face 'default 'fixed-pitch)
 #+end_src
 
@@ -547,6 +547,13 @@ The default font is good enough so let's not define additonal configuration here
           ;;      its popup rule causes eglot to steal focus too often.
           eglot-auto-display-help-buffer nil))
 
+#+end_src
+**** booster
+#+begin_src emacs-lisp
+  (use-package eglot-booster
+          :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+          :after eglot
+          :config	(eglot-booster-mode))
 #+end_src
 **** consult-eglot
 #+begin_src emacs-lisp
@@ -870,6 +877,11 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
       (when (get-buffer-window (current-buffer) t) (apply fn args))))
 #+end_src
 
+**** Org Babel
+***** Ditaa
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages 'org-babel-load-languages '((ditaa . t)))
+#+end_src
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
@@ -877,6 +889,22 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
     :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
     :custom (org-roam-completion-everywhere t)
     (org-roam-directory "~/Documents/org/roam"))
+#+end_src
+***** UI
+#+begin_src emacs-lisp
+(use-package websocket :after org-roam)
+
+(use-package org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
 #+end_src
 ***** Troubleshooting
 ****** Completion not working ?
@@ -1738,27 +1766,39 @@ So, I rolled my own.
 
 **** Org Tree Slide
 #+begin_src emacs-lisp
-  ;;;###autoload
-  (defun +org-present-hide-blocks-h ()
-    "Hide org #+ constructs."
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
-        (org-flag-region (match-beginning 1)
-                         (match-end 0)
-                         org-tree-slide-mode
-                         'block))))
+  (use-package org-tree-slide
+    :defer t
+    :commands (org-tree-slide-mode)
+    :hook ((org-tree-slide-mode . org-display-inline-images))
+    :general (
+    :states '(normal)
+    :keymaps 'org-tree-slide-mode-map
+                        "e" 'org-tree-slide-mode
+                        "C-i" 'org-display-inline-images
+                        "<left>" 'org-tree-slide-move-previous-tree
+                        "<right>" 'org-tree-slide-move-next-tree))
 
-  ;;;###autoload
-  (defun +org-present-hide-leading-stars-h ()
-    "Hide leading stars in headings."
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^\\(\\*+\\)" nil t)
-        (org-flag-region (match-beginning 1)
-                         (match-end 1)
-                         org-tree-slide-mode
-                         'headline))))
+    ;;;###autoload
+    (defun +org-present-hide-blocks-h ()
+      "Hide org #+ constructs."
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
+          (org-flag-region (match-beginning 1)
+                           (match-end 0)
+                           org-tree-slide-mode
+                           'block))))
+
+    ;;;###autoload
+    (defun +org-present-hide-leading-stars-h ()
+      "Hide leading stars in headings."
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^\\(\\*+\\)" nil t)
+          (org-flag-region (match-beginning 1)
+                           (match-end 1)
+                           org-tree-slide-mode
+                           'headline))))
 #+end_src
 
 **** Org Asciidoc
@@ -1819,6 +1859,12 @@ So, I rolled my own.
     (my/org-hugo-set-export-file-name))
 #+end_src
 
+**** Org Excalidraw
+#+begin_src emacs-lisp
+  (use-package org-excalidraw
+  :elpaca (org-excalidraw :host github :repo "wdavew/org-excalidraw")
+  :custom (org-excalidraw-directory "~/Documents/org/excalidraw"))
+#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
@@ -2522,38 +2568,72 @@ This section contains snippets to ease the development of planuml diagrams.
 **** auctex
 #+begin_src emacs-lisp
 
-(use-package auctex
-    :defer t
-    :commands (latex-mode plain-tex-mode)
-    :mode "\\.tex\\'"
-    :custom (org-latex-classes '(("beamer" "\\documentclass[presentation]{beamer}"
-                                  ("\\section{%s}" . "\\section*{%s}")
-                                  ("\\subsection{%s}" . "\\subsection*{%s}")
-                                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-                                 ("article" "\\documentclass[11pt]{article}"
-                                  ("\\section{%s}" . "\\section*{%s}")
-                                  ("\\subsection{%s}" . "\\subsection*{%s}")
-                                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                                  ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                                  ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
-                                 ("report" "\\documentclass[11pt]{report}"
-                                  ("\\part{%s}" . "\\part*{%s}")
-                                  ("\\chapter{%s}" . "\\chapter*{%s}")
-                                  ("\\section{%s}" . "\\section*{%s}")
-                                  ("\\subsection{%s}" . "\\subsection*{%s}")
-                                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-                                 ("book" "\\documentclass[11pt]{book}"
-                                  ("\\part{%s}" . "\\part*{%s}")
-                                  ("\\chapter{%s}" . "\\chapter*{%s}")
-                                  ("\\section{%s}" . "\\section*{%s}")
-                                  ("\\subsection{%s}" . "\\subsection*{%s}")
-                                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
-    :config
-    (setq TeX-auto-save t
-          TeX-parse-self t
-          TeX-save-query nil
-          TeX-PDF-mode t)
-    (setq-default TeX-master nil))
+  (use-package auctex
+      :defer t
+      :commands (latex-mode plain-tex-mode)
+      :mode "\\.tex\\'"
+      :custom (org-latex-classes '(("beamer" "\\documentclass[presentation]{beamer}"
+                                    ("\\section{%s}" . "\\section*{%s}")
+                                    ("\\subsection{%s}" . "\\subsection*{%s}")
+                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+                                   ("article" "\\documentclass[11pt]{article}"
+                                    ("\\section{%s}" . "\\section*{%s}")
+                                    ("\\subsection{%s}" . "\\subsection*{%s}")
+                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                                    ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                                    ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+                                   ("report" "\\documentclass[11pt]{report}"
+                                    ("\\part{%s}" . "\\part*{%s}")
+                                    ("\\chapter{%s}" . "\\chapter*{%s}")
+                                    ("\\section{%s}" . "\\section*{%s}")
+                                    ("\\subsection{%s}" . "\\subsection*{%s}")
+                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+                                   ("book" "\\documentclass[11pt]{book}"
+                                    ("\\part{%s}" . "\\part*{%s}")
+                                    ("\\chapter{%s}" . "\\chapter*{%s}")
+                                    ("\\section{%s}" . "\\section*{%s}")
+                                    ("\\subsection{%s}" . "\\subsection*{%s}")
+                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")))
+                                    ("altacv" "\\documentclass[10pt,a4paper,ragged2e,withhyper]{altacv}
+  % Change the page layout if you need to
+  \\geometry{left=1.25cm,right=1.25cm,top=1.5cm,bottom=1.5cm,columnsep=1.2cm}
+
+  % Use roboto and lato for fonts
+  \\renewcommand{\\familydefault}{\\sfdefault}
+
+  % Change the colours if you want to
+  \\definecolor{SlateGrey}{HTML}{2E2E2E}
+  \\definecolor{LightGrey}{HTML}{666666}
+  \\definecolor{DarkPastelRed}{HTML}{450808}
+  \\definecolor{PastelRed}{HTML}{8F0D0D}
+  \\definecolor{GoldenEarth}{HTML}{E7D192}
+  \\colorlet{name}{black}
+  \\colorlet{tagline}{PastelRed}
+  \\colorlet{heading}{DarkPastelRed}
+  \\colorlet{headingrule}{GoldenEarth}
+  \\colorlet{subheading}{PastelRed}
+  \\colorlet{accent}{PastelRed}
+  \\colorlet{emphasis}{SlateGrey}
+  \\colorlet{body}{LightGrey}
+
+  % Change some fonts, if necessary
+  \\renewcommand{\\namefont}{\\Huge\\rmfamily\\bfseries}
+  \\renewcommand{\\personalinfofont}{\\footnotesize}
+  \\renewcommand{\\cvsectionfont}{\\LARGE\\rmfamily\\bfseries}
+  \\renewcommand{\\cvsubsectionfont}{\\large\\bfseries}
+
+  % Change the bullets for itemize and rating marker
+  % for \cvskill if you want to
+  \\renewcommand{\\itemmarker}{{\\small\\textbullet}}
+  \\renewcommand{\\ratingmarker}{\\faCircle}
+  "
+                 ("\\cvsection{%s}" . "\\cvsection*{%s}")))
+      :config
+      (setq TeX-auto-save t
+            TeX-parse-self t
+            TeX-save-query nil
+            TeX-PDF-mode t)
+      (setq-default TeX-master nil))
 #+end_src
 **** Preview pane
 #+begin_src emacs-lisp
@@ -2561,6 +2641,30 @@ This section contains snippets to ease the development of planuml diagrams.
   :defer t
   :commands  (latex-preview-pane-mode)
   :hook ((latex-mode . latex-preview-pane-mode)))
+#+end_src
+**** Org Latex
+Inspired by https://www.aidanscannell.com/post/org-mode-resume/
+#+begin_src emacs-lisp
+    ;; code here will run after the package is loaded
+    (setq org-latex-pdf-process
+          '("pdflatex -interaction nonstopmode -output-directory %o %f"
+            "bibtex %b"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"))
+    (setq org-latex-with-hyperref nil) ;; stop org adding hypersetup{author..} to latex export
+    ;; (setq org-latex-prefer-user-labels t)
+
+    ;; deleted unwanted file extensions after latexMK
+    (setq org-latex-logfiles-extensions
+          (quote ("lof" "lot" "tex~" "aux" "idx" "log" "out" "toc" "nav" "snm" "vrb" "dvi" "fdb_latexmk" "blg" "brf" "fls" "entoc" "ps" "spl" "bbl" "xmpi" "run.xml" "bcf" "acn" "acr" "alg" "glg" "gls" "ist")))
+
+
+
+#+end_src
+*** Pdf Tools
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+    :init (pdf-loader-install))
 #+end_src
 ** Completion
 *** COMMENT Helm
@@ -2812,6 +2916,10 @@ These icons can also run on terminal so let's optionally enable them.
 *** Git
 **** Magit
 #+begin_src emacs-lisp
+(use-package transient)
+#+end_src
+
+#+begin_src emacs-lisp
   (use-package magit
     :defer t
     :after (general)
@@ -2838,6 +2946,7 @@ These icons can also run on terminal so let's optionally enable them.
 #+end_src
 **** Code review
 #+begin_src emacs-lisp
+  (use-package closql :elpaca (closql :host github :repo "magit/closql" :tag "v1.2.1")) 
   (use-package code-review
     :commands (code-review-at-point))
 #+end_src
@@ -2859,7 +2968,8 @@ These icons can also run on terminal so let's optionally enable them.
 *** IDEE
 #+begin_src emacs-lisp
   (use-package idee :elpaca (idee :host github :repo "iocanel/idee" :branch "next" :files (:defaults "*.el"))
-    :custom (idee/resources-dir (file-name-concat my/local-dir "idee"))
+    :custom ((idee/resources-dir (file-name-concat my/local-dir "idee"))
+             (idee/source-dir  (file-name-concat my/local-dir "elpaca/repos/idee")))
     :init
     (idee/init)
     (idee/java-init)
@@ -3537,6 +3647,15 @@ A callback for yt-dlp (see [[Youtube DLP]])
 #+begin_src emacs-lisp
   (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-www-p . my/elfeed-open-in-xwidget-webkit-browser)))
 #+end_src
+** AI
+*** ChatGPT
+**** gptel
+#+begin_src emacs-lisp
+  (use-package gptel
+    :elpaca (gptel :host github :repo "karthink/gptel")
+    :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key"))))
+#+end_src
+
 ** Additional Functions
 *** Troubleshooting
 **** Display Modes
