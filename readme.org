@@ -849,13 +849,13 @@ I am currently trying it out but it feel less flaky than before.
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
-  (setq org-agenda-files (append
-                          '("~/Documents/org/quickmarks.org"
-                            "~/Documents/org/github.org"
-                            "~/Documents/org/habits.org"
-                            "~/Documents/org/nutrition.org"
-                            "~/Documents/org/roam/Inbox.org")
-                          (directory-files-recursively "~/Documents/org/jira" "\.org$")))
+ (setq org-agenda-files (append
+                         '("~/Documents/org/quickmarks.org"
+                           "~/Documents/org/github.org"
+                           "~/Documents/org/habits.org"
+                           "~/Documents/org/nutrition.org"
+                           "~/Documents/org/roam/Inbox.org")
+                         (directory-files-recursively "~/Documents/org/jira" "\.org$")))
 #+end_src
 ***** Functions
 
