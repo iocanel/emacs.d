@@ -4023,7 +4023,22 @@ A callback for yt-dlp (see [[Youtube DLP]])
     :elpaca (gptel :host github :repo "karthink/gptel")
     :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key"))))
 #+end_src
+** System administration
+*** Nix mode
+#+begin_src emacs-lisp
+(use-package nix-mode :mode "\\.nix\\'")
+#+end_src
+*** Sudo Edit
+This is really handy when editing files that require root access.
+It address the pain of performing changes only to find out that you need `sudo`.
+The command `sudo-edit` address that.
 
+*Caution*: sudo not only affects saving, it also affects commands runs while editing this buffer. For example this will break commands that use `pass show` as they wil run as root.
+So, it something one needs to be aware of and run those commands before hand. (e.g. for pass running them in `init` vs `config` works around it).
+
+#+begin_src emacs-lisp
+  (use-package sudo-edit)
+#+end_src
 ** Additional Functions
 *** Troubleshooting
 **** Display Modes
