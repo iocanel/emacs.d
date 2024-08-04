@@ -455,6 +455,10 @@ Persists history over Emacs restarts
             plantuml-mode
             org-mode) . my/yas-ensure-snippets-loaded))
 #+end_src
+*** Recentf
+#+begin_src emacs-lisp
+(recentf-mode)
+#+end_src
 ** UI
 *** Appearance
 **** All icons
