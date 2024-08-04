@@ -2428,7 +2428,7 @@ The following code is a shell script that takes care of installing eclipse.jdt.l
   (use-package eglot-java
     :elpaca (eglot-java :host github :repo "iocanel/eglot-java" :files (:defaults "*.el"))
     :custom
-    (eglot-java-eclipse-jdt-ls-download-url "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.26.0/jdt-language-server-1.26.0-202307271613.tar.gz")
+    (eglot-java-eclipse-jdt-ls-download-url "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.37.0/jdt-language-server-1.37.0-202406271335.tar.gz")
     (eglot-java-server-install-dir (file-name-concat my/local-dir "lsp" "eclipse.jdt.ls"))
     (eglot-java-eclipse-jdt-args '("-XX:+UseAdaptiveSizePolicy" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Xmx8G" "-Xms2G"))
     (eglot-java-eclipse-jdt-data-root-dir (file-name-concat my/local-dir "lsp" "eclipse.jdt.ls" "data"))
