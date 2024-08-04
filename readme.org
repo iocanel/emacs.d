@@ -2929,11 +2929,10 @@ These icons can also run on terminal so let's optionally enable them.
   (use-package codeium
     :elpaca (codeium :host github :repo "Exafunction/codeium.el")
     :hook (prog-mode . my/codeium-enable)
+    :init 
+    ;; We need to set the api key on init or we might get issues with sudo-edit.
+    (setq codeium/metadata/api_key (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pass show services/codeium/iocanel/api-key-emacs")))
     :config
-    (setq codeium/metadata/api_key
-           (replace-regexp-in-string "\n\\'" ""
-                                     (shell-command-to-string "pass show services/codeium/iocanel/api-key-emacs")))
-
     (setq use-dialog-box nil) ;; do not use popup boxes
     ;; get codeium status in the modeline
     (setq codeium-mode-line-enable
