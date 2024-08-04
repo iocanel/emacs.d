@@ -466,16 +466,66 @@ Persists history over Emacs restarts
   (use-package all-the-icons :defer t)
 #+end_src
 **** Themes
-
-***** Doom themes
-
+***** COMMENT Doom themes
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
     (when (display-graphic-p)
       (load-theme 'doom-one t)(setq mode-line-format nil)))
 #+end_src
+***** Cattputccin
+#+begin_src emacs-lisp
+  (use-package  catppuccin-theme
+    :config
+    (setq catppuccin-flavor 'mocha)
+    (when (display-graphic-p)
+      (load-theme 'catppuccin t)(setq mode-line-format nil)))
+#+end_src
+**** Screens
+#+begin_src emacs-lisp
+  (defun my/laptop-screen-setup()
+    "Modify theme for latpop use"
+    (interactive)
+    (set-face-attribute 'default nil :height 75)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 90)))
 
+  (defun my/desktop-screen-setup()
+    "Modify theme for latpop use"
+    (interactive)
+    (set-face-attribute 'default nil :height 130)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 130)))
+
+  (defun my/comf-screen-setup()
+    "Modify theme for comfortable use"
+    (interactive)
+    (set-face-attribute 'default nil :height 170)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 160)))
+
+  (defun my/presentation-screen-setup()
+    "Modify theme for presentations use"
+    (interactive)
+    (set-face-attribute 'default nil :height 250)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 260)))
+
+  (defun my/asciinema-screen-setup()
+    "Modify theme for asciinema use"
+    (interactive)
+    (setq mode-line-format nil)
+    (setq-default mode-line-format nil)
+    (setq idee-tree-enabled nil)
+    (setq inhibit-message t)
+    (setq-default inhibit-message t)
+    (set-face-attribute 'default nil :height 150)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 160)))
+
+  (setq my/selected-screen-setup 'my/comf-screen-setup)
+  (my/comf-screen-setup)
+#+end_src
 *** Bell
 Disable the annoying bell
 #+begin_src emacs-lisp
