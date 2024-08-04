@@ -3466,17 +3466,24 @@ The setup requires:
 
   (defun my/youtube-callback (video-id-or-url title &optional func)
     "Create a callback for the specified VIDEO-ID-OR-URL"
-    (lambda (p s) (when (memq (process-status p) `(exit signal))
-                    (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
-                           (by-id-filename (my/youtube-get-by-id-filename video-id))
-                           (by-title-filename (my/youtube-get-by-title-filename title)))
-                      (message "Linking %s to %s" by-id-filename by-title-filename)
-                      (shell-command-to-string (format "ln -s %s %s" by-id-filename by-title-filename))
-                      (cond
-                       ((stringp func) (funcall (intern func) by-title-filename))
-                       ((symbolp func) (funcall func by-title-filename))
-                       (t "video downloaded and linked")))
-                    (shell-command-sentinel p s))))
+    (require 'cl)
+    (lexical-let ((video-id-or-url video-id-or-url)
+                  (title title)
+                  (func func))
+      (lambda (p s)
+        (when (memq (process-status p) '(exit signal))
+          (let* ((video-id (if (my/youtube-url-p video-id-or-url)
+                               (substring video-id-or-url (length my/youtube-watch-url-prefix))
+                             video-id-or-url))
+                 (by-id-filename (my/youtube-get-by-id-filename video-id))
+                 (by-title-filename (my/youtube-get-by-title-filename title)))
+            (message "Linking %s to %s" by-id-filename by-title-filename)
+            (shell-command-to-string (format "ln -s %s %s" by-id-filename by-title-filename))
+            (cond
+             ((stringp func) (funcall (intern func) by-title-filename))
+             ((symbolp func) (funcall func by-title-filename))
+             (t "video downloaded and linked")))
+          (shell-command-sentinel p s)))))
 #+end_src
 ***** COMMENT Burry yt-dlp buffer
 #+begin_src emacs-lisp
