@@ -537,7 +537,6 @@ Disable the annoying bell
 #+begin_src emacs-lisp
   (setq inhibit-message nil) ;; Changing that makes evil-search '/' invisible!
   (setq inhibit-startup-message t)
-  (set-face-attribute 'default nil :height 150)
 #+end_src
 
 *** Mode line 
