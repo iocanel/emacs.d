@@ -3413,14 +3413,15 @@ The setup requires:
     (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
            (url (if (my/youtube-url-p video-id-or-url) video-id-or-url (concat my/youtube-watch-url-prefix video-id)))
            (output-template (concat my/youtube-download-by-id-path video-id)))
-      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s" url output-template)))))
+      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s 2> /dev/null"  url output-template)))))
+
 
   (defun my/youtube-get-by-title-prefix (video-id-or-url)
     "Return the prefix (by-title) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
     (let* ((video-id (if (my/youtube-url-p video-id-or-url) (substring video-id-or-url (length my/youtube-watch-url-prefix) (length video-id-or-url)) video-id-or-url))
            (url (if (my/youtube-url-p video-id-or-url) video-id-or-url (concat my/youtube-watch-url-prefix video-id)))
            (output-template (concat my/youtube-download-by-title-path video-id)))
-      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s" url output-template)))))
+      (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-filename -o %s 2> /dev/null" url output-template)))))
 
   (defun my/youtube-get-by-id-filename (video-id-or-url)
     "Return the filename (by-id) of the youtube video that corresponds to the specified VIDEO-ID-OR-URL."
