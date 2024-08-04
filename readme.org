@@ -1841,11 +1841,11 @@ So, I rolled my own.
     :hook ((org-tree-slide-mode . org-display-inline-images))
     :general (
     :states '(normal)
-    :keymaps 'org-tree-slide-mode-map
+    (:keymaps 'org-tree-slide-mode-map
                         "e" 'org-tree-slide-mode
                         "C-i" 'org-display-inline-images
                         "<left>" 'org-tree-slide-move-previous-tree
-                        "<right>" 'org-tree-slide-move-next-tree))
+                        "<right>" 'org-tree-slide-move-next-tree)))
 
     ;;;###autoload
     (defun +org-present-hide-blocks-h ()
