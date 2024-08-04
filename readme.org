@@ -835,6 +835,14 @@ Use org-tempo in order to enable the good old <s to create src blocks.
   (require 'org-tempo)
 #+end_src
 
+**** Codeblock Indent
+Acording to DT this prevents weird code block indentation issues: https://gitlab.com/dwt1/configuring-emacs/-/blob/main/02-fixing-org-sudo-edit/config.org
+I am currently trying it out but it feel less flaky than before.
+
+#+begin_src emacs-lisp
+(electric-indent-mode -1)
+#+end_src
+
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
