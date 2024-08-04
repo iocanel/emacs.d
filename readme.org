@@ -734,7 +734,10 @@ The default font is good enough so let's not define additonal configuration here
                       "<backtab>"  'org-shiftab))
 
 #+end_src
-
+**** Org Query Language
+#+begin_src emacs-lisp
+  (use-package org-ql :elpaca (org-ql :host github :repo "alphapapa/org-ql" :files (:defaults (:exclude "helm-org-ql.el"))))
+#+end_src
 **** Getting things done
 
 To implement my `[[Getting things done]] workflow` I am going to use two main files:
