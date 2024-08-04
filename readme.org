@@ -4114,98 +4114,132 @@ Using `cond` it should be simply to easily change priorites.
 *** Binding definition
 Let's configure here all our keybindings to keep things tidy!
 #+begin_src emacs-lisp
-  (leader-key!
+   (leader-key!
+     ;;
+     ;; Apps
+     ;;
 
-    ;;
-    ;; Apps
-    ;;
-
-    "a" '(:ignore t :wk "apps")
-    ;; Bongo
-    "ab" '(:ignore t :wk "bongo")
-    "abb" '(bongo t :wk "bongo show")
-    "abs" '(bongo-start/stop t :wk "bongo start/stop")
-    "abi" '(bongo-insert-special t :wk "bongo insert")
-    "abn" '(bongo-next t :wk "bongo next")
-    "abp" '(bongo-next t :wk "bongo previous")
-    ;; Elfeed
-    "ae" '(elfeed t :wk "elfeed")
-
-
-    ;; 
-    ;; Open
-    ;;
-    "o" '(:ignore t :wk "open")
-    "of" '(find-file :wk "open file")
-    "ob" '(consult-buffer :wk "open buffer")
-    "oc" '(vterm :wk "open console")
-    "or" '(recentf :wk "open buffer")
-    "op" '(project-switch-project :wk "open project")
-    "SPC" '(project-find-file :wk "open project file")
-
-    ;; 
-    ;; Buffer
-    ;;
-    "b" '(:ignore t :wk "buffer")
-    "bb" '(switch-to-buffer :wk "buffer switch")
-    "bk" '(kill-this-buffer :wk "buffer kill")
-    "bn" '(next-buffer :wk "next buffer")
-    "bp" '(previous-buffer :wk "previous buffer")
-    "br" '(revert-buffer :wk "peload buffer")
-    "bs" '(consult-line :wk "buffer search")
-
-    ;;
-    ;; Magit
-    ;;
-    "g" '(:ignore t :wk "git")
-    "gg" '(magit :wk "magit")
-    "gt" '(git-timemachine :wk "git time machine")
-
-    ;;
-    ;; Search
-    ;;
-    "s" '(:ignore t :wk "search")
-    "sg" '(consult-git-grep :wk "search git grep")
-    "sr" '(consult-ripgrep :wk "search rip grep")
-    "sb" '(consult-line :wk "search buffer")
-    "so" '(:ignore t :wk "search org")
-    "sor" '(org-raom-node-find :wk "search org-roam")
-
-    ;;
-    ;; Insert
-    ;;
-    "i" '(:ignore t :wk "insert")
-    "io" '(:ignore t :wk "insert org")
-    "ior" '(org-roam-node-insert :wk "insert org-roam")
-
-    ;;
-    ;; LSP
-    ;;
-    "l" '(:ignore t :wk "lsp")
-    "lgd" '(xref-find-definitions :wk "lsp goto definition")
-    "lgr" '(xref-find-references :wk "lsp find references")
-    "ltd" '(eglot-find-typeDefinition :wk "lsp type definition")
-    "lca" '(eglot-code-actions :wk "lsp go back")
-    "lb" '(xref-go-back :wk "lsp go back")
-    "lf" '(xref-go-forward :wk "lsp go forward")
-
-    ;;
-    ;; Window
-    ;;
-    "w" '(:ignore t :wk "window")
-    "ws" '(:ignore t :wk "window split")
-    "wsh" '(split-window-horizontally :wk "window split horizontally")
-    "wsv" '(split-window-vertically :wk "window split vertically")
-    "wp" '(ace-select-window :wk "window pick")
-    "wn" '(other-window :wk "window next")
-    "wo" '(other-window :wk "window other")
-    "wk" '(ace-delete-window :wk "window kill")
-    "wu" '(winner-undo :wk "window undo")
-    "wr" '(winner-redo :wk "window redo")
+     "a" '(:ignore t :wk "apps")
+     ;; Bongo
+     "ab" '(:ignore t :wk "bongo")
+     "abb" '(bongo t :wk "bongo show")
+     "abs" '(bongo-start/stop t :wk "bongo start/stop")
+     "abi" '(bongo-insert-special t :wk "bongo insert")
+     "abn" '(bongo-next t :wk "bongo next")
+     "abp" '(bongo-next t :wk "bongo previous")
+     ;; Elfeed
+     "ae" '(elfeed t :wk "elfeed")
 
 
-    ;; Tools
-    "t" '(:ignore t :wk "tools")
-    "tm" '(idee/maven-hydra/body t :wk "maven")
-    )
+     ;;
+     ;; Open
+     ;;
+     "o" '(:ignore t :wk "open")
+     "oa" '(org-agenda :wk "open agenda")
+     "of" '(find-file :wk "open file")
+     "ob" '(consult-buffer :wk "open buffer")
+     "oc" '(vterm :wk "open console")
+     "or" '(consult-recent-file :wk "open buffer")
+     "op" '(idee/project-switch-project :wk "open project")
+     "SPC" '(project-find-file :wk "open project file")
+
+     ;;
+     ;; Buffer
+     ;;
+     "b" '(:ignore t :wk "buffer")
+     "bb" '(switch-to-buffer :wk "buffer switch")
+     "bk" '(kill-this-buffer :wk "buffer kill")
+     "bn" '(next-buffer :wk "next buffer")
+     "bp" '(previous-buffer :wk "previous buffer")
+     "br" '(revert-buffer :wk "peload buffer")
+     "bs" '(consult-line :wk "buffer search")
+
+     ;;
+     ;; Eval
+     ;; 
+     "e" '(:ignore t :wk "eval")
+     "eb" '(eval-buffer :wk "eval buffer")
+     "ed" '(eval-defin :wk "eval defun")
+     "er" '(eval-region :wk "eval region")
+     "ee" '(eval-expression :wk "eval expression")
+     "ec" '((lambda () (interactive)
+                       (org-babel-load-file "~/.emacs.d/readme.org")) :wk "eval emacs config")
+
+     ;;
+     ;; Find
+     ;; 
+
+     "f" '(:ignore t :wk "find")
+     "fc" '((lambda () (interactive) (find-file "~/.emacs.d/readme.org")) :wk "find emacs config")
+     "fn" '(:ignore t :wk "find nixos")
+     "fnc" '((lambda () (interactive) (find-file "/etc/nixos/configuration.nix")(sudo-edit)) :wk "find nixos config")
+     "fnh" '((lambda () (interactive) (find-file "/etc/nixos/hardware-configuration.nix")(sudo-edit)) :wk "find nixos hardware config")
+     "fh" '(:ignore t :wk "find home")
+     "fhm" '((lambda () (interactive) (find-file "~/.config/home-manager/home.nix")) :wk "find home manager config")
+     ;;
+     ;; Magit
+     ;;
+     "g" '(:ignore t :wk "git")
+     "gg" '(magit :wk "magit")
+     "gt" '(git-timemachine :wk "git time machine")
+
+     ;;
+     ;; Search
+     ;;
+     "s" '(:ignore t :wk "search")
+     "sg" '(consult-git-grep :wk "search git grep")
+     "sr" '(consult-ripgrep :wk "search rip grep")
+     "sb" '(consult-line :wk "search buffer")
+     "so" '(:ignore t :wk "search org")
+     "sor" '(org-raom-node-find :wk "search org-roam")
+
+     ;;
+     ;; Insert
+     ;;
+     "i" '(:ignore t :wk "insert")
+     "io" '(:ignore t :wk "insert org")
+     "ior" '(org-roam-node-insert :wk "insert org-roam")
+
+     ;;
+     ;; LSP
+     ;;
+     "l" '(:ignore t :wk "lsp")
+     "lgd" '(xref-find-definitions :wk "lsp goto definition")
+     "lgr" '(xref-find-references :wk "lsp find references")
+     "ltd" '(eglot-find-typeDefinition :wk "lsp type definition")
+     "lca" '(eglot-code-actions :wk "lsp go back")
+     "lb" '(xref-go-back :wk "lsp go back")
+     "lf" '(xref-go-forward :wk "lsp go forward")
+
+     ;;
+     ;; Window
+     ;;
+     "w" '(:ignore t :wk "window")
+     "ws" '(:ignore t :wk "window split")
+     "wsh" '(split-window-horizontally :wk "window split horizontally")
+     "wsv" '(split-window-vertically :wk "window split vertically")
+     "wp" '(ace-select-window :wk "window pick")
+     "wn" '(other-window :wk "window next")
+     "wo" '(other-window :wk "window other")
+     "wk" '(ace-delete-window :wk "window kill")
+     "wu" '(winner-undo :wk "window undo")
+     "wr" '(winner-redo :wk "window redo")
+
+     ;; Tools
+     "t" '(:ignore t :wk "tools")
+     "tm" '(idee/maven-hydra/body t :wk "maven")
+     )
+#+end_src
+
+**** Org Mode specic bindings
+
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps 'org-mode-map
+   :states '(normal)
+   :prefix "SPC"
+   :prefix "SPC"
+   "x" '(:ignore t :wk "org")
+   "xa" '(my/org-archive :wk "orgarchive")
+   "xr" '(org-refile :wk "orgrefile"))
 #+end_src
