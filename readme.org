@@ -3847,42 +3847,55 @@ A callback for yt-dlp (see [[Youtube DLP]])
 #+end_src
 **** Youtube
 #+begin_src emacs-lisp
-    (defun my/elfeed-start-bongo-callback (process signal)
-      "Callback to be called when a youtube video gets downloaded."
-      (when (memq (process-status process) '(exit signal))
-        (message "Video download finished!")
-        (when (not (bongo-playing-p)) (bongo-start/stop)))
-      (shell-command-sentinel process signal))
+  (defun my/elfeed-start-bongo-callback (process signal)
+    "Callback to be called when a youtube video gets downloaded."
+    (when (memq (process-status process) '(exit signal))
+      (message "Video download finished!")
+      (when (not (bongo-playing-p)) (bongo-start/stop)))
+    (shell-command-sentinel process signal))
 
   (defun my/elfeed-entry-youtube-p (entry)
     "Predicate that checks if ENTRY points to youtube."
-      (let ((link (elfeed-entry-link entry))
-            (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
+    (let ((link (elfeed-entry-link entry))
+          (enclosure (car (elt (elfeed-entry-enclosures entry) 0))))
       (or (my/youtube-url-p link) (my/youtube-url-p enclosure))))
 
-    (defun my/elfeed-open-in-youtube (entry)
-      "Display the currently selected item in youtube."
-      (interactive (list (elfeed-search-selected :ignore-region)))
-      (require 'elfeed-show)
-      ;;(my/elfeed-mark-current-as-read)
-      (when (elfeed-entry-p entry)
-        (let* ((url (elfeed-entry-link entry))
-               (title (elfeed-entry-title entry)))
-          (my/bongo-play url title)
-          (my/elfeed-external-mode 1))))
+  (defun my/elfeed-bongo-youtube-play (entry)
+    "Display the currently selected item in youtube."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    ;;(my/elfeed-mark-current-as-read)
+    (when (elfeed-entry-p entry)
+      (let* ((url (elfeed-entry-link entry))
+             (title (elfeed-entry-title entry)))
+        (my/bongo-play url title)
+        (my/elfeed-external-mode 1))))
 
-    (defun my/elfeed-show-in-youtube ()
-      "Display the currently shown item in youtube."
-      (interactive)
-      (require 'elfeed-show)
-      (when (elfeed-entry-p elfeed-show-entry)
-        (let* ((link (elfeed-entry-link elfeed-show-entry))
-               (download-path (my/bongo-enqueue-file link)))
-          (my/bongo-enqueue-file-and-play (concat "file://" download-path)))))
+  (defun my/elfeed-chromium-youtube-play (entry)
+    "Open a YouTube video URL in a new Chromium application process without controls."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    ;;(my/elfeed-mark-current-as-read)
+    (when (elfeed-entry-p entry)
+      (let* ((url (elfeed-entry-link entry))
+             (video-id (if (string-match "v=\\([a-zA-Z0-9_-]+\\)" url) (match-string 1 url) url))
+             (title (elfeed-entry-title entry))
+             (embeded-url (if video-id  (concat "https://www.youtube.com/embed/" video-id "?autoplay=1&rel=0") (concat url "?autoplay=1&rel=0")))
+             (chromium-command (list "chromium" (concat "--app=" embeded-url) "--disable-infobars" "--kiosk" "--start-fullscreen")))
+      (apply 'start-process "chromium" nil chromium-command))))
+
+  (defun my/elfeed-show-in-youtube ()
+    "Display the currently shown item in youtube."
+    (interactive)
+    (require 'elfeed-show)
+    (when (elfeed-entry-p elfeed-show-entry)
+      (let* ((link (elfeed-entry-link elfeed-show-entry))
+             (download-path (my/bongo-enqueue-file link)))
+        (my/bongo-enqueue-file-and-play (concat "file://" download-path)))))
 #+end_src
 ***** Elfeed DWIM Registration
 #+begin_src emacs-lisp
-  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-youtube-p . my/elfeed-open-in-youtube)))
+  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-youtube-p . my/elfeed-chromium-youtube-play)))
 #+end_src
 **** Bongo
 #+begin_src emacs-lisp
