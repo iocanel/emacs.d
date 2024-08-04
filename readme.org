@@ -3442,7 +3442,7 @@ The setup requires:
       (if entry
           (cdr entry)
         (progn
-          (let ((title (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-title -o %s" url output-template)))))
+          (let ((title (replace-regexp-in-string "\n\\'" "" (shell-command-to-string (format "yt-dlp \"%s\" --get-title -o %s 2> /dev/null" url output-template)))))
             (setq my/youtube-title-alist (cons `(,video-id . ,title) my/youtube-title-alist))
             title)))))
 
