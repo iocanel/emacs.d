@@ -4022,9 +4022,33 @@ A callback for yt-dlp (see [[Youtube DLP]])
         (my/use-pop-to-buffer
           (xwidget-webkit-browse-url link)))))
 #+end_src
+
+***** Chromium
+#+begin_src emacs-lisp
+  (defun my/elfeed-open-in-chromium (entry)
+    "Display the currently selected item in eww."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (require 'elfeed-show)
+    (my/elfeed-mark-current-as-read)
+    (when (elfeed-entry-p entry)
+      (let* ((url (elfeed-entry-link entry))
+            (chromium-command (list "chromium" (concat "--app=" url) "--disable-infobars" "--kiosk" "--start-fullscreen")))
+        (apply 'start-process "chromium" nil chromium-command))))
+
+  (defun my/elfeed-show-in-chromium ()
+    "Display the currently shown item in xwidget-webkit-browser."
+    (interactive)
+    (require 'elfeed-show)
+    (when (elfeed-entry-p elfeed-show-entry)
+      (let* ((url (elfeed-entry-link elfeed-show-entry))
+            (chromium-command (list "chromium" (concat "--app=" url) "--disable-infobars" "--kiosk" "--start-fullscreen")))
+        (apply 'start-process "chromium" nil chromium-command))))
+
+
+#+end_src
 ****** Elfeed DWIM Registration
 #+begin_src emacs-lisp
-  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-www-p . my/elfeed-open-in-xwidget-webkit-browser)))
+  (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-www-p . my/elfeed-open-in-chromium)))
 #+end_src
 ** AI
 *** ChatGPT
