@@ -1483,11 +1483,13 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
     :init
     (defvar my/github-repositories nil "The list of watch repositories by org-github-issues")
     :commands (org-github-issues-sync-all my/org-github-issues-eww-at-point my/org-github-issues-show-open-project-issues my/org-github-issues-show-open-workspace-issues)
+    :custom
+    (org-github-issues-org-file "~/Documents/org/github.org")
+    (org-github-issues-user "iocanel")
+    (org-github-issues-assignee "iocanel")
     :config
     (setq
      gh-user "iocanel"
-     org-github-issues-user "iocanel"
-     org-github-issues-org-file "~/Documents/org/github.org"
      org-github-issues-tags '("github")
      org-github-issues-issue-tags '("issue")
      org-github-issues-pull-tags '("pull")
