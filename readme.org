@@ -4429,6 +4429,6 @@ Let's configure here all our keybindings to keep things tidy!
    :prefix "SPC"
    :prefix "SPC"
    "x" '(:ignore t :wk "org")
-   "xa" '(my/org-archive :wk "orgarchive")
-   "xr" '(org-refile :wk "orgrefile"))
+   "xa" '(my/org-archive :wk "org archive")
+   "xr" '(org-refile :wk "org refile"))
 #+end_src
