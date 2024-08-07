@@ -36,6 +36,12 @@ This is possibly my 5th attempt to configuring Emacs. My previous attempts were 
     - It's the most modern approach to completion.
 
 ** Bootstrap
+
+*** COMMENT Debugging
+
+#+begin_src emacs-lisp
+(toggle-debug-on-error)
+#+end_src
 *** Lexical binding
 
 [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Lexical-Binding.html][Lexical Binding]]
