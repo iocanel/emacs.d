@@ -135,49 +135,11 @@ Sometimes I want to use package-xxx commands and query MELPA.
 Since I don't do that often I expect this to be commented out most of the time.
 
 #+begin_src emacs-lisp
-  (require 'package)
-  (add-to-list 'package-archives
-    '("MELPA" .
-      "http://melpa.org/packages/"))
-  (package-initialize)
-#+end_src
-*** File Manager
-**** Dired
-#+begin_src emacs-lisp
-  (use-feature dired
-  :config
-  (setq dired-dwim-target t))
-#+end_src
-**** Dired Narrow
-#+begin_src emacs-lisp
-  (use-package dired-narrow
-  :after dired
-  :commands (dired-narrow dired-narrow-fuzzy dired-narrow-regexp)
-  :bind (:map dired-mode-map 
-              ("C-c C-n" . dired-narrow)
-              ("C-c C-f" . dired-narrow-fuzzy)
-              ("C-c C-N" . dired-narrow-regexp)))
-#+end_src
-**** Dired Subtree
-#+begin_src emacs-lisp
-  (use-package dired-subtree
-    :after dired
-    :init
-    (defun my/dired-expand-all ()
-      (interactive)
-      "Expand all subtrees in the dired buffer."
-      (let ((has-more t))
-        (while has-more
-          (condition-case ex
-              (progn
-                (dired-next-dirline 1)
-                (dired-subtree-toggle))
-            ('error (setq has-more nil))))))
-    :commands (dired-subtree-toggle dired-subtree-cycle)
-    :general (:keymaps dired-mode-map 
-                "<tab>" 'dired-subtree-toggle
-                "S-<tab>" 'my/dired-expand-all
-                "<backtab>" 'dired-subtree-cycle))
+(require 'package)
+(add-to-list 'package-archives
+             '("MELPA" .
+               "http://melpa.org/packages/"))
+(package-initialize)
 #+end_src
 *** General
 
@@ -195,6 +157,44 @@ Since I don't do that often I expect this to be commented out most of the time.
     :global-prefix "M-SPC")
 #+end_src
 
+*** File Manager
+**** Dired
+#+begin_src emacs-lisp
+  (use-feature dired
+  :config
+  (setq dired-dwim-target t))
+#+end_src
+**** Dired Narrow
+#+begin_src emacs-lisp
+  (use-package dired-narrow
+  :after dired
+  :commands (dired-narrow dired-narrow-fuzzy dired-narrow-regexp)
+  :general (:keymaps 'dired-mode-map 
+              "C-c C-n" 'dired-narrow
+              "C-c C-f" 'dired-narrow-fuzzy
+              "C-c C-N" 'dired-narrow-regexp))
+#+end_src
+**** Dired Subtree
+#+begin_src emacs-lisp
+(use-package dired-subtree
+  :after dired
+  :init
+  (defun my/dired-expand-all ()
+    (interactive)
+    "Expand all subtrees in the dired buffer."
+    (let ((has-more t))
+      (while has-more
+        (condition-case ex
+            (progn
+              (dired-next-dirline 1)
+              (dired-subtree-toggle))
+          ('error (setq has-more nil))))))
+  :commands (dired-subtree-toggle dired-subtree-cycle)
+  :general (:keymaps 'dired-mode-map 
+                     "<tab>" 'dired-subtree-toggle
+                     "S-<tab>" 'my/dired-expand-all
+                     "<backtab>" 'dired-subtree-cycle))
+#+end_src
 *** Evil Mode
 **** Package
 
