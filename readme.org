@@ -4445,3 +4445,9 @@ Let's configure here all our keybindings to keep things tidy!
    "xa" '(my/org-archive :wk "org archive")
    "xr" '(org-refile :wk "org refile"))
 #+end_src
+
+* Finalize
+#+begin_src emacs-lisp
+(my/comf-screen-setup)
+(message "Done")
+#+end_src
