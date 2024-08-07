@@ -1916,39 +1916,39 @@ So, I rolled my own.
 
 **** Org Tree Slide
 #+begin_src emacs-lisp
-  (use-package org-tree-slide
-    :defer t
-    :commands (org-tree-slide-mode)
-    :hook ((org-tree-slide-mode . org-display-inline-images))
-    :general (
-    :states '(normal)
-    (:keymaps 'org-tree-slide-mode-map
-                        "e" 'org-tree-slide-mode
-                        "C-i" 'org-display-inline-images
-                        "<left>" 'org-tree-slide-move-previous-tree
-                        "<right>" 'org-tree-slide-move-next-tree)))
+(use-package org-tree-slide
+  :defer t
+  :commands (org-tree-slide-mode)
+  :hook ((org-tree-slide-mode . org-display-inline-images))
+  :general 
+  (:states '(normal)
+           :keymaps 'org-tree-slide-mode-map
+           "e" 'org-tree-slide-mode
+           "C-i" 'org-display-inline-images
+           "<left>" 'org-tree-slide-move-previous-tree
+           "<right>" 'org-tree-slide-move-next-tree))
 
-    ;;;###autoload
-    (defun +org-present-hide-blocks-h ()
-      "Hide org #+ constructs."
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
-          (org-flag-region (match-beginning 1)
-                           (match-end 0)
-                           org-tree-slide-mode
-                           'block))))
+;;;###autoload
+(defun +org-present-hide-blocks-h ()
+  "Hide org #+ constructs."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^[[:space:]]*\\(#\\+\\)\\(\\(?:BEGIN\\|END\\|ATTR\\)[^[:space:]]+\\).*" nil t)
+      (org-flag-region (match-beginning 1)
+                       (match-end 0)
+                       org-tree-slide-mode
+                       'block))))
 
-    ;;;###autoload
-    (defun +org-present-hide-leading-stars-h ()
-      "Hide leading stars in headings."
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^\\(\\*+\\)" nil t)
-          (org-flag-region (match-beginning 1)
-                           (match-end 1)
-                           org-tree-slide-mode
-                           'headline))))
+;;;###autoload
+(defun +org-present-hide-leading-stars-h ()
+  "Hide leading stars in headings."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^\\(\\*+\\)" nil t)
+      (org-flag-region (match-beginning 1)
+                       (match-end 1)
+                       org-tree-slide-mode
+                       'headline))))
 #+end_src
 
 **** Org Asciidoc
