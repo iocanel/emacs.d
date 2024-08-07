@@ -614,8 +614,8 @@ The configured font needs to support the unicode characters that are used by the
 The default font is good enough so let's not define additonal configuration here.
 
 #+begin_src emaacs-lips
-  (push '(font . "JetBrains Mono Nerd Font") default-frame-alist)
-(set-face-font 'default "JetBrains Mono Nerd Font")
+  (push '(font . "JetBrains Mono Nerd Font Bold") default-frame-alist)
+(set-face-font 'default "JetBrains Mono Nerd Font Bold")
 (set-face-font 'variable-pitch "JetBrains Mono Nerd Font")
 (copy-face 'default 'fixed-pitch)
 #+end_src
