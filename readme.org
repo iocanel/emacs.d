@@ -3157,7 +3157,7 @@ Surprisignly, it works much better, but it still requires some tuning.
                      (mu4e-compose-complete-addresses  . t)
 
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/bin/msmtp")
+                     (sendmail-program                 . "msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
@@ -3181,7 +3181,7 @@ Surprisignly, it works much better, but it still requires some tuning.
                      (mu4e-sent-folder                 . "/ikanello@gmail.com/Sent")
                      (mu4e-compose-complete-addresses  . t)
                      (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "/usr/bin/msmtp")
+                     (sendmail-program                 . "msmtp")
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
