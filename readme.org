@@ -295,7 +295,7 @@ Ensure that we always see the actual file content.
 *** Expand Region
 #+begin_src emacs-lisp
   (use-package expand-region
-    :general ("C-q" 'er/expand-region))
+    :general ("M-e" 'er/expand-region))
 #+end_src
 *** Exit confirmation
 
