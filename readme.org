@@ -777,14 +777,26 @@ The default font is good enough so let's not define additonal configuration here
           org-hide-emphasis-markers t
           ;; Use yasnippets inside src blocks
           org-src-tab-acts-natively t
+          org-src-preserve-indentation t
+          org-src-window-setup 'current-window
           org-src-fontify-natively t)
 
     :general (:states 'normal
                       :keymaps 'org-mode-map
                       "<tab>"  'org-cycle
-                      "<backtab>"  'org-shiftab))
-
+                      "<backtab>"  'org-shiftab)
+    (:keymaps 'org-src-mode-map
+              "C-c C-c" 'org-edit-src-exit
+              "C-c C-k" 'org-edit-src-abort))
 #+end_src
+
+#+begin_src emacs-lisp
+(eval-after-load 'org
+  '(progn
+     (define-key org-src-mode-map (kbd "C-c C-c") 'org-edit-src-exit)))
+#+end_src
+
+
 **** Org Query Language
 #+begin_src emacs-lisp
   (use-package org-ql :elpaca (org-ql :host github :repo "alphapapa/org-ql" :files (:defaults (:exclude "helm-org-ql.el"))))
