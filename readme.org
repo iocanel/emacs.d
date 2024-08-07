@@ -3379,7 +3379,7 @@ This should allow me to easily go through my mailbox and I should be able to tra
             (lambda ()
               (set-fill-column 72)
               (auto-fill-mode 0)
-              (visual-fill-column-mode)
+              (when (fboundp 'visual-fill-column-mode) (visual-fill-colum-mode))
               (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
               (visual-line-mode)))
 #+end_src
