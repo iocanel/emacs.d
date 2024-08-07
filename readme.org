@@ -297,6 +297,57 @@ Ensure that we always see the actual file content.
   (use-package expand-region
     :general ("M-e" 'er/expand-region))
 #+end_src
+*** Multiple cursors
+**** evil-mc
+#+begin_src emacs-lisp
+  (use-package evil-mc
+    :init
+    (defun my/cursor-create-below ()
+      "Go the the line below and create a cursor there."
+      (interactive)
+      (let* ((line (line-number-at-pos))
+              (col (current-column)))
+      (evil-mc-make-cursor-here)
+      (goto-line (+ (line-number-at-pos) 1))
+      (move-to-column col)))
+
+    (defun my/cursor-create-above ()
+      "Go the the line below and create a cursor there."
+      (interactive)
+      (let* ((line (line-number-at-pos))
+              (col (current-column)))
+      (evil-mc-make-cursor-here)
+      (goto-line (- (line-number-at-pos) 1))
+      (move-to-column col)))
+
+    :config
+    (setq evil-mc-undo-cursors-on-keyboard-quit 'all)
+    :general
+    ("C-<down>" 'my/cursor-create-below
+     "C-<up>" 'my/cursor-create-above)
+    :init (global-evil-mc-mode  1))
+#+end_src
+**** evil-multiedit
+#+begin_src emacs-lisp
+  (use-package evil-multiedit
+   :config
+   (defun my/evil-multiedit-match-and-goto-next ()
+     "Match next but also move the cursor there"
+     (interactive)
+     (evil-multiedit-match-and-next)
+     (evil-multiedit-next))
+
+   (defun my/evil-multiedit-match-and-goto-prev ()
+     "Match prev but also move the cursor there"
+     (interactive)
+     (evil-multiedit-match-and-prev)
+     (evil-multiedit-prev))
+   :general
+   (:states 'normal
+     "M-n" 'my/evil-multiedit-match-and-goto-next
+     "M-p" 'my/evil-multiedit-match-and-goto-prev
+     "M-t" 'evil-multiedit-toggle-or-restrict-region))
+#+end_src
 *** Exit confirmation
 
 #+begin_src emacs-lisp
