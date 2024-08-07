@@ -516,22 +516,23 @@ Persists history over Emacs restarts
 #+begin_src emacs-lisp
   (use-package all-the-icons :defer t)
 #+end_src
-**** Themes
-***** COMMENT Doom themes
+**** COMMENT Fonts
+Commented out, as it causes issues with the screen setup configured below.
+For now, I am just setting the font in the screen setup.
+
+The configured font needs to support the unicode characters that are used by the modeline.
+The default font is good enough so let's not define additonal configuration here.
+
 #+begin_src emacs-lisp
-  (use-package doom-themes
-    :config
-    (when (display-graphic-p)
-      (load-theme 'doom-one t)(setq mode-line-format nil)))
+(push '(font . "JetBrains Mono Nerd Font Bold") default-frame-alist)
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (with-selected-frame frame
+              (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+              (set-face-attribute 'variable-pitch nil :font "JetBrains Mono Nerd Font")
+              (copy-face 'default 'fixed-pitch))))
 #+end_src
-***** Cattputccin
-#+begin_src emacs-lisp
-  (use-package  catppuccin-theme
-    :config
-    (setq catppuccin-flavor 'mocha)
-    (when (display-graphic-p)
-      (load-theme 'catppuccin t)(setq mode-line-format nil)))
-#+end_src
+
 **** Screens
 #+begin_src emacs-lisp
   (defun my/laptop-screen-setup()
@@ -551,7 +552,7 @@ Persists history over Emacs restarts
   (defun my/comf-screen-setup()
     "Modify theme for comfortable use"
     (interactive)
-    (set-face-attribute 'default nil :height 170)
+    (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 160)))
 
@@ -576,6 +577,23 @@ Persists history over Emacs restarts
 
   (setq my/selected-screen-setup 'my/comf-screen-setup)
   (my/comf-screen-setup)
+#+end_src
+
+**** Themes
+***** COMMENT Doom themes
+#+begin_src emacs-lisp
+  (use-package doom-themes
+    :config
+    (when (display-graphic-p)
+      (load-theme 'doom-one t)(setq mode-line-format nil)))
+#+end_src
+***** Cattputccin
+#+begin_src emacs-lisp
+  (use-package  catppuccin-theme
+    :config
+    (setq catppuccin-flavor 'mocha)
+    (when (display-graphic-p)
+      (load-theme 'catppuccin t)(setq mode-line-format nil)))
 #+end_src
 *** Bell
 Disable the annoying bell
@@ -608,17 +626,6 @@ Disable the annoying bell
       (column-number-mode)))
 #+end_src
 
-
-**** Fonts
-The configured font needs to support the unicode characters that are used by the modeline.
-The default font is good enough so let's not define additonal configuration here.
-
-#+begin_src emaacs-lips
-  (push '(font . "JetBrains Mono Nerd Font Bold") default-frame-alist)
-(set-face-font 'default "JetBrains Mono Nerd Font Bold")
-(set-face-font 'variable-pitch "JetBrains Mono Nerd Font")
-(copy-face 'default 'fixed-pitch)
-#+end_src
 
 *** Window Management
 **** Ace Window
