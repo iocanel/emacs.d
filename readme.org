@@ -402,6 +402,7 @@ Persists history over Emacs restarts
             "\\*Async Shell Command\\*"
             "\\*.*compilation.*\\*"
             "\\*Org QL View: Github issues for .*\\*"
+            "\\*Agenda Commands\\*"
             "\\*eshell.*\\*"
             "\\*shell.*\\*"
             "\\*vterm.*\\*"
@@ -409,6 +410,25 @@ Persists history over Emacs restarts
             "\\*undo-tree*\\*")
           popper-mode-line (propertize " π " 'face 'mode-line-emphasis))
     :config
+    (defun my/agenda-pop-up-frame-enable()
+      "Make agenda commands window pop-up frame."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*Agenda Commands\\*"
+                                                                      (display-buffer-reuse-window display-buffer-pop-up-frame)
+                                                                      (reusable-frames . visible)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
+
+    (defun my/agenda-pop-up-frame-dissable()
+      "Disable agneda commands windows as a pop-up window."
+      (interactive)
+      (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*Agenda Commands\\*"
+                                                                      (display-buffer-in-side-window)
+                                                                      (window-height . 0.40)
+                                                                      (side . bottom)
+                                                                      (slot . 0)))))
+
     (defun my/shell-pop-up-frame-enable()
       "Make shell windows pop-up frame."
       (interactive)
@@ -420,7 +440,7 @@ Persists history over Emacs restarts
                                                                       (slot . 0)))))
 
     (defun my/shell-pop-up-frame-dissable()
-      "Make shell windows pop-up use window."
+      "Didable shell window as a pop-up window."
       (interactive)
       (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
                                                                       (display-buffer-in-side-window)
@@ -455,6 +475,8 @@ Persists history over Emacs restarts
       (if (popper-popup-p (current-buffer))
           (popper-kill-latest-popup)
         (evil-record-macro register)))
+    ;; Initialize
+     (my/agenda-pop-up-frame-disable)
     :general (:states 'normal
                       "q" 'my/kill-if-popup)
     :hook ((eshell-mode . popper-mode)
