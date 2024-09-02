@@ -4377,6 +4377,7 @@ Let's configure here all our keybindings to keep things tidy!
      "abp" '(bongo-next t :wk "bongo previous")
      ;; Elfeed
      "ae" '(elfeed t :wk "elfeed")
+     "am" '(mu4e :wk "mu4e")
 
 
      ;;
