@@ -4389,6 +4389,15 @@ Let's configure here all our keybindings to keep things tidy!
      "oc" '(vterm :wk "open console")
      "or" '(consult-recent-file :wk "open buffer")
      "op" '(idee/project-switch-project :wk "open project")
+
+     ;; Open Org
+     "oo" '(:ignore t :wk "open org")
+     "ooa" '(org-agenda :wk "open agenda")
+     "ooc" '(org-capture :wk "open capture")
+     "oor" '(:ignore t :wk "open org-roam")
+     "oorn" '(org-roam-node-find :wk "open org-roam node")
+     "ooru" '(org-roam-node-find :wk "open org-roam ui")
+
      "SPC" '(project-find-file :wk "open project file")
 
      ;;
