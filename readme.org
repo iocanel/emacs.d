@@ -952,6 +952,8 @@ I am currently trying it out but it feel less flaky than before.
                            "~/Documents/org/github.org"
                            "~/Documents/org/habits.org"
                            "~/Documents/org/nutrition.org"
+                           "~/Documents/org/calendars/personal.org"
+                           "~/Documents/org/calendars/work.org"
                            "~/Documents/org/roam/Inbox.org")
                          (directory-files-recursively "~/Documents/org/jira" "\.org$")))
 #+end_src
