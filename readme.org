@@ -1538,18 +1538,42 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
               (message "Found linked habit:%s" habit)
               (when (not org-note-abort) (my/org-habit-mark habit))))))
 
-    (defun my/org-habit-mark (heading)
-      (save-excursion
-        (let* ((habits-file "/home/iocanel/Documents/org/habits.org")
-               (original (current-buffer))
-               (buf (find-file habits-file)))
-          (with-current-buffer buf
-            (goto-char (point-min))
-            (re-search-forward (concat "TODO " heading ".*:habit:"))
-            (org-habit-parse-todo)
+(defun my/org-habit-daily-marked-p (heading &optional date)
+"Test if habit with HEADING is marked for DATE. If DATE is missing the current date is used"
+  (interactive)
+  (let* ((date (or date (format-time-string "%Y-%m-%d")))
+        (done-found nil))
+    ;; Go through each headline in the current buffer
+    (org-map-entries
+     (lambda ()
+       ;; Search for DONE states within the current headline
+       (save-excursion
+         (org-back-to-heading t)
+         (let ((end (save-excursion (outline-next-heading) (point))))
+           (while (re-search-forward "- State \"DONE\".*\\[\\([0-9]+-[0-9]+-[0-9]+\\) " end t)
+             (when (string= date (match-string 1))
+               (setq done-found t)
+               (message "Today's date found in entry: %s" (org-get-heading t t t t)))))))
+     nil 'agenda)
+    done-found))
+
+(defun my/org-habit-mark (heading)
+  "Mark the habit with HEADING as done and schedule it for the next day."
+  (save-excursion
+    (let* ((habits-file "/home/iocanel/Documents/org/habits.org")
+           (original (current-buffer))
+           (buf (find-file habits-file)))
+      (with-current-buffer buf
+        (goto-char (point-min))
+        (re-search-forward (concat "TODO " heading ".*:habit:"))
+        (let ((todo-state (org-habit-parse-todo)))
+          (message "Found todo state:%s" (assoc "STYLE" todo-state))
+          (message "Current time %s" (format-time-string "[%Y-%m-%d]" (current-time)))
+          (unless (my/org-habit-daily-marked-p heading)
             (org-todo 'done)
-            (save-buffer t))
-          (switch-to-buffer original t t))))
+            (org-schedule nil (format-time-string "<%Y-%m-%d>" (current-time))))
+          (save-buffer t)))
+      (switch-to-buffer original t t))))
 
     (advice-add 'org-drill :after (lambda() (my/org-habit-mark "Org Drill")))
     (add-hook 'org-capture-after-finalize-hook 'my/org-habit-check-captured))
