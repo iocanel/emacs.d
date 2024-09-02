@@ -988,7 +988,58 @@ Requires:
       (set-window-configuration agenda-window-configuration)))
 #+end_src
 ****** Export Agenda ::function::
-
+#+begin_src emacs-lisp
+(defun my/org-agenda-export ()
+    "Export the content of org-agenda"
+    (interactive)
+    (org-eval-in-environment (org-make-parameter-alist
+                              `(org-agenda-span 'day
+                                                org-agenda-use-time-grid t
+                                                org-agenda-remove-tags t
+                                                org-agenda-window-setup 'nope))
+      (let* ((wins (current-window-configuration))
+             org-agenda-sticky)
+        (save-excursion
+          (with-current-buffer
+              (get-buffer-create org-agenda-buffer-name)
+            (pop-to-buffer (current-buffer))
+            (org-agenda nil "t")
+            (let ((result (buffer-string)))
+              (with-temp-file "~/.agenda" (insert result)))))
+        (set-window-configuration wins))))
+#+end_src
+****** Export Agenda to PDF
+#+begin_src emacs-lisp
+(defun my/org-agenda-export-to-pdf ()
+  "Export the content of org-agenda to a PDF."
+  (interactive)
+  (org-eval-in-environment (org-make-parameter-alist
+                            `(org-agenda-span 'day
+                                              org-agenda-use-time-grid t
+                                              org-agenda-remove-tags t
+                                              org-agenda-window-setup 'nope))
+    (let* ((wins (current-window-configuration))
+           org-agenda-sticky)
+      (save-excursion
+        (with-current-buffer
+            (get-buffer-create org-agenda-buffer-name)
+          (pop-to-buffer (current-buffer))
+          (org-agenda nil "t")
+          (let ((org-file "~/.agenda.org")
+                (pdf-file "~/.agenda.pdf"))
+            ;; Save the agenda content to an Org file
+            (with-temp-file org-file
+              (insert (buffer-string)))
+            ;; Convert the Org file to a PDF
+            (with-temp-buffer
+              (insert-file-contents org-file)
+              (org-mode)
+              (org-latex-export-to-pdf nil nil nil nil
+                                       `(:output-file ,pdf-file)))
+            ;; Notify user of PDF creation
+            (message "Org Agenda exported to PDF: %s" pdf-file))))
+      (set-window-configuration wins))))
+#+end_src
 ***** Super Agenda
 
 Requires:
