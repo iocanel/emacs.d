@@ -1527,7 +1527,7 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
           org-habit-preceding-days 35
           org-habit-show-habits t)
 
-    (defvar my/org-habit-capture-alist '() "An association list that maps capture keys to habit headings")
+    (defvar my/org-habit-capture-alist '(("nm" . "Log meals")) "An association list that maps capture keys to habit headings")
 
     (defun my/org-habit-check-captured ()
       "Check if there is a habit matching that latest captured item and mark it as done."
