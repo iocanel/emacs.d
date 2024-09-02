@@ -3285,7 +3285,7 @@ Surprisignly, it works much better, but it still requires some tuning.
 
   ;; Mu4e cusotmization
   (defalias 'org-mail 'org-mu4e-compose-org-mode)
-                                          ; use imagemagick, if available
+  ;; use imagemagick, if available
   (when (fboundp 'imagemagick-register-types)
     (imagemagick-register-types))
 
