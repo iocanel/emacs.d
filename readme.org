@@ -3261,11 +3261,6 @@ Surprisignly, it works much better, but it still requires some tuning.
   (setq mu4e-headers-visible-lines 25)
   ;; convert org mode to HTML automatically
 
-  ;; enable inline images
-  (setq mu4e-view-show-images t)
-  (setq org-mu4e-convert-to-html t)
-
-
   ;; Sending Emails
   (setq message-send-mail-function 'message-send-mail-with-sendmail)
   (setq sendmail-program "msmtp")
