@@ -1607,7 +1607,22 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
   (define-key dired-mode-map (kbd "C-c o l") 'my/dired-file-as-org-link-to-clipboard)
   (define-key dired-mode-map (kbd "C-c u l") 'my/dired-file-as-plantuml-link-to-clipboard)
 #+end_src
-
+**** Org Google Calender
+#+begin_src emacs-lisp
+(use-package org-gcal
+  :defer t
+  :after org
+  :elpaca (org-gcal :host github :repo "kidd/org-gcal")
+  :commands (org-gcal-sync org-gcal-fetch)
+  :config
+  (setq org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/client-id"))
+        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/secret"))
+        org-gcal-file-alist '(("iocanel@gmail.com" .  "~/Documents/org/calendars/personal.org")
+                              ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org")))
+;; Fixes: `deferred error : (error "oauth2-auto: Unknown provider: org-gcal")`
+;; Credits: https://github.com/kidd/org-gcal.el/issues/209
+(org-gcal-reload-client-id-secret))
+#+end_src
 **** Org Github Issues
 ***** Package
 #+begin_src emacs-lisp
