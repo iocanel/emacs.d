@@ -3139,6 +3139,12 @@ These icons can also run on terminal so let's optionally enable them.
     :commands (idee/init idee/maven-hydra/body))
 
 #+end_src
+*** Colorful Mode
+#+begin_src emacs-lisp
+(use-package colorful-mode
+  :ensure t ; Optional
+  :hook (prog-mode text-mode))
+#+end_src
 ** Term
 *** vterm
 #+begin_src emacs-lisp 
