@@ -2067,6 +2067,10 @@ So, I rolled my own.
   :elpaca (org-excalidraw :host github :repo "wdavew/org-excalidraw")
   :custom (org-excalidraw-directory "~/Documents/org/excalidraw"))
 #+end_src
+**** Nutrition
+#+begin_src emacs-lisp
+(org-babel-load-file "~/Documents/org/nutrition.org")
+#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
