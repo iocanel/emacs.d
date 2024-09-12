@@ -565,21 +565,22 @@ The optional argument NEW-WINDOW is not used."
 #+begin_src emacs-lisp
   (use-package all-the-icons :defer t)
 #+end_src
-**** COMMENT Fonts
-Commented out, as it causes issues with the screen setup configured below.
+**** Fonts
+Only used in deamon mode (e.g. `(when (display-graphical-p))`) , as it causes issues with the screen setup configured below.
 For now, I am just setting the font in the screen setup.
 
 The configured font needs to support the unicode characters that are used by the modeline.
 The default font is good enough so let's not define additonal configuration here.
 
 #+begin_src emacs-lisp
+(when (not (display-graphic-p))
 (push '(font . "JetBrains Mono Nerd Font Bold") default-frame-alist)
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (with-selected-frame frame
               (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
               (set-face-attribute 'variable-pitch nil :font "JetBrains Mono Nerd Font")
-              (copy-face 'default 'fixed-pitch))))
+              (copy-face 'default 'fixed-pitch)))))
 #+end_src
 
 **** Screens
@@ -633,16 +634,14 @@ The default font is good enough so let's not define additonal configuration here
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
-    (when (display-graphic-p)
-      (load-theme 'doom-one t)(setq mode-line-format nil)))
+    (load-theme 'doom-one t)(setq mode-line-format nil))
 #+end_src
 ***** Cattputccin
 #+begin_src emacs-lisp
   (use-package  catppuccin-theme
     :config
     (setq catppuccin-flavor 'mocha)
-    (when (display-graphic-p)
-      (load-theme 'catppuccin t)(setq mode-line-format nil)))
+    (load-theme 'catppuccin t)(setq mode-line-format nil))
 #+end_src
 *** Bell
 Disable the annoying bell
@@ -669,10 +668,8 @@ Disable the annoying bell
           doom-modeline-lsp t
           doom-modeline-column-zero-based t)
     :config
-    (when
-        (display-graphic-p)
-      (doom-modeline-mode)
-      (column-number-mode)))
+    (doom-modeline-mode)
+    (column-number-mode))
 #+end_src
 
 
@@ -3116,7 +3113,7 @@ These icons require GUI so let's only enable them when its available.
 #+begin_src emacs-lisp
   (use-package all-the-icons-completion
     :config
-    (when (display-graphic-p) (all-the-icons-completion-mode)))
+    (all-the-icons-completion-mode))
 #+end_src
 
 **** Nerd icons completion
