@@ -420,7 +420,7 @@ Persists history over Emacs restarts
                                                                       (side . bottom)
                                                                       (slot . 0)))))
 
-    (defun my/agenda-pop-up-frame-dissable()
+    (defun my/agenda-pop-up-frame-disable()
       "Disable agneda commands windows as a pop-up window."
       (interactive)
       (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*Agenda Commands\\*"
@@ -439,7 +439,7 @@ Persists history over Emacs restarts
                                                                       (side . bottom)
                                                                       (slot . 0)))))
 
-    (defun my/shell-pop-up-frame-dissable()
+    (defun my/shell-pop-up-frame-disable()
       "Didable shell window as a pop-up window."
       (interactive)
       (setq display-buffer-alist (add-to-list 'display-buffer-alist `("\\*\\(eshell.*\\|shell.*\\|vterm.*\\)\\*"
