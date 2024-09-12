@@ -2168,10 +2168,6 @@ So, I rolled my own.
   :elpaca (org-excalidraw :host github :repo "wdavew/org-excalidraw")
   :custom (org-excalidraw-directory "~/Documents/org/excalidraw"))
 #+end_src
-**** Nutrition
-#+begin_src emacs-lisp
-(org-babel-load-file "~/Documents/org/nutrition.org")
-#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
@@ -4638,6 +4634,11 @@ Let's configure here all our keybindings to keep things tidy!
    "xr" '(org-refile :wk "org refile"))
 #+end_src
 
+*** Other
+**** Nutrition
+#+begin_src emacs-lisp
+(org-babel-load-file "~/Documents/org/nutrition.org")
+#+end_src
 * Finalize
 #+begin_src emacs-lisp
 (my/comf-screen-setup)
