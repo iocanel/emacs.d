@@ -3400,6 +3400,35 @@ Surprisignly, it works much better, but it still requires some tuning.
     (auto-fill-mode -1))
 
 #+end_src
+**** Attachments
+
+#+begin_src emacs-lisp
+(defun my/mu4e-view-save-attachments ()
+  "Save attachements after asking for dir"
+  (interactive)
+  (let* ((mu4e-attachment-dir (read-directory-name "Save to directory: " "/home/iocanel/"))
+         (parts (mu4e-view-mime-parts))
+         (candidates  (seq-map
+                         (lambda (fpart)
+                           (cons ;; (filename . annotation)
+                            (plist-get fpart :filename)
+                            fpart))
+                         (seq-filter
+                          (lambda (part) (plist-get part :attachment-like))
+                          parts)))
+         (candidates (or candidates
+                         (mu4e-warn "No attachments for this message")))
+         (files (mu4e--completing-read "Save file(s): " candidates 'attachment 'multi)))
+    ;; we have determined what files to save, and where.
+    (seq-do (lambda (fname)
+              (let* ((part (cdr (assoc fname candidates)))
+                     (path (mu4e--uniqify-file-name
+                            (mu4e-join-paths
+                             (or mu4e-attachment-dir (plist-get part :target-dir))
+                             (plist-get part :filename)))))
+                (mm-save-part-to-file (plist-get part :handle) path)))
+            files)))
+#+end_src
 **** Quick Access
 #+begin_src emacs-lisp
   (defun my/mu4e-view-unread()
@@ -3563,7 +3592,8 @@ This should allow me to easily go through my mailbox and I should be able to tra
    "C-<tab>" 'mu4e-view-headers-next-unread
    "C-t" 'my/mu4e-mark-thread-as-read
    "C-r" 'my/mu4e-capture-read-later
-   "C-f" 'my/mu4e-capture-follow-up)
+   "C-f" 'my/mu4e-capture-follow-up
+   "C-s" 'my/mu4e-view-save-attachments)
 
   (general-define-key
    :keymaps 'mu4e-loading-mode-map
