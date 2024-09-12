@@ -1678,7 +1678,8 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
   (define-key dired-mode-map (kbd "C-c o l") 'my/dired-file-as-org-link-to-clipboard)
   (define-key dired-mode-map (kbd "C-c u l") 'my/dired-file-as-plantuml-link-to-clipboard)
 #+end_src
-**** Org Google Calender
+**** COMMENT Org Google Calender
+This is still work in progress so let's comment it for now.
 #+begin_src emacs-lisp
 (use-package org-gcal
   :defer t
@@ -1692,7 +1693,21 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
                               ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org")))
 ;; Fixes: `deferred error : (error "oauth2-auto: Unknown provider: org-gcal")`
 ;; Credits: https://github.com/kidd/org-gcal.el/issues/209
-(org-gcal-reload-client-id-secret))
+(org-gcal-reload-client-id-secret)
+
+(defun my/org-gcal-autoschedule ()
+  "Loop through calendar files and automatically schedule them"
+  (interactive)
+  (dolist (entry org-gcal-file-alist)
+    (with-current-buffer (find-file-noselect (cdr entry))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^\\*\\s-\\(.*\\)" nil t)
+          (let ((heading (match-string 1)))
+            (when (re-search-forward "<\\([^>]+\\)>" nil t)
+              (let ((timestamp (match-string 1)))
+                (org-schedule nil timestamp)
+                (message (format "Scheduled event from heading: %s" heading)))))))))))
 #+end_src
 **** Org Github Issues
 ***** Package
