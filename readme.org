@@ -4062,19 +4062,19 @@ A callback for yt-dlp (see [[Youtube DLP]])
                                  "j" 'next-line
                                  "k" 'previous-line
                                  "d" 'my/elfeed-open-in-dwim
-                                 "<tab>" 'my/elfeed-next-entry
-                                 "C-<tab>" 'my/elfeed-prev-entry
+                                 "C-<tab>" 'my/elfeed-next-entry
+                                 "CS-<tab>" 'my/elfeed-prev-entry
                                  "E" 'my/elfeed-enqueue-media-url
                                  "Q" 'my/elfeed-save-and-quit
                                  "r" 'my/elfeed-mark-as-read
                                  "R" 'my/elfeed-mark-all-as-read)
     (general-define-key :keymaps 'elfeed-show-mode-map
-                        "<tab>" 'my/elfeed-next-entry
-                        "C-<tab>" 'my/elfeed-prev-entry
+                        "C-<tab>" 'my/elfeed-next-entry
+                        "CS-<tab>" 'my/elfeed-prev-entry
                         "d" 'my/elfeed-show-dwim)
     (general-define-key :keymaps 'my/elfeed-external-mode-map
-                        "<tab>" 'my/elfeed-next-entry
-                        "C-<tab>" 'my/elfeed-prev-entry))
+                        "C-<tab>" 'my/elfeed-next-entry
+                        "CS-<tab>" 'my/elfeed-prev-entry))
 #+end_src
 
 **** Org
