@@ -3980,6 +3980,11 @@ A callback for yt-dlp (see [[Youtube DLP]])
         ad-do-it))) 
 #+end_src
 
+*** Mpv
+#+begin_src emacs-lisp
+(use-package empv
+  :elpaca (:host github :repo "isamert/empv.el"))
+#+end_src
 *** Elfeed
 **** Package
 #+begin_src emacs-lisp
