@@ -3589,7 +3589,8 @@ This should allow me to easily go through my mailbox and I should be able to tra
    "C-t" 'my/mu4e-mark-thread-as-read
    "C-r" 'my/mu4e-capture-read-later
    "C-f" 'my/mu4e-capture-follow-up
-   "C-s" 'my/mu4e-view-save-attachments)
+   "C-s" 'my/mu4e-view-save-attachments
+   "C-l" 'ace-link)
 
   (general-define-key
    :keymaps 'mu4e-loading-mode-map
