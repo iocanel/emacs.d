@@ -1468,7 +1468,19 @@ Requires:
 ***** Troubleshooting
 ****** org-roam-extract-subtree is creating empty file
 It turns out that this was caused by doomemacs file template functionality that was over writing the extracted node file.
-
+**** Video Notes
+***** Org Media Note
+#+begin_src emacs-lisp
+(use-package org-media-note
+  :elpaca (org-media-note :host github :repo "yuchen-lea/org-media-note")
+  :hook (org-mode .  org-media-note-mode))
+#+end_src
+***** Org Mpv Notes
+#+begin_src emacs-lisp
+(use-package org-mpv-notes
+  :ensure t
+  :commands (org-mpv-notes-mode org-mpv-notes-open))
+#+end_src
 **** Org Capture
 ***** Capture Template
 
