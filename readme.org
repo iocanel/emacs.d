@@ -540,7 +540,9 @@ Persists history over Emacs restarts
 #+end_src
 ** Integration
 *** Browser
+**** Chromium
 Let's use `sandboxed` chromium as the default browser.
+
 #+begin_src emacs-lisp
 (defun my/browse-url-chromium-in-app-mode (url &optional _new-window)
   "Ask the Chromium WWW browser to load URL in app/mode.
@@ -555,9 +557,29 @@ The optional argument NEW-WINDOW is not used."
 	   (concat "chromium --app=" url) nil
 	   browse-url-chromium-program
 	   (append browse-url-chromium-arguments (list (concat "--app=" url))))))
+#+end_src
 
-(setq browse-url-browser-function 'my/browse-url-chromium-in-app-mode
-      browse-url-chromium-arguments '("--user-data-dir=/home/iocanel/.sandbox/iocanel/.local/emacs-browser" "--user-cache-dir=/home/iocanel/.sandbox/iocanel/.cache/emacs-browser" "--class=EmacsBrowser"))
+**** Qutebrowser
+#+begin_src emacs-lisp
+(setq browse-url-qutebrowser-program "qutebrowser")
+(defun my/browse-url-qutebrowser (url &optional _new-window)
+  "Ask the Qutebrowser WWW browser to load URL.
+Default to the URL around or before point.  The strings in
+variable `browse-url-qutebrowser-arguments' are also passed to
+Qutebrowser.
+The optional argument NEW-WINDOW is not used."
+  (interactive (browse-url-interactive-arg "URL: "))
+  (setq url (browse-url-encode-url url))
+  (let* ((process-environment (browse-url-process-environment)))
+    (apply #'start-process
+	   (concat "qutebrowser") nil
+	   browse-url-qutebrowser-program
+	   (append browse-url-qutebrowser-arguments (list (concat url))))))
+#+end_src
+**** Browse URL
+#+begin_src emacs-lisp
+(setq browse-url-browser-function 'my/browse-url-qutebrowser
+      browse-url-qutebrowser-arguments '("-C" "/home/iocanel/.config/qutebrowser/config.py"))
 #+end_src
 ** UI
 *** Appearance
