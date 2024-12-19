@@ -858,8 +858,11 @@ Disable the annoying bell
 
     :general (:states 'normal
                       :keymaps 'org-mode-map
+                      "C-c C-o" 'org-open-at-point
                       "<tab>"  'org-cycle
-                      "<backtab>"  'org-shiftab)
+                      "<backtab>"  'org-shiftab
+                      "M-S-<left>" 'org-demote-subtree
+                      "M-S-<right>" 'org-promote-subtree)
     (:keymaps 'org-src-mode-map
               "C-c C-c" 'org-edit-src-exit
               "C-c C-k" 'org-edit-src-abort))
