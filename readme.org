@@ -3607,35 +3607,55 @@ This should allow me to easily go through my mailbox and I should be able to tra
               (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
               (visual-line-mode)))
 #+end_src
+**** Custom Functions
+***** mu4e~view-browse-url-from-binding
+I use `ace-link` to open links in mu4e.
+It seems that `ace-link` tries to use the fucntion below but it does not exist
+
+#+begin_src emacs-lisp
+  (defun mu4e~view-browse-url-from-binding()
+   "Delegate to org-open-at-point"
+   (org-open-at-point))
+#+end_src
+
 **** Keybindings
 #+begin_src emacs-lisp
-  (general-define-key
-   "C-c a m m" 'mu4e
-   "C-c a m n" 'mu4e-compose-new
-   "C-c a m u" 'my/mu4e-view-unread)
+(general-define-key
+ "C-c a m m" 'mu4e
+ "C-c a m n" 'mu4e-compose-new
+ "C-c a m u" 'my/mu4e-view-unread)
 
-  (general-define-key
-   :keymaps 'evil-normal-state-map
-   "SPC a m u" 'my/mu4e-view-unread)
-  (general-define-key
-   :keymaps 'mu4e-view-mode-map
-   "C-<tab>" 'mu4e-view-headers-next-unread
-   "C-t" 'my/mu4e-mark-thread-as-read
-   "C-r" 'my/mu4e-capture-read-later
-   "C-f" 'my/mu4e-capture-follow-up
-   "C-s" 'my/mu4e-view-save-attachments
-   "C-l" 'ace-link)
+(general-define-key
+ :keymaps 'evil-normal-state-map
+ "SPC a m u" 'my/mu4e-view-unread)
 
-  (general-define-key
-   :keymaps 'mu4e-loading-mode-map
-   "C-<tab>"  'my/mu4e-force-next-unread)
+(general-define-key
+ :keymaps 'mu4e-view-mode-map
+ :states '(normal emacs)
+ "h" 'evil-backward-char
+ "j" 'evil-next-line
+ "k" 'evil-previous-line
+ "l" 'evil-forward-char)
 
-  (general-define-key
-   :keymaps 'mu4e-headers-mode-map
-   "C-<tab>" 'mu4e-headers-next-unread
-   "C-t" 'my/mu4e-mark-thread-as-read
-   "C-r" 'my/mu4e-capture-read-later
-   "C-f" 'my/mu4e-capture-follow-up)
+(general-define-key
+ :keymaps 'mu4e-view-mode-map
+ "C-<tab>" 'mu4e-view-headers-next-unread
+ "C-t" 'my/mu4e-mark-thread-as-read
+ "C-r" 'my/mu4e-capture-read-later
+ "C-f" 'my/mu4e-capture-follow-up
+ "C-s" 'my/mu4e-view-save-attachments
+ "C-l" 'ace-link)
+
+(general-define-key
+ :keymaps 'mu4e-loading-mode-map
+ "C-<tab>"  'my/mu4e-force-next-unread)
+
+(general-define-key
+ :keymaps 'mu4e-headers-mode-map
+ "C-<tab>" 'mu4e-headers-next-unread
+ "C-t" 'my/mu4e-mark-thread-as-read
+ "C-r" 'my/mu4e-capture-read-later
+ "C-f" 'my/mu4e-capture-follow-up)
 #+end_src
 *** Youtube DLP
 
