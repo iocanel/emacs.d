@@ -4434,6 +4434,11 @@ A callback for yt-dlp (see [[Youtube DLP]])
     (async-shell-command "sudo nixos-rebuild --install-bootloader boot"))
   
   (defun my/nixos-gc ()
+    "Call nix-garbage-collect"
+    (interactive)
+    (async-shell-command "sudo nix-collect-garbage"))
+
+  (defun my/nixos-delete-generations ()
     "Call nix-env nix-env --delete-generations 3d"
     (interactive)
     (async-shell-command "nix-env --delete-generations 3d"))
@@ -4449,11 +4454,13 @@ A callback for yt-dlp (see [[Youtube DLP]])
   _r s_: rebuild switch
   _r b_: install bootloader
   _g c_: garbage collect
+  _d g_: generations delete
   _h s_: home-manager switch
   _q_: quit
   "
     ("r s" my/nixos-rebuild-switch :exit t)
     ("r b" my/nixos-install-bootloader :exit t)
+    ("d g" my/nixos-delete-generations :exit t)
     ("g c" my/nixos-gc :exit t)
     ("h s" my/home-manager-switch :exit t)
     ("q" nil "quit" :color blue))
