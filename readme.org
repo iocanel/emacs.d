@@ -3391,6 +3391,10 @@ Surprisignly, it works much better, but it still requires some tuning.
   (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
+  (with-eval-after-load "mm-decode"
+    (add-to-list 'mm-discouraged-alternatives "text/html")
+    (add-to-list 'mm-discouraged-alternatives "text/richtext"))
+
   (setq mu4e-update-interval nil)
   (setq mu4e-get-mail-command "mbsync -a")
   (setq mu4e-headers-results-limit 1000000)
@@ -3831,6 +3835,7 @@ This is not working as expected so let's disable for now.
   (use-package ace-link
     :after eww
     :defer t
+    :config (ace-link-setup-default)
     :commands (eww-back-url eww-forward-url ace-link-eww)
     :general  (:keyamps eww-mode-map
                         "<" 'eww-back-url
