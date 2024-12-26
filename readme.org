@@ -2753,14 +2753,15 @@ The file below can be added to `.dir-locals.el` at the project roto in order to 
 **** PlantUML
 ***** Package
 #+begin_src emacs-lisp
-  (use-package plantuml-mode
-    :after org
-    :commands (plantuml-mode plantuml-download-jar)
-    :init
-    (add-to-list 'org-src-lang-modes '("plantuml" . plantuml)
-                 (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
-                       org-plantuml-jar-path plantuml-jar-path))
-    :hook (plantuml-mode . yas/minor-mode))
+(use-package plantuml-mode
+  :after org
+  :commands (plantuml-mode plantuml-download-jar)
+  :init
+  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+  (setq plantuml-jar-path (concat user-emacs-directory "plantuml/" "plantuml.jar")
+        org-plantuml-jar-path plantuml-jar-path
+        plantuml-default-exec-mode 'jar)
+  :hook (plantuml-mode . yas/minor-mode))
 #+end_src
 ***** Flycheck
 #+begin_src emacs-lisp 
