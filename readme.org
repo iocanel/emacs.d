@@ -4344,6 +4344,23 @@ A callback for yt-dlp (see [[Youtube DLP]])
 #+begin_src emacs-lisp
   (setq my/elfeed-presenter-alist (add-to-list 'my/elfeed-presenter-alist '(my/elfeed-entry-www-p . my/elfeed-open-in-chromium)))
 #+end_src
+*** Lilypond
+**** Installation
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/home/iocanel/.nix-profile/share/emacs/site-lisp/")
+(autoload 'LilyPond-mode "lilypond-mode")
+(add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode))
+#+end_src
+**** Org Babel
+#+begin_src emacs-lisp
+(use-package ob-lilypond
+  :elpaca (ob-lilypond :host github :repo "mjago/ob-lilypond")
+  :init
+  (add-to-list 'org-babel-load-languages '(lilypond . t))
+  (setq ly-nix-ly-path "/home/iocanel/.nix-profile/bin/lilypond")
+  (setq ly-nix-pdf-path "/home/iocanel/.nix-profile/bin/evince")
+  (setq ly-nix-timidity-path "/home/iocanel/.nix-profile/bin/timidity"))
+#+end_src
 ** AI
 *** ChatGPT
 **** GPTel
