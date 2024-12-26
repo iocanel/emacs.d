@@ -1154,6 +1154,11 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 #+begin_src emacs-lisp
   (org-babel-do-load-languages 'org-babel-load-languages '((ditaa . t)))
 #+end_src
+***** Python
+#+begin_src emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages '((python . t)))
+
+#+end_src
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
