@@ -3186,7 +3186,7 @@ These icons can also run on terminal so let's optionally enable them.
             company-dabbrev-downcase nil                  ; don't downcase
             company-require-match t
             company-minimum-prefix-length 3
-            company-backends '(company-files company-keywords company-capf)
+            company-backends '(company-files company-keywords company-capf company-yasnippet)
             company-frontends '(company-pseudo-tooltip-frontend company-preview-frontend))
       :general (:keymaps 'company-mode-map
                 "C-c ."  'company-complete)
