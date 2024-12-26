@@ -2205,6 +2205,43 @@ So, I rolled my own.
   :elpaca (org-excalidraw :host github :repo "wdavew/org-excalidraw")
   :custom (org-excalidraw-directory "~/Documents/org/excalidraw"))
 #+end_src
+
+**** Utilities
+#+begin_src emacs-lisp
+(defun my/markdown-to-org-region (start end)
+  "Convert markdown to org-mode syntax in the selected region, treating single '*' lines as subheadings."
+  (interactive "r")
+  (save-restriction
+    (narrow-to-region start end)
+    (goto-char (point-min))
+    (let ((current-heading-level 0))  ;; Tracks the level of the last heading
+      ;; Process lines one by one
+      (while (not (eobp))
+        (cond
+         ;; Convert markdown headers to org headers
+         ((looking-at "^\\(#+\\) \\(.*\\)$")
+          (let ((level (length (match-string 1)))
+                (text (match-string 2)))
+            (setq current-heading-level level)
+            (replace-match (concat (make-string level ?*) " " text))))
+         ;; Treat lines starting with a single '*' as subheadings
+         ((looking-at "^\\* \\(.*\\)$")
+          (let ((text (match-string 1)))
+            (replace-match (concat (make-string (+ current-heading-level 1) ?*) " " text))))
+         ;; Convert markdown bold (**text**) to org bold (*text*)
+         ((re-search-forward "\\*\\*\\(.*?\\)\\*\\*" (line-end-position) t)
+          (replace-match "*\\1*"))
+         ;; Convert markdown italic (*text*) to org italic (/text/)
+         ((re-search-forward "\\*\\(.*?\\)\\*" (line-end-position) t)
+          (replace-match "/\\1/"))
+         ;; Leave nested list items intact
+         ((looking-at "^\\s*\\*(\\*)+\\s+")
+          (forward-line 1))
+         ;; Convert markdown lists with a single star to org lists
+         ((looking-at "^\\s*\\*\\s+")
+          (replace-match "- ")))
+        (forward-line 1)))))
+#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
