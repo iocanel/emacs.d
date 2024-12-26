@@ -874,7 +874,6 @@ Disable the annoying bell
      (define-key org-src-mode-map (kbd "C-c C-c") 'org-edit-src-exit)))
 #+end_src
 
-
 **** Org Query Language
 #+begin_src emacs-lisp
   (use-package org-ql :elpaca (org-ql :host github :repo "alphapapa/org-ql" :files (:defaults (:exclude "helm-org-ql.el"))))
@@ -904,7 +903,7 @@ We have two challenges to solve:
 
 ***** Refile
 ****** Functions
-******* Refile item ::function::
+******* Refile item                                       ::function::
 #+begin_src emacs-lisp
   (defun my/org-refile (file headline &optional new-state)
     "Refile item to the target FILE under the HEADLINE and set the NEW-STATE."
@@ -936,7 +935,7 @@ We have two challenges to solve:
         "Unsorted"))
 #+end_src
 
-******* Archive item ::function::
+******* Archive item                                      ::function::
 #+begin_src emacs-lisp
   (defun my/org-archive ()
     "Mark item as complete and refile to archieve."
@@ -951,7 +950,7 @@ We have two challenges to solve:
 
 #+end_src
 
-******* Auto archive ::function::
+******* Auto archive                                      ::function::
 #+begin_src emacs-lisp 
   (defun my/org-auto-archive ()
     "Archieve all completed items in my inbox."
@@ -1002,7 +1001,7 @@ I am currently trying it out but it feel less flaky than before.
 #+end_src
 ***** Functions
 
-****** Archive agenda item at point ::function::
+****** Archive agenda item at point                        ::function::
 Requires:
 - [[Getting things done]]
 - [[Archive item]]
@@ -1016,7 +1015,7 @@ Requires:
       (my/org-archive)
       (set-window-configuration agenda-window-configuration)))
 #+end_src
-****** Browse at point ::function::
+****** Browse at point                                     ::function::
 #+begin_src emacs-lisp
   (defun my/org-agenda-browse-at-point ()
     "Browse the url of the specified item."
@@ -1030,7 +1029,7 @@ Requires:
         (when url (browse-url  url)))
       (set-window-configuration agenda-window-configuration)))
 #+end_src
-****** Export Agenda ::function::
+****** Export Agenda                                       ::function::
 #+begin_src emacs-lisp
 (defun my/org-agenda-export ()
     "Export the content of org-agenda"
@@ -1206,7 +1205,7 @@ To have multiple different org roam directories, just add the following `.dir-lo
 #+end_example
 
 ***** Functions
-******  Roam extract subtree and insert ::function::
+******  Roam extract subtree and insert                    ::function::
 One of the pieces of functionality I am missing is the ability to move a subtree to a node.
 Inspiration drawn from logseq plugin: https://github.com/vipzhicheng/logseq-plugin-move-block
 
@@ -1303,7 +1302,7 @@ Requires:
   (defun my/with-length (str) (cons (length str) str))
 #+end_src
 
-****** Logseq to Roam ::function::
+****** Logseq to Roam                                      ::function::
 
 #+begin_src emacs-lisp
   (defun my/logseq-to-roam-buffer (buffer)
@@ -1371,7 +1370,7 @@ Requires:
               newlink))))))
 #+end_src
 
-****** Roam to Logseq ::function::
+****** Roam to Logseq                                      ::function::
 #+begin_src emacs-lisp
 
   (defun my/roam-to-logseq-buffer (buffer)
@@ -1416,7 +1415,7 @@ Requires:
                   (org-roam--list-files my/logseq-folder))))
 #+end_src
 
-****** Check Logseq ::function::
+****** Check Logseq                                        ::function::
 #+begin_src emacs-lisp
   (defun my/logseq-journal-p (file) (string-match-p (concat "^" my/logseq-journals) file))
   (defun my/ensure-file-id (file)
@@ -1500,6 +1499,9 @@ Requires:
 It turns out that this was caused by doomemacs file template functionality that was over writing the extracted node file.
 **** Video Notes
 ***** Org Media Note
+Use links like:
+- video:
+- audio:
 #+begin_src emacs-lisp
 (use-package org-media-note
   :elpaca (org-media-note :host github :repo "yuchen-lea/org-media-note")
@@ -2827,7 +2829,7 @@ This section contains snippets to ease the development of planuml diagrams.
 #+end_src
 
 ****** Conditionals
-******* TODO If then else
+******* If then else
 #+begin_src snippet :mkdirp yes :tangle (concat my/local-dir "snippets/plantuml-mode/ite")
   # -*- mode: snippet -*-
   # name: if then else
