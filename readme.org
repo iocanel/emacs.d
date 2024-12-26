@@ -3633,6 +3633,8 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
 (general-define-key
  :keymaps 'mu4e-view-mode-map
  :states '(normal emacs)
+ "H" 'mu4e-view-toggle-html
+ "g" 'ace-link
  "h" 'evil-backward-char
  "j" 'evil-next-line
  "k" 'evil-previous-line
