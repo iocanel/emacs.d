@@ -1789,8 +1789,8 @@ This is still work in progress so let's comment it for now.
   :elpaca (org-gcal :host github :repo "kidd/org-gcal")
   :commands (org-gcal-sync org-gcal-fetch)
   :config
-  (setq org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/client-id"))
-        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/ikanello@redhat.com/secret"))
+  (setq org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/client-id"))
+        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/secret"))
         org-gcal-file-alist '(("iocanel@gmail.com" .  "~/Documents/org/calendars/personal.org")
                               ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org")))
 ;; Fixes: `deferred error : (error "oauth2-auto: Unknown provider: org-gcal")`
