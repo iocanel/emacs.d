@@ -1082,6 +1082,63 @@ Requires:
             (message "Org Agenda exported to PDF: %s" pdf-file))))
       (set-window-configuration wins))))
 #+end_src
+****** Count todays Agenda items
+#+begin_src emacs-lisp
+(defun my/org-agenda-count-todays-items ()
+  "Count all calendar items for today."
+  (interactive)
+  (let* ((count 0))
+    (let* ((wins (current-window-configuration))
+             org-agenda-sticky)
+        (save-excursion
+          (with-current-buffer
+              (get-buffer-create org-agenda-buffer-name)
+            (pop-to-buffer (current-buffer))
+            (org-agenda nil "a")
+            (goto-char (point-min))
+            (while (not (eobp))
+              (let ((line (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (line-end-position))))
+                (when (string-match-p "^\\s-*personal:" line)
+                  (setq count (+ 1 count)))
+                (when (string-match-p "^\\s-*work:" line)
+                  (setq count (+ 1 count)))
+                (forward-line))))))
+        (set-window-configuration wins)
+        count))
+#+end_src
+****** Query todays items
+#+begin_src emacs-lisp
+(defun my/org-query-todays-items ()
+  "Query all `org-agenda-files` for items scheduled for today or containing an `org-gcal` drawer with today's date."
+  (interactive)
+  (let ((today (format-time-string "%Y-%m-%d"))
+        (gcal-regexp (format ":org-gcal:\\|<%s.*>" (regexp-quote (format-time-string "%Y-%m-%d")))))
+    (org-ql-search
+     org-agenda-files
+     `(or (scheduled :on ,today)
+          (regexp ,gcal-regexp))
+     :title "Today or org-gcal entries"
+     :super-groups `((:name "Scheduled Today" :scheduled ,today)
+                     (:name "org-gcal Entries" :regexp ,gcal-regexp))
+     :sort 'date)))
+
+(defun my/org-count-todays-items ()
+  "Count items in `org-agenda-files` scheduled for today or containing an `org-gcal` drawer with today's date."
+  (interactive)
+  (let* ((today (format-time-string "%Y-%m-%d"))
+         (gcal-regexp (format ":org-gcal:\\|<%s.*>" (regexp-quote today)))
+         (count (length
+                 (org-ql-select
+                  org-agenda-files
+                  `(or (scheduled :on ,today)
+                       (regexp ,gcal-regexp))))))
+    count))
+
+
+
+#+end_src
 ***** Super Agenda
 
 Requires:
