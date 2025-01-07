@@ -1104,9 +1104,9 @@ Requires:
                   (setq count (+ 1 count)))
                 (when (string-match-p "^\\s-*work:" line)
                   (setq count (+ 1 count)))
-                (forward-line))))))
+                (forward-line)))))
         (set-window-configuration wins)
-        count))
+        count)))
 #+end_src
 ****** Query todays items
 #+begin_src emacs-lisp
