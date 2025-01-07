@@ -4726,7 +4726,68 @@ So, it something one needs to be aware of and run those commands before hand. (e
     (interactive)
     (message "Cursor is within a `#+begin_src` block. Language: %s" (my/get-org-src-mode)))
 #+end_src
+** Scheduled Tasks
+*** Functions
+#+begin_src emacs-lisp
+(defvar my/scheduled-tasks nil
+  "A list of currently scheduled tasks and their next execution times.")
 
+(defun my/schedule-daily-task (task-fn hour minute)
+  "Schedule TASK-FN to run daily at HOUR:MINUTE.
+TASK-FN is a function to execute.
+HOUR and MINUTE specify the time of day in 24-hour format.
+Tracks the scheduled task and its next execution time."
+  (let* ((current-time (decode-time (current-time)))
+         (scheduled-time (encode-time 0 minute hour
+                                      (nth 3 current-time)
+                                      (nth 4 current-time)
+                                      (nth 5 current-time)))
+         (run-time (if (time-less-p (current-time) scheduled-time)
+                       scheduled-time
+                     (time-add scheduled-time (* 24 60 60)))))
+    ;; Schedule the task
+    (run-at-time
+     run-time (* 24 60 60)
+     (lambda ()
+       (condition-case err
+           (progn
+             (funcall task-fn)
+             (message "Completed task '%s': %s" (symbol-name task-fn)))
+         (error
+          (message "Error running task '%s': %s"
+                   (symbol-name task-fn)
+                   err)))))
+    ;; Update the tracking list
+    (setq my/scheduled-tasks
+          (let ((updated-tasks ()))
+            (dolist (task my/scheduled-tasks)
+              (unless (eq (plist-get task :task) task-fn)
+                (setq updated-tasks (cons task updated-tasks))))
+            (cons (list :task task-fn :time run-time) updated-tasks)))))
+
+(defun my/list-scheduled-tasks ()
+  "Display a list of currently scheduled tasks and their next execution times."
+  (interactive)
+  (if my/scheduled-tasks
+      (with-output-to-temp-buffer "*Scheduled Tasks*"
+        (princ (format "%-20s %-30s\n" "Task" "Next Execution Time"))
+        (princ (make-string 50 ?-))
+        (princ "\n")
+        (dolist (task my/scheduled-tasks)
+          (let ((task-fn (symbol-name (plist-get task :task)))
+                (time (format-time-string "%Y-%m-%d %H:%M:%S" (plist-get task :time))))
+            (princ (format "%-20s %-30s\n" task-fn time)))))
+    (message "No tasks are currently scheduled.")))
+#+end_src
+*** Tasks
+**** Sync Calendars
+#+begin_src emacs-lisp
+(my/schedule-daily-task #'org-gcal-fetch 06 00)
+#+end_src
+**** Sync Github Issues
+#+begin_src emacs-lisp
+(my/schedule-daily-task #'org-github-issues-sync-all 06 00)
+#+end_src
 ** Key Bindings
 
 *** Binding functions
