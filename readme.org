@@ -4670,17 +4670,16 @@ A callback for yt-dlp (see [[Youtube DLP]])
     ("h s" my/home-manager-switch :exit t)
     ("q" nil "quit" :color blue))
 
-  ;; Bind the Hydra to a key in nix-mode-map
-  (general-define-key :keymaps 'nix-mode-map
-                      "C-x h"
-                      "n" 'hydra-nixos/body)
-
   :general (:keymaps 'nix-mode-map
                      "C-x h" 'my/nixos-hydra/body
                      "C-x n r s" '(my/nixos-rebuild-switch :wk "nixos-rebuild switch")
                      "C-x n r b" '(my/nixos-install-bootloader :wk "nixos-rebuild --isntall-bootloader boot")
                      "C-x n g c" '(my/nixos-gc :wk "nixenv --delete-generations 3d")
                      "C-x n h s" '(my/home-manager-switch :wk "home-manager switch"))
+ (:keymaps 'nix-mode-map
+            :states '(normal)
+             "?" 'my/nixos-hydra/body)
+
   (:keymaps 'nix-mode-map
             :states '(normal)
             :prefix "SPC"
