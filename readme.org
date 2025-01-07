@@ -3724,6 +3724,82 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
    "Delegate to org-open-at-point"
    (org-open-at-point))
 #+end_src
+***** Reply to all
+#+begin_src emacs-lisp
+(defun my/mu4e-compose-reply-to-all ()
+     "Reply to All"
+     (interactive)
+     (mu4e-compose-reply t))
+#+end_src
+**** Hydra
+***** Headers
+#+begin_src emacs-lisp
+(defun my/mu4e-hydra-headers ()
+  "Define (if not already defined org-jira hydra and invoke it."
+  (interactive)
+  (unless (boundp 'my/mu4e-hydra-headers)
+    (defhydra my/mu4e-hydra-headers (:color pink :hint nil)
+      "
+   Mail Headers
+^^^^^^^^--------------------------------------------------------------------------------
+^ Navigation^       ^ Marks^                   ^ Capture^
+^^^^^^^^--------------------------------------------------------------------------------
+_n_:   next         _d_:  delete               _f_:  follow-up [C-f]
+_p_:   previous     _r_:  read/unread          _l_:  read later [C-r]
+_N_:  next unread  _U_:  unflag
+_P_:  prev unread
+"
+      ("n" mu4e-headers-next :exit nil)
+      ("p" mu4e-headers-prev :exit nil)
+      ("N" mu4e-headers-next-unread :exit nil)
+      ("P" mu4e-headers-prev-unread :exit nil)
+      ("d" mu4e-headers-mark-for-trash :exit nil)
+      ("r" mu4e-headers-mark-for-read :exit nil)
+      ("U" mu4e-headers-mark-for-unmark :exit nil)
+      ("f" my/mu4e-capture-follow-up :exit nil)
+      ("l" my/mu4e-capture-read-later :exit nil)
+      ("q" nil "quit" :color blue)))
+  (my/mu4e-hydra-headers/body))
+#+end_src
+***** View
+#+begin_src emacs-lisp
+(defun my/mu4e-hydra-view ()
+  "Define (if not already defined org-jira hydra and invoke it."
+  (interactive)
+  (unless (boundp 'my/mu4e-hydra-view)
+    (defhydra my/mu4e-hydra-view (:color pink :hint nil)
+      "
+   Mail View
+^^^^^^^^--------------------------------------------------------------------------------
+^ Navigation^       ^ Actions^                 ^ Attachments^           ^ Capture^
+^^^^^^^^--------------------------------------------------------------------------------
+_n_:  next          _r_:  reply                _a_:  attach            _f_:  follow-up [C-f]
+_p_:  previous      _f_:  forward              _d_:  detach            _l_:  read later [C-r]
+_R_:  reply all     _D_:  delete               _S_:  save all
+_s_:  save message  _H_:  toggle html/text [H]
+_A_:  refile
+_g_:  goto link [g]
+"
+      ("n" mu4e-view-headers-next :exit nil)
+      ("p" mu4e-view-headers-prev :exit nil)
+      ("r" mu4e-compose-reply :exit nil)
+      ("R" my/mu4e-compose-reply-to-all :exit nil)
+      ("f" mu4e-compose-forward :exit nil)
+      ("b" mu4e-view-bounce :exit nil)
+      ("s" mu4e-view-save-message :exit nil)
+      ("a" mu4e-view-attach :exit nil)
+      ("v" mu4e-view-attachment-view :exit nil)
+      ("d" mu4e-view-detach :exit nil)
+      ("S" mu4e-view-save-attachments :exit nil)
+      ("D" mu4e-view-mark-for-delete :exit nil)
+      ("A" mu4e-view-mark-for-refile :exit nil)
+      ("g" ace-link :exit nil)
+      ("H" mu4e-view-toggle-html :exit nil)
+      ("f" my/mu4e-capture-follow-up :exit nil)
+      ("l" my/mu4e-capture-read-later :exit nil)
+      ("q" nil "quit" :color blue)))
+  (my/mu4e-hydra-view/body))
+#+end_src
 
 **** Keybindings
 #+begin_src emacs-lisp
@@ -3744,7 +3820,8 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
  "h" 'evil-backward-char
  "j" 'evil-next-line
  "k" 'evil-previous-line
- "l" 'evil-forward-char)
+ "l" 'evil-forward-char
+ "?" 'my/mu4e-hydra-view)
 
 (general-define-key
  :keymaps 'mu4e-view-mode-map
@@ -3764,7 +3841,8 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
  "C-<tab>" 'mu4e-headers-next-unread
  "C-t" 'my/mu4e-mark-thread-as-read
  "C-r" 'my/mu4e-capture-read-later
- "C-f" 'my/mu4e-capture-follow-up)
+ "C-f" 'my/mu4e-capture-follow-up
+ "?" 'my/mu4e-hydra-headers)
 #+end_src
 *** Youtube DLP
 
