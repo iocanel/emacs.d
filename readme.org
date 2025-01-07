@@ -1096,9 +1096,10 @@ Requires:
   (use-package org-super-agenda
     :commands (my/org-agenda-browse-at-point my/org-agenda-archive-at-point my/org-agenda-export my/org-archive my/org-refile)
     :config
-    (setq org-super-agenda-groups '((:name "Events" :time-grid t :todo "TODAY")
+    (setq org-super-agenda-groups '(
+                                    (:name "Today" :time-grid t :deadline today)
                                     (:name "Habbits" :tag "habit" :todo "TODAY")
-                                    (:name "Due" :deadline past)
+                                    (:name "Events" :time-grid t :todo "TODAY")
                                     (:name "Jira" :tag "jira")
                                     (:name "Email" :tag "email")
                                     (:name "Github pulls" :tag "pull")
@@ -1111,7 +1112,7 @@ Requires:
           org-agenda-span 2
           org-agenda-files (append
                             (directory-files-recursively "~/Documents/org/jira" "\.org$")
-                            '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org"))
+                            '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org"))
           ;; Refile
           org-refile-targets '(
                                ;; P.A.R.A
