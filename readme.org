@@ -1723,7 +1723,7 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
           org-habit-preceding-days 35
           org-habit-show-habits t)
 
-    (defvar my/org-habit-capture-alist '(("nm" . "Log meals")) "An association list that maps capture keys to habit headings")
+    (defvar my/org-habit-capture-alist '() "An association list that maps capture keys to habit headings")
 
     (defun my/org-habit-check-captured ()
       "Check if there is a habit matching that latest captured item and mark it as done."
@@ -1735,21 +1735,22 @@ Credits: https://www.reddit.com/r/emacs/comments/74gkeq/system_wide_org_capture
               (when (not org-note-abort) (my/org-habit-mark habit))))))
 
 (defun my/org-habit-daily-marked-p (heading &optional date)
-"Test if habit with HEADING is marked for DATE. If DATE is missing the current date is used"
-  (interactive)
+  "Test if habit with HEADING is marked DONE for DATE. If DATE is missing, the current date is used."
+  (interactive "sHeading: \nsDate (YYYY-MM-DD, leave blank for today): ")
   (let* ((date (or date (format-time-string "%Y-%m-%d")))
-        (done-found nil))
+         (done-found nil))
     ;; Go through each headline in the current buffer
     (org-map-entries
      (lambda ()
-       ;; Search for DONE states within the current headline
+       ;; Search for DONE states within the current headline if the heading matches
        (save-excursion
          (org-back-to-heading t)
-         (let ((end (save-excursion (outline-next-heading) (point))))
-           (while (re-search-forward "- State \"DONE\".*\\[\\([0-9]+-[0-9]+-[0-9]+\\) " end t)
-             (when (string= date (match-string 1))
-               (setq done-found t)
-               (message "Today's date found in entry: %s" (org-get-heading t t t t)))))))
+         (when (string= heading (org-get-heading t t t t))
+           (let ((end (save-excursion (outline-next-heading) (point))))
+             (while (re-search-forward "- State \"DONE\".*\\[\\([0-9]+-[0-9]+-[0-9]+\\) " end t)
+               (when (string= date (match-string 1))
+                 (setq done-found t)
+                 (message "Today's date found in entry: %s" (org-get-heading t t t t))))))))
      nil 'agenda)
     done-found))
 
@@ -5013,6 +5014,12 @@ Let's configure here all our keybindings to keep things tidy!
 **** Nutrition
 #+begin_src emacs-lisp
 (org-babel-load-file "~/Documents/org/nutrition.org")
+(add-to-list 'my/org-habit-capture-alist '("nm" . "Log meals"))
+#+end_src
+**** Workout
+#+begin_src emacs-lisp
+(org-babel-load-file "~/Documents/org/workout.org")
+(add-to-list 'my/org-habit-capture-alist '("wl" . "Log workout"))
 #+end_src
 * Finalize
 #+begin_src emacs-lisp
