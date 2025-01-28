@@ -1206,6 +1206,11 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
       (when (get-buffer-window (current-buffer) t) (apply fn args))))
 #+end_src
 
+**** Org Aggregate
+#+begin_src emacs-lisp
+  (use-package orgtbl-aggregate
+    :elpaca (orgtbl-aggregate :host github :repo "tbanel/orgaggregate" :ref "366677c0a5792cdcc5157362fd36416c76b9660b" :files (:defaults "*.el")))
+
 **** Org Babel
 ***** Ditaa
 #+begin_src emacs-lisp
