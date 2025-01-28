@@ -538,6 +538,10 @@ Persists history over Emacs restarts
 #+begin_src emacs-lisp
 (recentf-mode)
 #+end_src
+*** Olivetti
+#+begin_src emacs-lisp
+(use-package olivetti)
+#+end_src
 ** Integration
 *** Browser
 **** Chromium
