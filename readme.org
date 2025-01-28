@@ -1215,6 +1215,20 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
   (use-package orgtbl-aggregate
     :elpaca (orgtbl-aggregate :host github :repo "tbanel/orgaggregate" :ref "366677c0a5792cdcc5157362fd36416c76b9660b" :files (:defaults "*.el")))
 
+#+end_src
+**** Org Modern
+#+begin_src emacs-lisp
+(use-package org-modern
+  :after (org)
+  :custom
+  (org-modern-replace-starts "◇◉○✸✿✚★►")
+  (org-modern-star 'replace)
+  (org-modern-block-name nil)
+  (org-modern-block-fringe nil) ;; fringe breaks org-indent
+  :hook ((org-agenda-finalize . org-modern-agenda)
+         (org-mode . org-modern-mode)))
+#+end_src
+
 **** Org Babel
 ***** Ditaa
 #+begin_src emacs-lisp
