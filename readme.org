@@ -998,6 +998,7 @@ I am currently trying it out but it feel less flaky than before.
                            "~/Documents/org/github.org"
                            "~/Documents/org/habits.org"
                            "~/Documents/org/nutrition.org"
+                           "~/Documents/org/workout.org"
                            "~/Documents/org/calendars/personal.org"
                            "~/Documents/org/calendars/work.org"
                            "~/Documents/org/roam/Inbox.org")
@@ -1154,41 +1155,54 @@ Requires:
   - [[Archive agenda item at point]]
     
 #+begin_src emacs-lisp
-  (use-package org-super-agenda
-    :commands (my/org-agenda-browse-at-point my/org-agenda-archive-at-point my/org-agenda-export my/org-archive my/org-refile)
-    :config
-    (setq org-super-agenda-groups '(
-                                    (:name "Today" :time-grid t :deadline today)
-                                    (:name "Habbits" :tag "habit" :todo "TODAY")
-                                    (:name "Events" :time-grid t :todo "TODAY")
-                                    (:name "Jira" :tag "jira")
-                                    (:name "Email" :tag "email")
-                                    (:name "Github pulls" :tag "pull")
-                                    (:name "Github issues" :tag "issue"))
-          ;; agenda
-          org-agenda-scheduled-leaders '("" "")
-          org-agenda-tag-filter-preset '("-drill")
-          org-agenda-start-day "+0"
-          org-agenda-start-on-weekday nil
-          org-agenda-span 2
-          org-agenda-files (append
-                            (directory-files-recursively "~/Documents/org/jira" "\.org$")
-                            '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org"))
-          ;; Refile
-          org-refile-targets '(
-                               ;; P.A.R.A
-                               ("~/Documents/org/roam/Projects.org" :maxlevel . 10)
-                               ("~/Documents/org/roam/Areas.org" :maxlevel . 10)
-                               ("~/Documents/org/roam/Resources.org" :maxlevel . 10)
-                               ("~/Documents/org/roam/Archives.org" :maxlevel . 10)))
-    :hook (org-agenda-mode . org-super-agenda-mode)
-    :general (:keymaps 'org-agenda-mode-map
-                       "C-a" 'my/org-agenda-archive-at-point
-                       "C-b" 'my/org-agenda-browse-at-point))
+(use-package org-super-agenda
+  :commands (my/org-agenda-browse-at-point my/org-agenda-archive-at-point my/org-agenda-export my/org-archive my/org-refile)
+  :config
+  (setq org-super-agenda-groups '(
+                                  (:name "Today" :time-grid t :deadline today)
+                                  (:name "Habbits" :tag "habit" :todo "TODAY")
+                                  (:name "Events" :time-grid t :todo "TODAY")
+                                  (:name "Jira" :tag "jira")
+                                  (:name "Email" :tag "email")
+                                  (:name "Github pulls" :tag "pull")
+                                  (:name "Github issues" :tag "issue"))
+        ;; agenda
+        org-agenda-scheduled-leaders '("" "")
+        org-agenda-tag-filter-preset '("-drill")
+        org-agenda-start-day "+0"
+        org-agenda-start-on-weekday nil
+        org-agenda-span 2
+        org-agenda-hide-tags-regexp nil
+        org-agenda-files (append
+                          (directory-files-recursively "~/Documents/org/jira" "\.org$")
+                          '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/workout.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org"))
+        ;; Refile
+        org-refile-targets '(
+                             ;; P.A.R.A
+                             ("~/Documents/org/roam/Projects.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Areas.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Resources.org" :maxlevel . 10)
+                             ("~/Documents/org/roam/Archives.org" :maxlevel . 10)))
+
+  (defun my/customize-agenda-dates ()
+    "Customize the appearance of date headers in the Org Agenda."
+    (set-face-attribute 'org-agenda-date nil
+                        :height 1.5   
+                        :weight 'bold 
+                        :foreground "orange")
+    (set-face-attribute 'org-agenda-date-today nil
+                        :height 1.5   
+                        :weight 'bold 
+                        :foreground "orange"))
+
+  :hook ((org-agenda-mode . org-super-agenda-mode)
+         (org-agenda-finalize . my/customize-agenda-dates))
+  :general (:keymaps 'org-agenda-mode-map
+                     "C-a" 'my/org-agenda-archive-at-point
+                     "C-b" 'my/org-agenda-browse-at-point))
 
 #+end_src
-
-**** Bullets
+**** COMMENT Bullets
 #+begin_src emacs-lisp
   (use-package org-bullets
     :after (org)
