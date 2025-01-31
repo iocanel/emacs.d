@@ -3152,6 +3152,45 @@ Inspired by https://www.aidanscannell.com/post/org-mode-resume/
   (use-package pdf-tools
     :init (pdf-loader-install))
 #+end_src
+**** Functions
+#+begin_src emacs-lisp
+(defun my/pdf-unlock (&optional file password)
+  "Unlock a PDF FILE using PASSWORD.
+If called in Dired and the selected file is a PDF, use that without prompting for FILE.
+Otherwise, prompt for the PDF file. Always prompt for PASSWORD.
+Writes the unlocked PDF to a temporary file, then overwrites the original FILE."
+  (interactive
+   (let ((dired-file
+          ;; Only capture the file if we are in dired-mode and it's a PDF
+          (when (eq major-mode 'dired-mode)
+            (let ((f (dired-get-filename nil t))) ; `nil` => no error if none, t => absolute filename
+              (and f (string-match-p "\\.pdf\\'" f) f)))))
+     (list
+      ;; FILE
+      (or dired-file
+          (read-file-name "Select encrypted PDF file: " nil nil t nil
+                          (lambda (f)
+                            (string-match-p "\\.pdf\\'" f))))
+      ;; PASSWORD
+      (read-passwd "Enter PDF password: "))))
+  ;; Now we have `file` and `password`.
+  (let* ((tmp-file
+          (expand-file-name
+           (concat (file-name-nondirectory (file-name-sans-extension file))
+                   "_unlocked.pdf")
+           temporary-file-directory))
+         (exit-code
+          (call-process
+           "qpdf" nil nil nil
+           (concat "--password=" password) "--decrypt" file tmp-file)))
+    (cond
+     ((not (zerop exit-code))
+      (message "Failed to unlock PDF. qpdf exited with code %s" exit-code))
+     (t
+      (copy-file tmp-file file t)  ; Overwrite original
+      (delete-file tmp-file)
+      (message "Unlocked PDF written over original: %s" file)))))
+#+end_src
 ** Completion
 *** COMMENT Helm
 **** Package
