@@ -1266,10 +1266,29 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
-  (use-package org-roam
-    :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
-    :custom (org-roam-completion-everywhere t)
-    (org-roam-directory "~/Documents/org/roam"))
+(use-package org-roam
+  :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
+  :custom (org-roam-completion-everywhere t)
+  (org-roam-directory "~/Documents/org/roam")
+  :config
+  (require 'org-roam-dailies) ;; Ensure the keymap is available
+  (org-roam-db-autosync-mode)
+  (defun my/org-roam-node-insert-immediate (arg &rest args)
+    "Insert a link to a new org-roam node without leaving the current file."
+    (interactive "P")
+    (let ((args (cons arg args))
+          (org-roam-capture-templates (list (append (car org-roam-capture-templates)
+                                                    '(:immediate-finish t)))))
+      (apply #'org-roam-node-insert args)))
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n I" . my/org-roam-node-insert-immediate)
+         :map org-mode-map
+         ("C-M-i" . completion-at-point)
+         :map org-roam-dailies-map
+         ("Y" . org-roam-dailies-capture-yesterday)
+         ("T" . org-roam-dailies-capture-tomorrow)))
 #+end_src
 ***** UI
 #+begin_src emacs-lisp
