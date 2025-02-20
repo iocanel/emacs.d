@@ -2398,6 +2398,43 @@ So, I rolled my own.
           (replace-match "- ")))
         (forward-line 1)))))
 #+end_src
+***** Auto-Tagging
+#+begin_src emacs-lisp
+(defun my/org-heading-append-tag (tag)
+  "Append TAG to all org-mode headings in the current buffer.
+If a heading already has tags, insert the new tag into the tag list.
+If the tag already exists for a heading, it is left unchanged."
+  (interactive "sEnter tag: ")
+  (save-excursion
+    (goto-char (point-min))
+    ;; Regex explanation:
+    ;;   Group 1: stars (one or more "*")
+    ;;   Group 2: heading text (non-greedy match)
+    ;;   Group 3 (optional): whitespace followed by the tag block
+    ;;   Group 4 (optional): the actual tag block (e.g. ":tag1:tag2:")
+    (while (re-search-forward
+            "^\\(\\*+\\)[ \t]+\\(.*?\\)\\(?:[ \t]+\\(:[[:alnum:]_@#%:]+:\\)\\)?[ \t]*$"
+            nil t)
+      (let* ((stars (match-string 1))
+             (heading (match-string 2))
+             (tags-group (match-string 3)) ; includes leading space if present
+             new-tags)
+        (if tags-group
+            (progn
+              ;; If the tag is already present, do nothing.
+              (if (string-match (concat ":" tag ":") tags-group)
+                  (setq new-tags tags-group)
+                ;; Remove the trailing colon from the existing tags, then add new tag.
+                (let* ((existing (string-trim tags-group))
+                       (trimmed (if (and (> (length existing) 0)
+                                         (string-suffix-p ":" existing))
+                                    (substring existing 0 -1)
+                                  existing)))
+                  (setq new-tags (concat trimmed ":" tag ":")))))
+          ;; No tags were present – create a new tag list.
+          (setq new-tags (concat ":" tag ":")))
+        (replace-match (format "%s %s %s" stars heading new-tags) t t)))))
+#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
