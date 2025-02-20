@@ -2401,11 +2401,11 @@ So, I rolled my own.
 #+end_src
 ***** Auto-Tagging
 #+begin_src emacs-lisp
-(defun my/org-heading-append-tag (tag)
+(defun my/org-heading-append-tag (tag required-tag)
   "Append TAG to all org-mode headings in the current buffer.
 If a heading already has tags, insert the new tag into the tag list.
 If the tag already exists for a heading, it is left unchanged."
-  (interactive "sEnter tag: ")
+  (interactive "sEnter tag: \nsEnter existing tag (leave blank for all headings): ")
   (save-excursion
     (goto-char (point-min))
     ;; Regex explanation:
@@ -2434,7 +2434,8 @@ If the tag already exists for a heading, it is left unchanged."
                   (setq new-tags (concat trimmed ":" tag ":")))))
           ;; No tags were present – create a new tag list.
           (setq new-tags (concat ":" tag ":")))
-        (replace-match (format "%s %s %s" stars heading new-tags) t t)))))
+        (when (or (or (not required-tag) (s-blank-p required-tag)) (and tags-group (s-contains-p required-tag tags-group)))
+          (replace-match (format "%s %s %s" stars heading new-tags) t t))))))
 #+end_src
 *** Java
 **** Eclipse JDT Language Server
