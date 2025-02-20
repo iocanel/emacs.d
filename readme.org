@@ -166,9 +166,16 @@ Since I don't do that often I expect this to be commented out most of the time.
 *** File Manager
 **** Dired
 #+begin_src emacs-lisp
-  (use-feature dired
+(use-feature dired
   :config
-  (setq dired-dwim-target t))
+  (setq dired-dwim-target t)
+  (defun my/xdg-open ()
+    "Open the file at point in Dired using xdg-open."
+    (interactive)
+    (let ((file (dired-get-file-for-visit)))
+      (start-process "xdg-open" nil "xdg-open" file)))
+    :general  (:keyamps 'eww-mode-map
+                        "C-c x" 'my/xdg-open))
 #+end_src
 **** Dired Narrow
 #+begin_src emacs-lisp
