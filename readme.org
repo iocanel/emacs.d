@@ -1639,7 +1639,8 @@ Use links like:
           ("bp" "Passes" entry (file+olp "~/Documents/org/bjj/BJJ.org" "Techniques" "Passes")(file "~/Documents/org/templates/bjj-pass.orgtmpl"))
           ("bf" "FAQ" entry (file+olp "~/Documents/org/bjj/BJJ.org" "FAQ")(file "~/Documents/org/templates/bjj-faq.orgtmpl"))
 
-          ("h" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
+          ("o" "Org")
+          ("oh" "Habit" entry (file+olp "~/Documents/org/habits.org" "Habits") (file "~/Documents/org/templates/habit.orgtmpl"))
 
           ("f" "Flashcards")
           ("fq" "Quotes" entry (file+headline "~/Documents/org/flashcards/quotes.org" "Quotes") "* %?\n%u" :prepend t)
@@ -5068,6 +5069,11 @@ Let's configure here all our keybindings to keep things tidy!
 #+begin_src emacs-lisp
 (org-babel-load-file "~/Documents/org/nutrition.org")
 (add-to-list 'my/org-habit-capture-alist '("nm" . "Log meals"))
+#+end_src
+**** Weight
+#+begin_src emacs-lisp
+(org-babel-load-file "~/Documents/org/weight.org")
+(add-to-list 'my/org-habit-capture-alist '("hw" . "Log weight"))
 #+end_src
 **** Workout
 #+begin_src emacs-lisp
