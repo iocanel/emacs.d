@@ -2363,6 +2363,7 @@ So, I rolled my own.
 #+end_src
 
 **** Utilities
+***** Markdown to Org
 #+begin_src emacs-lisp
 (defun my/markdown-to-org-region (start end)
   "Convert markdown to org-mode syntax in the selected region, treating single '*' lines as subheadings."
