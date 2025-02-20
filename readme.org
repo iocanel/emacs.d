@@ -2279,12 +2279,30 @@ So, I rolled my own.
                        'headline))))
 #+end_src
 
+**** Org Present
+#+begin_src emacs-lisp
+(use-package org-present
+:general
+(:states '(normal)
+           :keymaps 'org-present-mode-map
+           "e" 'org-tree-slide-mode
+           "C-i" 'org-display-inline-images
+           "<left>" 'org-tree-slide-move-previous-tree
+           "<right>" 'org-tree-slide-move-next-tree))
+#+end_src
+
 **** Org Asciidoc
 #+begin_src emacs-lisp
   (use-package adoc-mode)
 #+end_src
 
 **** Org Hugo
+***** Package
+#+begin_src emacs-lisp
+(use-package ox-hugo
+  :ensure t
+  :after ox)
+#+end_src
 ***** Configuration
 
 #+begin_src emacs-lisp
