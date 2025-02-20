@@ -4733,18 +4733,82 @@ A callback for yt-dlp (see [[Youtube DLP]])
 ** AI
 *** ChatGPT
 **** GPTel
+***** Prompts
+#+begin_src text :tangle (concat my/local-dir "llm/prompts/flashcard-creator.txt") :mkdirp t
+You are an org-mode assistant that create org-drill flashcards based on the provided content.
+The flashcard should be an org heading with the :drill: tag that contains no properties. 
+The content of the heading should be never be empty. 
+If there is nothing to included in the body (e.g. multiple choices, clarifications) then repeat the full question. 
+The answer should be provided under an answer sub-heading. The answer itself may not contain additional sub-headings. 
+Be carefull, to discern when the question is followed by the response or multiple choices. 
+Examples: 
+
+User: 
+What's the capital of Greece ?
+Assistant: 
+,** What's the capital of Greece ? :drill:
+What's the capital of Greece ?
+,*** Answer 
+Athens
+
+User: 
+What's the capital of Greece ?
+Athens
+Assistant:
+,** What's the capital of Greece ? :drill:
+What's the capital of Greece ?
+,*** Answer 
+Athens
+
+User:
+What's the capital of Greece ?
+Athens
+Rome 
+Paris
+Assistant:
+,** What's the capital of Greece ? :drill:
+- Athens
+- Rome 
+- Paris
+,*** Answer 
+Athens
+
+User: 
+The capital of Greece is Athens
+Assistant:
+,** What's the capital of Greece ? :drill:
+What's the capital of Greece ?
+,*** Answer 
+Athens
+
+Use all the content in thee triple backticks to generate the flashcoard: ```%s```.
+#+end_src
+***** Package
 #+begin_src emacs-lisp
-    (use-package gptel
-      :elpaca (gptel :host github :repo "karthink/gptel")
-      :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
-      :general
-      ("C-c <RET>" 'gptel-send)
-      (:states 'normal
-       :keymaps 'org-mode-map
-       :prefix "<SPC>"
-       "c s" 'gptel-send
-       "c m" 'gptel-menu
-       "c t" 'gptel-org-set-topic))
+(use-package gptel
+  :elpaca (gptel :host github :repo "karthink/gptel")
+  :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
+  :config
+  (defun my/clipboard-to-flashcard-at-point ()
+    "Paste the clipboard content as an org-mode flashcard."
+    (interactive)
+    (let* ((clipboard (gui-get-selection 'CLIPBOARD))
+           (prompt-file (concat my/local-dir "llm/prompts/flashcard-creator.txt"))
+           (prompt-text (with-temp-buffer (insert-file-contents prompt-file) (buffer-string)))
+           (prompt (format prompt-text clipboard)))
+      (gptel-request prompt :callback (lambda (resp &rest _)
+                                        (setq response (replace-regexp-in-string "^```org\\|```$" "" resp))))
+      (while (string-empty-p response)
+        (sleep-for 0.1))
+      (insert response)))
+  :general
+  ("C-c <RET>" 'gptel-send)
+  (:states 'normal
+           :keymaps 'org-mode-map
+           :prefix "<SPC>"
+           "c s" 'gptel-send
+           "c m" 'gptel-menu
+           "c t" 'gptel-org-set-topic))
 #+end_src
 **** Copilot
 #+begin_src emacs-lisp
