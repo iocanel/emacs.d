@@ -3202,6 +3202,8 @@ This section contains snippets to ease the development of planuml diagrams.
   "
                  ("\\cvsection{%s}" . "\\cvsection*{%s}")))
       :config
+      (setq org-format-latex-options (plist-put org-format-latex-options :dpi 300))
+      (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.8))
       (setq TeX-auto-save t
             TeX-parse-self t
             TeX-save-query nil
