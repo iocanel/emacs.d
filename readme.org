@@ -1251,6 +1251,14 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 #+end_src
 
 **** Org Babel
+***** Java
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages 'org-babel-load-languages '((java . t)))
+#+end_src
+****** Unamed Class Support
+#+begin_src java
+(setq org-babel-java-command "java --enable-preview --source 21")
+#+end_src
 ***** Ditaa
 #+begin_src emacs-lisp
   (org-babel-do-load-languages 'org-babel-load-languages '((ditaa . t)))
