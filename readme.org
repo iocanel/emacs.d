@@ -1260,6 +1260,170 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 #+begin_src java
 (setq org-babel-java-command "java --enable-preview --source 21")
 #+end_src
+******* Code customization
+In order to support features like `Unamed Class` and `Source Code Execution` we need to customize the `org-babel-execute:java` function.
+We need to introduce a few new parameters:
+- `:unamed` - if true, the code block is an unamed class
+- `:source-exec` - if true, the code block should be executed as source code
+
+We also need to modify the code in order to respoect these parameters.
+Specifically, we need for unamed classes to disable code that automatically wraps the block in a class and adds a main method.
+For source code execution, we need to modify the actual command to skip the compilation step and to also enable preview features.
+
+#+begin_src emacs-lisp
+(defun org-babel-execute:java (body params)
+  "Execute a java source block with BODY code and PARAMS params."
+  (let* (;; allow header overrides
+         (org-babel-java-compiler
+          (or (cdr (assq :javac params))
+              org-babel-java-compiler))
+         (org-babel-java-command
+          (or (cdr (assq :java params))
+              org-babel-java-command))
+         (org-babel-java-unamed
+          (or (cdr (assq :unamed params))
+              org-babel-java-unamed))
+         (org-babel-java-source-code-execution
+          (or (cdr (assq :source-exec params))
+              org-babel-java-source-code-execution))
+
+         ;; if true, run from babel temp directory
+         (run-from-temp (not (cdr (assq :dir params))))
+         ;; class and package
+         (fullclassname (or (cdr (assq :classname params))
+                            (org-babel-java-find-classname body)))
+         ;; just the class name
+         (classname (car (last (split-string fullclassname "\\."))))
+         ;; just the package name
+         (packagename (if (string-match-p "\\." fullclassname)
+                          (file-name-base fullclassname)))
+         ;; the base dir that contains the top level package dir
+         (basedir (file-name-as-directory
+                   (if run-from-temp
+                       (org-babel-temp-directory)
+                     default-directory)))
+         ;; the dir to write the source file
+         (packagedir (if (and (not run-from-temp) packagename)
+                         (file-name-as-directory
+                          (concat basedir (replace-regexp-in-string "\\." "/" packagename)))
+                       basedir))
+         ;; the filename of the source file
+         (src-file (concat packagedir classname ".java"))
+         ;; compiler flags
+         (cmpflag (or (cdr (assq :cmpflag params)) ""))
+         ;; runtime flags
+         (cmdline (or (cdr (assq :cmdline params))
+                      (if org-babel-java-unamed "--enable-preview --source 21" "")))
+         ;; command line args
+         (cmdargs (or (cdr (assq :cmdargs params)) ""))
+         ;; the command to compile and run
+         (cmd (if org-babel-java-source-code-execution
+                  (concat org-babel-java-command 
+                      " -cp " (org-babel-process-file-name basedir 'noquote)
+                      " " cmdline " " src-file
+                      " " cmdargs)
+                  (concat org-babel-java-compiler " " cmpflag " "
+                      (org-babel-process-file-name src-file 'noquote)
+                      " && " org-babel-java-command
+                      " -cp " (org-babel-process-file-name basedir 'noquote)
+                      " " cmdline " " (if run-from-temp classname fullclassname)
+                      " " cmdargs)))
+         ;; header args for result processing
+         (result-type (cdr (assq :result-type params)))
+         (result-params (cdr (assq :result-params params)))
+         (result-file (and (eq result-type 'value)
+                           (org-babel-temp-file "java-")))
+         ;; the expanded body of the source block
+         (full-body (org-babel-expand-body:java body params)))
+
+    ;; created package-name directories if missing
+    (unless (or (not packagedir) (file-exists-p packagedir))
+      (make-directory packagedir 'parents))
+
+    ;; write the source file
+    (when (not org-babel-java-unamed)
+      (setq full-body (org-babel-java--expand-for-evaluation
+                     full-body run-from-temp result-type result-file)))
+
+    (with-temp-file src-file (insert full-body))
+
+    ;; compile, run, process result
+    (org-babel-reassemble-table
+     (org-babel-java-evaluate cmd result-type result-params result-file)
+     (org-babel-pick-name
+      (cdr (assoc :colname-names params)) (cdr (assoc :colnames params)))
+     (org-babel-pick-name
+      (cdr (assoc :rowname-names params)) (cdr (assoc :rownames params))))))
+
+(defun org-babel-expand-body:java (body params)
+  "Expand BODY with PARAMS.
+BODY could be a few statements, or could include a full class
+definition specifying package, imports, and class.  Because we
+allow this flexibility in what the source block can contain, it
+is simplest to expand the code block from the inside out."
+  (let* (
+         (org-babel-java-unamed
+          (or (cdr (assq :unamed params))
+              org-babel-java-unamed))
+         (fullclassname (or (cdr (assq :classname params)) ; class and package
+                            (org-babel-java-find-classname body)))
+         (classname (car (last (split-string fullclassname "\\.")))) ; just class name
+         (packagename (if (string-match-p "\\." fullclassname)       ; just package name
+                          (file-name-base fullclassname)))
+         (var-lines (org-babel-variable-assignments:java params))
+         (imports-val (assq :imports params))
+         (imports (if imports-val
+                      (split-string (org-babel-read (cdr imports-val) nil) " ")
+                    nil)))
+    (with-temp-buffer
+      (insert body)
+      
+      (when (not org-babel-java-unamed)
+      ;; wrap main.  If there are methods defined, but no main method
+      ;; and no class, wrap everything in a generic main method.
+      (goto-char (point-min))
+      (when (and (not (re-search-forward org-babel-java--main-re nil t))
+                 (not (re-search-forward org-babel-java--any-method-re nil t)))
+        (org-babel-java--move-past org-babel-java--package-re) ; if package is defined, move past it
+        (org-babel-java--move-past org-babel-java--imports-re) ; if imports are defined, move past them
+        (insert "public static void main(String[] args) {\n")
+        (indent-code-rigidly (point) (point-max) 4)
+        (goto-char (point-max))
+        (insert "\n}"))
+
+      ;; wrap class.  If there's no class, wrap everything in a
+      ;; generic class.
+      (goto-char (point-min))
+      (when (not (re-search-forward org-babel-java--class-re nil t))
+        (org-babel-java--move-past org-babel-java--package-re) ; if package is defined, move past it
+        (org-babel-java--move-past org-babel-java--imports-re) ; if imports are defined, move past them
+        (insert (concat "\npublic class " (file-name-base classname) " {\n"))
+        (indent-code-rigidly (point) (point-max) 4)
+        (goto-char (point-max))
+        (insert "\n}"))
+      (goto-char (point-min)))
+
+      ;; insert variables from source block headers
+      (when var-lines
+        (goto-char (point-min))
+        (org-babel-java--move-past org-babel-java--class-re)   ; move inside class
+        (insert (mapconcat 'identity var-lines "\n"))
+        (insert "\n"))
+
+      ;; add imports from source block headers
+      (when imports
+        (goto-char (point-min))
+        (org-babel-java--move-past org-babel-java--package-re) ; if package is defined, move past it
+        (insert (mapconcat (lambda (package) (concat "import " package ";")) imports "\n") "\n"))
+
+      ;; add package at the top
+      (goto-char (point-min))
+      (when (and packagename (not (re-search-forward org-babel-java--package-re nil t)))
+        (insert (concat "package " packagename ";\n")))
+
+      ;; return expanded body
+      (buffer-string))))
+#+end_src
 ***** Ditaa
 #+begin_src emacs-lisp
   (org-babel-do-load-languages 'org-babel-load-languages '((ditaa . t)))
