@@ -1261,6 +1261,108 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 (setq org-babel-java-command "java --enable-preview --source 21")
 #+end_src
 ******* Code customization
+******** Maven
+This section introudces some function that are meant to be used for dependency resultion and classpath construction.
+
+#+begin_src emacs-lisp
+(defun maven/coords-to-classpath (coordinates)
+  "Constructs the classpath argument for `java -cp` from one or more Maven coordinates in GACTV format.
+Each coordinate should be in the format: groupId:artifactId:classifier:type:version.
+If classifier or type are omitted, defaults to an empty classifier and 'jar' as the type.
+Accepts either a single coordinate (string) or a list of coordinates (list of strings)."
+  (let* ((coordinates (if (listp coordinates) coordinates (list coordinates))) ;; Ensure list format
+         (maven-repo (concat (getenv "HOME") "/.m2/repository"))
+         (paths (mapcar (lambda (coordinate)
+                          (let* ((parts (split-string coordinate ":"))
+                                 (group-id (nth 0 parts))
+                                 (artifact-id (nth 1 parts))
+                                 (version (nth 2 parts))
+                                 (classifier (if (and (nth 3 parts) (not (string-empty-p (nth 3 parts))))
+                                                 (nth 3 parts) ""))
+                                 (type (if (nth 4 parts) (nth 4 parts) "jar"))
+                                 (file-name (concat artifact-id "-" version
+                                                    (if (string-empty-p classifier) "" (concat "-" classifier))
+                                                    "." type))
+                                 (path (concat maven-repo "/"
+                                               (replace-regexp-in-string "\\." "/" group-id) "/"
+                                               artifact-id "/" version "/" file-name)))
+                            (when (file-exists-p path) path)))  ;; Only include existing JARs
+                        coordinates)))
+    (mapconcat 'identity (delq nil paths) (if (eq system-type 'windows-nt) ";" ":"))))
+
+(defun maven/create-temp-pom (dependencies temp-dir)
+  "Creates a temporary `pom.xml` in TEMP-DIR with the specified DEPENDENCIES."
+  (let ((pom-file (concat temp-dir "/pom.xml")))
+    (with-temp-file pom-file
+      (insert "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+      (insert "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n")
+      (insert "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n")
+      (insert "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n")
+      (insert "  <modelVersion>4.0.0</modelVersion>\n")
+      (insert "  <groupId>temp.maven</groupId>\n")
+      (insert "  <artifactId>temp-project</artifactId>\n")
+      (insert "  <version>1.0-SNAPSHOT</version>\n")
+      (insert "  <dependencies>\n")
+
+      ;; Insert dependencies
+      (dolist (dep dependencies)
+        (let* ((parts (split-string dep ":"))
+               (group-id (nth 0 parts))
+               (artifact-id (nth 1 parts))
+               (version (nth 2 parts))
+               (classifier (if (and (nth 3 parts) (not (string-empty-p (nth 3 parts))))
+                               (nth 3 parts) ""))
+               (type (if (nth 4 parts) (nth 4 parts) "jar")))
+          (insert "    <dependency>\n")
+          (insert (format "      <groupId>%s</groupId>\n" group-id))
+          (insert (format "      <artifactId>%s</artifactId>\n" artifact-id))
+          (insert (format "      <version>%s</version>\n" version))
+          (unless (string-empty-p classifier)
+            (insert (format "      <classifier>%s</classifier>\n" classifier)))
+          (insert (format "      <type>%s</type>\n" type))
+          (insert "    </dependency>\n")))
+
+      (insert "  </dependencies>\n")
+      (insert "</project>\n"))
+    pom-file))
+
+(defun maven/resolve-transitive-dependencies (coordinates)
+  "Fetch and resolve transitive dependencies using `mvn dependency:tree`.
+Accepts either a single Maven coordinate (string) or a list of Maven coordinates.
+Returns a list of resolved JAR paths."
+  (let* ((coordinates (if (listp coordinates) coordinates (list coordinates)))
+         (maven-repo (concat (getenv "HOME") "/.m2/repository"))
+         (temp-dir (make-temp-file "maven-deps" t))
+         (pom-file (maven/create-temp-pom coordinates temp-dir))
+         (output-file (concat temp-dir "/deps.txt"))
+         (cmd (format "cd %s && mvn dependency:tree -DoutputFile=%s -DoutputType=text > /dev/null 2>&1"
+                      temp-dir output-file))
+         all-dependencies)
+
+    (shell-command cmd)
+    ;; Display the content of output file
+
+    ;; Read the output file to extract dependencies
+    (when (file-exists-p output-file)
+      (with-temp-buffer
+        (insert-file-contents output-file)
+        (let ((lines (split-string (buffer-string) "\n")))
+          (dolist (line lines)
+            (when (string-match "-[ ]*\\([^:]+\\):\\([^:]+\\):\\([^:]+\\):\\([^:]+\\):\\([^:]+\\)" line)
+              (let* ((group-id (match-string 1 line))
+                     (artifact-id (match-string 2 line))
+                     (type (match-string 3 line))
+                     (version (match-string 4 line))
+                     (jar-path (concat maven-repo "/"
+                                       (replace-regexp-in-string "\\." "/" group-id) "/"
+                                       artifact-id "/" version "/" artifact-id "-" version ".jar")))
+                (push (concat group-id ":" artifact-id ":" version) all-dependencies)))))))
+
+    ;; Cleanup
+    (delete-directory temp-dir t)
+    all-dependencies))
+#+end_src
+******** Org Babel Java
 In order to support features like `Unamed Class` and `Source Code Execution` we need to customize the `org-babel-execute:java` function.
 We need to introduce a few new parameters:
 - `:unamed` - if true, the code block is an unamed class
@@ -1286,6 +1388,14 @@ For source code execution, we need to modify the actual command to skip the comp
          (org-babel-java-source-code-execution
           (or (cdr (assq :source-exec params))
               org-babel-java-source-code-execution))
+
+         (org-babel-java-deps
+          (or (cdr (assq :deps params))
+              org-babel-java-deps))
+
+         (classpath
+          (or (cdr (assq :classpath params))
+              (maven/coords-to-classpath (maven/resolve-transitive-dependencies org-babel-java-deps))))
 
          ;; if true, run from babel temp directory
          (run-from-temp (not (cdr (assq :dir params))))
@@ -1319,13 +1429,13 @@ For source code execution, we need to modify the actual command to skip the comp
          ;; the command to compile and run
          (cmd (if org-babel-java-source-code-execution
                   (concat org-babel-java-command 
-                      " -cp " (org-babel-process-file-name basedir 'noquote)
+                      " -cp " classpath ":" (org-babel-process-file-name basedir 'noquote)
                       " " cmdline " " src-file
                       " " cmdargs)
                   (concat org-babel-java-compiler " " cmpflag " "
                       (org-babel-process-file-name src-file 'noquote)
                       " && " org-babel-java-command
-                      " -cp " (org-babel-process-file-name basedir 'noquote)
+                      " -cp " classpath ":" (org-babel-process-file-name basedir 'noquote)
                       " " cmdline " " (if run-from-temp classname fullclassname)
                       " " cmdargs)))
          ;; header args for result processing
