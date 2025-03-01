@@ -1271,6 +1271,18 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 #+begin_src emacs-lisp
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
 #+end_src
+***** Latex
+#+begin_src emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages '((latex . t)))
+#+end_src
+***** Gnuplot
+#+begin_src emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages '((gnuplot . t)))
+#+end_src
+
+
+#+RESULTS:
+
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
