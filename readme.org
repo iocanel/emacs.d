@@ -869,6 +869,7 @@ Disable the annoying bell
 
     :general (:states 'normal
                       :keymaps 'org-mode-map
+                      "SPC g l" 'ace-link
                       "C-c C-o" 'org-open-at-point
                       "<tab>"  'org-cycle
                       "<backtab>"  'org-shiftab
