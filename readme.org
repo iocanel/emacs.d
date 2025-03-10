@@ -5456,6 +5456,14 @@ Let's configure here all our keybindings to keep things tidy!
      "gt" '(git-timemachine :wk "git time machine")
 
      ;;
+     ;; Jump
+     ;;
+     "j" '(:ignoree t :wk "jump")
+     "jw" '(avy-goto-word-0 :wk "jump to word")
+     "jl" '(ace-link :wk "jump to link")
+     "js" '(avy-goto-symbol-1 :wk "jump to symbol")
+
+     ;;
      ;; Search
      ;;
      "s" '(:ignore t :wk "search")
