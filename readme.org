@@ -1534,6 +1534,11 @@ is simplest to expand the code block from the inside out."
       ;; return expanded body
       (buffer-string))))
 #+end_src
+
+***** PlantUML
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t)))
+#+end_src
 ***** Ditaa
 #+begin_src emacs-lisp
   (org-babel-do-load-languages 'org-babel-load-languages '((ditaa . t)))
