@@ -2738,6 +2738,51 @@ If the tag already exists for a heading, it is left unchanged."
         (when (or (or (not required-tag) (s-blank-p required-tag)) (and tags-group (s-contains-p required-tag tags-group)))
           (replace-match (format "%s %s %s" stars heading new-tags) t t))))))
 #+end_src
+***** Long line splitter
+#+begin_src emacs-lisp
+(defun my/long-line-splitter ()
+  "Split the current line into smaller lines when possible.
+Splitting ideally occurs on fullstop or comma signs that are near the line end.
+Lines could possibly exceed the max line length by 10%. When this happens, the split should take place at the next space.
+Lines never start or end with blank characters."
+  (interactive)
+  (let* ((max-length fill-column)
+         (extended-length (round (* 1.1 max-length)))
+         (line (string-trim (thing-at-point 'line t))) ;; Remove leading/trailing whitespace
+         (line-start (line-beginning-position))
+         (new-lines '()))
+
+    (while (> (length line) extended-length)
+      (let ((break-position
+             (let ((full-stop (string-match "[.,]" line max-length))
+                   (space (string-match " " line max-length)))
+               (cond
+                ((and full-stop (<= full-stop extended-length)) full-stop)
+                ((and space (<= space extended-length)) space)
+                (t nil)))))
+        (if break-position
+            (progn
+              ;; Extract trimmed substring
+              (let ((chunk (string-trim (substring line 0 break-position))))
+                (push chunk new-lines))
+              (setq line (string-trim (substring line (1+ break-position)))))
+          (progn
+            ;; No good break position found, force split at extended-length nearest space
+            (let ((fallback-space (string-match " " line extended-length)))
+              (if fallback-space
+                  (progn
+                    (push (string-trim (substring line 0 fallback-space)) new-lines)
+                    (setq line (string-trim (substring line (1+ fallback-space)))))
+                (progn
+                  (push (string-trim (substring line 0 extended-length)) new-lines)
+                  (setq line (string-trim (substring line extended-length))))))))))
+
+    ;; Insert the reformatted text, replacing the current line.
+    (delete-region line-start (line-end-position))
+    (insert (mapconcat #'identity (reverse new-lines) "\n"))
+    (when (> (length line) 0)
+      (insert "\n" line))))
+#+end_src
 *** Java
 **** Eclipse JDT Language Server
 ***** Formatting
