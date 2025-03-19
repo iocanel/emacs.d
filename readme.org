@@ -1384,14 +1384,14 @@ For source code execution, we need to modify the actual command to skip the comp
               org-babel-java-command))
          (org-babel-java-unamed
           (or (cdr (assq :unamed params))
-              org-babel-java-unamed))
+              nil))
          (org-babel-java-source-code-execution
           (or (cdr (assq :source-exec params))
-              org-babel-java-source-code-execution))
+              nil))
 
          (org-babel-java-deps
           (or (cdr (assq :deps params))
-              org-babel-java-deps))
+             nil))
 
          (classpath
           (or (cdr (assq :classpath params))
