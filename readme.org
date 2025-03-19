@@ -2593,6 +2593,7 @@ So, I rolled my own.
 
 **** Org Asciidoc
 #+begin_src emacs-lisp
+  (use-package ox-asciidoc :after ox)
   (use-package adoc-mode)
 #+end_src
 
