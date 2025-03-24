@@ -1562,7 +1562,54 @@ is simplest to expand the code block from the inside out."
 
 
 #+RESULTS:
-
+***** Redis
+****** Implementation
+#+begin_src emacs-lisp
+(defun org-babel-execute:redis (body params)
+  "Execute a block of Redis commands with org-babel.
+If no :host, :port, or :auth is specified and the default Redis server (127.0.0.1:6379) is not running,
+start a temporary Redis server, run the commands, and then stop the server."
+  (let* ((host (or (cdr (assoc :host params)) "127.0.0.1"))
+         (port (or (cdr (assoc :port params)) "6379"))
+         (auth (cdr (assoc :auth params)))
+         (auto-start (and (not (assoc :host params))
+                          (not (assoc :port params))
+                          (not (assoc :auth params))))
+         (cmd (concat "redis-cli "
+                      (when auth (concat "-a " (shell-quote-argument auth) " "))
+                      "-h " host " -p " port))
+         (temp-server-process nil))
+    ;; In auto-start mode, check if the default Redis server is running.
+    (when auto-start
+      (unless (string-match "PONG"
+                            (shell-command-to-string
+                             (concat "redis-cli -h " host " -p " port " ping")))
+        (message "Starting temporary Redis server on port %s..." port)
+        (setq temp-server-process
+              (start-process "redis-temp-server" "*redis-temp*"
+                             "redis-server" "--port" port))
+        (sleep-for 0.5)  ;; Allow some time for the server to start.
+        ;; Wait up to 2 seconds for the server to respond.
+        (let ((timeout 2))
+          (while (and (> timeout 0)
+                      (not (string-match "PONG"
+                                         (shell-command-to-string
+                                          (concat "redis-cli -h " host " -p " port " ping")))))
+            (sleep-for 0.1)
+            (setq timeout (- timeout 0.1))))))
+    ;; Execute the Redis commands.
+    (let ((result (org-babel-eval cmd body)))
+      ;; If a temporary server was started, shut it down.
+      (when temp-server-process
+        (message "Stopping temporary Redis server...")
+        (kill-process temp-server-process))
+      result)))
+#+end_src
+****** Registration
+#+begin_src emacs-lisp
+;; Register redis as a supported language
+(add-to-list 'org-babel-load-languages '(redis . t))
+#+end_src
 **** Org Roam
 ***** Package
 #+begin_src emacs-lisp
