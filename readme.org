@@ -1563,6 +1563,11 @@ is simplest to expand the code block from the inside out."
 
 #+RESULTS:
 ***** Redis
+The code below implements support for using Redis in org-babel code blocks.
+The goal is to easily execute simple commands against a Redis server from within an org-mode document
+as if the where running from the `redis-cli`.
+
+To further simplify things, the code will automatically start a temporary Redis server if no `:host`, `:port`, or `:auth` is specified.
 ****** Implementation
 #+begin_src emacs-lisp
 (defun org-babel-execute:redis (body params)
