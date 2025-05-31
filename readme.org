@@ -284,7 +284,17 @@ the cursor by ARG lines."
 *** Autorevert
 Ensure that we always see the actual file content.
 #+begin_src emacs-lisp
-  (global-auto-revert-mode 1)
+(global-auto-revert-mode 1)
+
+(defun my/auto-revert-enable ()
+"Enable auto-revert mode for the current buffer."
+  (interactive)
+  (auto-revert-mode -1)
+  (setq auto-revert-verbose nil)
+  (setq auto-revert-interval 1)
+  (setq auto-revert-use-notify nil)
+  (auto-revert-mode 1)
+  (auto-revert-tail-mode 1))
 #+end_src
 *** Autosave
 #+begin_src emacs-lisp
