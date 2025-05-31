@@ -1673,7 +1673,7 @@ start a temporary Redis server, run the commands, and then stop the server."
 If completion does not work just call `org-roam-db-sync`.
 ***** Capture templates
 #+begin_src emacs-lisp
-  (setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}\n") :unnarrowed t)))
+  (setq org-roam-capture-templates '(("d" "default" plain "%?" :target (file+head "${title}.org" "#+title: ${title}") :unnarrowed t)))
   (setq org-roam-dailies-capture-templates `(("d" "default" entry "* %?" :target (file+head "%<%Y-%m-%d>.org"
                                                                                             ,(concat "#+title: %<%Y-%m-%d>\n"
                                                                                                      "* Daily Checklist\n"
