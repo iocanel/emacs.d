@@ -3389,6 +3389,11 @@ The file below can be added to `.dir-locals.el` at the project roto in order to 
          ;; end of java
         )))))
 #+end_example
+*** YAML
+**** yaml-mode
+#+begin_src emacs-lisp
+(use-package yaml-mode)
+#+end_src
 *** UML
 **** PlantUML
 ***** Package
