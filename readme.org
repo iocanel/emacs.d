@@ -3554,75 +3554,82 @@ This section contains snippets to ease the development of planuml diagrams.
 *** Latex
 **** auctex
 #+begin_src emacs-lisp
+(use-package auctex
+  :defer t
+  :mode ("\\.tex\\'" . latex-mode)
+  :commands (latex-mode plain-tex-mode)
+  :init
+  ;; Custom LaTeX classes for Org-mode export
+  (setq org-latex-classes
+        '(("beamer" "\\documentclass[presentation]{beamer}"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("article" "\\documentclass[11pt]{article}"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+           ("\\paragraph{%s}" . "\\paragraph*{%s}")
+           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+          ("report" "\\documentclass[11pt]{report}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("book" "\\documentclass[11pt]{book}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("letter" "\\documentclass{letter}"
+           ("\\section{%s}" . "\\section*{%s}"))
+          ("koma-letter" "\\documentclass{scrlttr2}"
+           ("\\section{%s}" . "\\section*{%s}"))
+          ("altacv" ,(string-join
+                      '("\\documentclass[10pt,a4paper,ragged2e,withhyper]{altacv}"
+                        "% Change the page layout if you need to"
+                        "\\geometry{left=1.25cm,right=1.25cm,top=1.5cm,bottom=1.5cm,columnsep=1.2cm}"
+                        "% Use roboto and lato for fonts"
+                        "\\renewcommand{\\familydefault}{\\sfdefault}"
+                        "% Change the colours if you want to"
+                        "\\definecolor{SlateGrey}{HTML}{2E2E2E}"
+                        "\\definecolor{LightGrey}{HTML}{666666}"
+                        "\\definecolor{DarkPastelRed}{HTML}{450808}"
+                        "\\definecolor{PastelRed}{HTML}{8F0D0D}"
+                        "\\definecolor{GoldenEarth}{HTML}{E7D192}"
+                        "\\colorlet{name}{black}"
+                        "\\colorlet{tagline}{PastelRed}"
+                        "\\colorlet{heading}{DarkPastelRed}"
+                        "\\colorlet{headingrule}{GoldenEarth}"
+                        "\\colorlet{subheading}{PastelRed}"
+                        "\\colorlet{accent}{PastelRed}"
+                        "\\colorlet{emphasis}{SlateGrey}"
+                        "\\colorlet{body}{LightGrey}"
+                        "% Change some fonts, if necessary"
+                        "\\renewcommand{\\namefont}{\\Huge\\rmfamily\\bfseries}"
+                        "\\renewcommand{\\personalinfofont}{\\footnotesize}"
+                        "\\renewcommand{\\cvsectionfont}{\\LARGE\\rmfamily\\bfseries}"
+                        "\\renewcommand{\\cvsubsectionfont}{\\large\\bfseries}"
+                        "% Change the bullets for itemize and rating marker"
+                        "\\renewcommand{\\itemmarker}{{\\small\\textbullet}}"
+                        "\\renewcommand{\\ratingmarker}{\\faCircle}")
+                      "\n")
+           ("\\cvsection{%s}" . "\\cvsection*{%s}"))))
+  :config
+  ;; High-quality previews
+  (setq org-format-latex-options
+        (plist-put org-format-latex-options :dpi 600))
+  (setq org-format-latex-options
+        (plist-put org-format-latex-options :scale 4.0))
 
-  (use-package auctex
-      :defer t
-      :commands (latex-mode plain-tex-mode)
-      :mode "\\.tex\\'"
-      :custom (org-latex-classes '(("beamer" "\\documentclass[presentation]{beamer}"
-                                    ("\\section{%s}" . "\\section*{%s}")
-                                    ("\\subsection{%s}" . "\\subsection*{%s}")
-                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-                                   ("article" "\\documentclass[11pt]{article}"
-                                    ("\\section{%s}" . "\\section*{%s}")
-                                    ("\\subsection{%s}" . "\\subsection*{%s}")
-                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                                    ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                                    ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
-                                   ("report" "\\documentclass[11pt]{report}"
-                                    ("\\part{%s}" . "\\part*{%s}")
-                                    ("\\chapter{%s}" . "\\chapter*{%s}")
-                                    ("\\section{%s}" . "\\section*{%s}")
-                                    ("\\subsection{%s}" . "\\subsection*{%s}")
-                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-                                   ("book" "\\documentclass[11pt]{book}"
-                                    ("\\part{%s}" . "\\part*{%s}")
-                                    ("\\chapter{%s}" . "\\chapter*{%s}")
-                                    ("\\section{%s}" . "\\section*{%s}")
-                                    ("\\subsection{%s}" . "\\subsection*{%s}")
-                                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")))
-                                    ("altacv" "\\documentclass[10pt,a4paper,ragged2e,withhyper]{altacv}
-  % Change the page layout if you need to
-  \\geometry{left=1.25cm,right=1.25cm,top=1.5cm,bottom=1.5cm,columnsep=1.2cm}
-
-  % Use roboto and lato for fonts
-  \\renewcommand{\\familydefault}{\\sfdefault}
-
-  % Change the colours if you want to
-  \\definecolor{SlateGrey}{HTML}{2E2E2E}
-  \\definecolor{LightGrey}{HTML}{666666}
-  \\definecolor{DarkPastelRed}{HTML}{450808}
-  \\definecolor{PastelRed}{HTML}{8F0D0D}
-  \\definecolor{GoldenEarth}{HTML}{E7D192}
-  \\colorlet{name}{black}
-  \\colorlet{tagline}{PastelRed}
-  \\colorlet{heading}{DarkPastelRed}
-  \\colorlet{headingrule}{GoldenEarth}
-  \\colorlet{subheading}{PastelRed}
-  \\colorlet{accent}{PastelRed}
-  \\colorlet{emphasis}{SlateGrey}
-  \\colorlet{body}{LightGrey}
-
-  % Change some fonts, if necessary
-  \\renewcommand{\\namefont}{\\Huge\\rmfamily\\bfseries}
-  \\renewcommand{\\personalinfofont}{\\footnotesize}
-  \\renewcommand{\\cvsectionfont}{\\LARGE\\rmfamily\\bfseries}
-  \\renewcommand{\\cvsubsectionfont}{\\large\\bfseries}
-
-  % Change the bullets for itemize and rating marker
-  % for \cvskill if you want to
-  \\renewcommand{\\itemmarker}{{\\small\\textbullet}}
-  \\renewcommand{\\ratingmarker}{\\faCircle}
-  "
-                 ("\\cvsection{%s}" . "\\cvsection*{%s}")))
-      :config
-      (setq org-format-latex-options (plist-put org-format-latex-options :dpi 300))
-      (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0))
-      (setq TeX-auto-save t
-            TeX-parse-self t
-            TeX-save-query nil
-            TeX-PDF-mode t)
-      (setq-default TeX-master nil))
+  ;; AUCTeX settings
+  (setq TeX-auto-save t
+        TeX-parse-self t
+        TeX-save-query nil
+        TeX-PDF-mode t)
+  (setq-default TeX-master nil))
 #+end_src
 **** Preview pane
 #+begin_src emacs-lisp
