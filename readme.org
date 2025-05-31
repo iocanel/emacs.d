@@ -3521,12 +3521,12 @@ This section contains snippets to ease the development of planuml diagrams.
         nil))
 
     (defun org-babel-execute:yuml (body params)
-      "Execute a block of yuml code with org-babel."
+      "Execute a block of yuml code with org-babel.
+       :type is required and it can be one of activity class flow"
       (let ((in-file (org-babel-temp-file "" ".yuml"))
             (type (or (cdr (assq :type params))
                       (error "yuml requires a \":type\" header argument")))
-            (out-file (or (cdr (assq :file params))
-                          (error "yuml requires a \":file\" header argument")))
+            (out-file (or (cdr (assq :file params)) (error "yuml requires a \":file\" header argument")))
             (verbosity (or (cdr (assq :verbosity params)) 0)))
         (with-temp-buffer
           (insert body)
@@ -3535,7 +3535,7 @@ This section contains snippets to ease the development of planuml diagrams.
           (write-region nil nil in-file)
           (message (buffer-substring (point-min) (point-max)))
           (eyuml-create-document type out-file))
-        (format "[[file:%s]]" out-file)))
+        nil))
 
     (defun eyuml-create-document (type &optional out-file)
       "Fetch remote document, TYPE could be class,usecase or activity."
