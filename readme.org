@@ -3494,6 +3494,7 @@ This section contains snippets to ease the development of planuml diagrams.
     :after org
     :init
     (add-to-list 'org-src-lang-modes '("yuml" . yuml))
+    (setq org-babel-default-header-args:yuml '((:results . "file")))
     (add-to-list 'org-src-lang-modes '("flowchart-js" . flowchart-js))
     :commands (org-babel-execute:yuml)
     :config
