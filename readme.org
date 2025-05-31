@@ -3974,6 +3974,7 @@ These icons can also run on terminal so let's optionally enable them.
     :config
     (require 'idee-maven)
     (require 'idee-vterm)
+    (require 'idee-kubernetes)
     :commands (idee/init idee/maven-hydra/body))
 
 #+end_src
