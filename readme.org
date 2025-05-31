@@ -3646,14 +3646,11 @@ Inspired by https://www.aidanscannell.com/post/org-mode-resume/
     ;; deleted unwanted file extensions after latexMK
     (setq org-latex-logfiles-extensions
           (quote ("lof" "lot" "tex~" "aux" "idx" "log" "out" "toc" "nav" "snm" "vrb" "dvi" "fdb_latexmk" "blg" "brf" "fls" "entoc" "ps" "spl" "bbl" "xmpi" "run.xml" "bcf" "acn" "acr" "alg" "glg" "gls" "ist")))
-
-
-
 #+end_src
 *** Pdf Tools
 #+begin_src emacs-lisp
   (use-package pdf-tools
-    :init (pdf-loader-install))
+    :init (pdf-loader-install t))
 #+end_src
 **** Functions
 #+begin_src emacs-lisp
