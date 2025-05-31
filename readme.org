@@ -5250,6 +5250,21 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
   :elpaca (gptel :host github :repo "karthink/gptel")
   :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
   :config
+  (defun my/clipboard-to-org-at-point ()
+    "Paste the clipboard content as an org-mode flashcard."
+    (interactive)
+    (let* ((clipboard (gui-get-selection 'CLIPBOARD))
+           (prompt-file (concat my/local-dir "llm/prompts/org-mode-creator.txt"))
+           (prompt-text (with-temp-buffer (insert-file-contents prompt-file) max-length (buffer-string)))
+           (prompt (format prompt-text clipboard))
+           (response ))
+      (message "%s" clipboard)
+      (gptel-request prompt :callback (lambda (resp &rest _)
+                                        (setq response (replace-regexp-in-string "^```org\\|```$" "" resp))))
+      (while (or (not response) (string-empty-p response))
+        (sleep-for 0.1))
+      (insert response)))
+
   (defun my/clipboard-to-flashcard-at-point ()
     "Paste the clipboard content as an org-mode flashcard."
     (interactive)
