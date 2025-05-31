@@ -5152,10 +5152,49 @@ A callback for yt-dlp (see [[Youtube DLP]])
   (setq ly-nix-pdf-path "/home/iocanel/.nix-profile/bin/evince")
   (setq ly-nix-timidity-path "/home/iocanel/.nix-profile/bin/timidity"))
 #+end_src
+*** Qutebrowser
+**** Move takeaway.org
+#+begin_src elisp
+(defun my/qutebroswer-move-takeaway-at-point ()
+  "Move the content of qutebrowser takeaway.org at point"
+  (interactive)
+  (let ((path "~/.local/share/qutebrowser/takeaway.org"))
+    (save-excursion
+      (insert-file-contents path)
+      (with-current-buffer path
+        (delete-region (point-min) (point-max))
+        (save-buffer)))))
+#+end_src
+**** Move flashcards.org
+#+begin_src elisp
+(defun my/qutebroswer-move-flashcards-at-point ()
+  "Move the content of qutebrowser falshcards.org at point"
+  (interactive)
+  (let ((path "~/.local/share/qutebrowser/flashcards.org"))
+    (save-excursion
+      (insert-file-contents path)
+      (with-current-buffer path
+        (delete-region (point-min) (point-max))
+        (save-buffer)))))
+#+end_src
 ** AI
 *** ChatGPT
 **** GPTel
 ***** Prompts
+****** Org Mode
+#+begin_src text :tangle (concat my/local-dir "llm/prompts/org-mode-creator.txt") :mkdirp t
+You are an org-mode assistant that creates, maintains, updates and migratees to org-mode documents.
+
+Your job is to ensure that input text is converted to org-mode (if not already) and uses a consistent formatting.
+
+Headings should have a reasonable size and should avoid wrapping text in quotes, stars etc.
+Headings should avoid using ':'. Instead they split the heading at ':' and move the right side of the ':' to the body.
+
+Regular text should not exceed maximum line width: ```%s```
+
+Use all the content in thee triple backticks to generate the flashcoard: ```%s```.
+#+end_src
+****** Flashcards
 #+begin_src text :tangle (concat my/local-dir "llm/prompts/flashcard-creator.txt") :mkdirp t
 You are an org-mode assistant that create org-drill flashcards based on the provided content.
 The flashcard should be an org heading with the :drill: tag that contains no properties. 
