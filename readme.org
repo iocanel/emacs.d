@@ -371,11 +371,18 @@ Ensure that we always see the actual file content.
      "M-p" 'my/evil-multiedit-match-and-goto-prev
      "M-t" 'evil-multiedit-toggle-or-restrict-region))
 #+end_src
+*** Yes or No
+#+begin_src emacs-lisp
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
 *** Exit confirmation
-
 #+begin_src emacs-lisp
   (setq confirm-kill-emacs 'y-or-n-p)
-  (defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
+*** Use diaglog box
+#+begin_src emacs-lisp
+(setq use-dialog-box 'y-or-n-p)
+(setq use-file-dialog 'y-or-n-p)
 #+end_src
 
 *** Save history
