@@ -3396,6 +3396,12 @@ The file below can be added to `.dir-locals.el` at the project roto in order to 
          ;; end of java
         )))))
 #+end_example
+*** Typescript
+**** typescript-mode
+#+begin_src emacs-lisp
+(use-package typescript-mode)
+#+end_src
+
 *** YAML
 **** yaml-mode
 #+begin_src emacs-lisp
@@ -3557,6 +3563,11 @@ This section contains snippets to ease the development of planuml diagrams.
                           (insert data)
                           (write-region nil nil out-file)))))))))
 
+#+end_src
+**** mermaid
+#+begin_src emacs-lisp
+(use-package mermaid-mode
+  :custom (mermaid-flags "--scale 2"))
 #+end_src
 *** Latex
 **** auctex
@@ -5261,13 +5272,14 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
 ***** Package
 #+begin_src emacs-lisp
 (use-package gptel
-  :elpaca (gptel :host github :repo "karthink/gptel")
+  :elpaca (gptel :host github :repo "karthink/gptel" :ref "7bb353a582d11ce210bb0a5b77c53de564c28e67")
   :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
   :config
   (defun my/clipboard-to-org-at-point ()
     "Paste the clipboard content as an org-mode flashcard."
     (interactive)
-    (let* ((clipboard (gui-get-selection 'CLIPBOARD))
+    (let* ((max-length fill-column)
+           (clipboard (gui-get-selection 'CLIPBOARD))
            (prompt-file (concat my/local-dir "llm/prompts/org-mode-creator.txt"))
            (prompt-text (with-temp-buffer (insert-file-contents prompt-file) max-length (buffer-string)))
            (prompt (format prompt-text clipboard))
@@ -5326,10 +5338,71 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
                         (setq response (replace-regexp-in-string "^```org\\|```$" "" resp))))
           (while (or (not response) (string-empty-p response))
             (sleep-for 0.1))
-           (insert response)
-           (insert "\n")
-           (save-buffer)
-           (sleep-for 10)))))
+          (insert response)
+          (insert "\n")
+          (save-buffer)
+          (sleep-for 10)))))
+
+  ;;
+  ;; Tools
+  ;;
+  (gptel-make-tool
+   :name "list_files"
+   :function (lambda ()
+               (let ((default-directory (locate-dominating-file default-directory ".git")))
+                 (string-join
+                  (split-string
+                   (shell-command-to-string "git ls-files") "\n" t)
+                  "\n")))
+   :description "List all source files tracked by Git in the current project directory"
+   :args nil
+   :category "filesystem")
+
+  (gptel-make-tool
+   :name "read_file"
+   :function (lambda (filename &optional start_line end_line)
+               (let ((file (expand-file-name filename (locate-dominating-file default-directory ".git"))))
+                 (if (not (file-readable-p file))
+                     (format "File not found or unreadable: %s" filename)
+                   (with-temp-buffer
+                     (insert-file-contents file)
+                     (let ((start (if start_line
+                                      (progn (goto-char (point-min))
+                                             (forward-line (1- (string-to-number start_line)))
+                                             (point))
+                                    (point-min)))
+                           (end (if end_line
+                                    (progn (goto-char (point-min))
+                                           (forward-line (string-to-number end_line))
+                                           (point))
+                                  (point-max))))
+                       (buffer-substring-no-properties start end))))))
+   :description "Read the contents of a file, optionally specifying a line range"
+   :args (list '(:name "filename"
+                       :type string
+                       :description "The path to the file relative to the project root")
+               '(:name "start_line"
+                       :type integer
+                       :description "The starting line number (optional)"
+                       :optional t)
+               '(:name "end_line"
+                       :type integer
+                       :description "The ending line number (optional)"
+                       :optional t))
+   :category "filesystem")
+
+  (gptel-make-tool
+   :name "search_files"
+   :function (lambda (pattern)
+               (let ((default-directory (locate-dominating-file default-directory ".git")))
+                 (shell-command-to-string
+                  (format "git grep -n -e %s"
+                          (shell-quote-argument pattern)))))
+   :description "Search for a pattern in all Git-tracked files, returning matches with file and line context"
+   :args (list '(:name "pattern"
+                       :type string
+                       :description "The regex or keyword to search for"))
+   :category "filesystem")
 
   :general
   ("C-c <RET>" 'gptel-send)
@@ -5339,6 +5412,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
            "c s" 'gptel-send
            "c m" 'gptel-menu
            "c t" 'gptel-org-set-topic))
+
 #+end_src
 **** Copilot
 #+begin_src emacs-lisp
