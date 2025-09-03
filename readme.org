@@ -882,7 +882,11 @@ Disable the annoying bell
           org-src-tab-acts-natively t
           org-src-preserve-indentation t
           org-src-window-setup 'current-window
-          org-src-fontify-natively t)
+          org-src-fontify-natively t
+          ;; LaTeX preview settings
+          org-startup-with-latex-preview nil
+          org-format-latex-options (plist-put org-format-latex-options :scale 2.5)
+          org-format-latex-options (plist-put org-format-latex-options :background "Transparent"))
 
     :general (:states 'normal
                       :keymaps 'org-mode-map
@@ -3638,9 +3642,9 @@ This section contains snippets to ease the development of planuml diagrams.
   :config
   ;; High-quality previews
   (setq org-format-latex-options
-        (plist-put org-format-latex-options :dpi 600))
-  (setq org-format-latex-options
-        (plist-put org-format-latex-options :scale 4.0))
+        (plist-put org-format-latex-options :scale 1.5)
+        org-format-latex-options
+        (plist-put org-format-latex-options :dvi 300))
 
   ;; AUCTeX settings
   (setq TeX-auto-save t
