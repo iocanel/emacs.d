@@ -208,6 +208,12 @@ Since I don't do that often I expect this to be commented out most of the time.
                      "S-<tab>" 'my/dired-expand-all
                      "<backtab>" 'dired-subtree-cycle))
 #+end_src
+**** Dired lock
+#+begin_src emacs-lisp
+(use-package dired-lock
+  :straight (dired-lock :type git :host github :repo "iocanel/dired-lock.el")
+  :commands (dired-lock-lock dired-lock-unlock))
+#+end_src
 *** Evil Mode
 **** Package
 
