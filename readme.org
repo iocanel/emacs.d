@@ -5284,7 +5284,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
 ***** Package
 #+begin_src emacs-lisp
 (use-package gptel
-  :elpaca (gptel :host github :repo "karthink/gptel" :ref "7bb353a582d11ce210bb0a5b77c53de564c28e67")
+  :elpaca (gptel :host github :repo "karthink/gptel" :ref "81618f24e2190568ea745dca82ba50267eed321a" )
   :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
   :config
   (defun my/clipboard-to-org-at-point ()
