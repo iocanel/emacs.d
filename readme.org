@@ -284,6 +284,7 @@ the cursor by ARG lines."
 *** emacsql
 #+begin_src emacs-lisp
   (use-package emacsql :elpaca (emacsql :host github :repo "magit/emacsql" :branch "main"))
+  (use-package emacsql-sqlite :elpaca (emacsql-sqlite :host github :repo "magit/emacsql" :branch "main" :files ("emacsql-sqlite.el")))
 
 #+end_src
 ** Editor
