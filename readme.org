@@ -110,9 +110,9 @@ Github: https://github.com/progfolio/elpaca
 Configure elpace `use-package` integration so that the rest of the configuration just uses `use-package`.
 #+begin_src emacs-lisp
 (elpaca elpaca-use-package
-  ;; Enable :elpaca use-package keyword.
+  ;; Enable :ensure use-package keyword.
   (elpaca-use-package-mode)
-  ;; Assume :elpaca t unless otherwise specified.
+  ;; Assume :ensure t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
 
 ;; Block until current queue processed.
@@ -121,8 +121,8 @@ Configure elpace `use-package` integration so that the rest of the configuration
 
 ***** use-feature
 There are cases where we want to use `use-package` with internal packages.
-In these cases `:elpaca nil` needs to be set. Let's create a macro `use-feature`
-that combines `use-package` with `:elpaca nil` nicely.
+In these cases `:ensure nil` needs to be set. Let's create a macro `use-feature`
+that combines `use-package` with `:ensure nil` nicely.
 
 Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
 
@@ -132,7 +132,7 @@ Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
     NAME and ARGS are in `use-package'."
   (declare (indent defun))
   `(use-package ,name
-     :elpaca nil
+     :ensure nil
      ,@args))
 #+end_src
 
@@ -212,7 +212,7 @@ Since I don't do that often I expect this to be commented out most of the time.
 **** Dired lock
 #+begin_src emacs-lisp
 (use-package dired-lock
-  :straight (dired-lock :type git :host github :repo "iocanel/dired-lock.el")
+  :ensure (dired-lock :type git :host github :repo "iocanel/dired-lock.el")
   :commands (dired-lock-lock dired-lock-unlock))
 #+end_src
 *** Evil Mode
@@ -246,7 +246,7 @@ Evil related stuff for misc modes (e.g. [[Dired]]).
 
 #+begin_src emacs-lisp
   (use-package evil-collection
-    :elpaca (:remotes ("fork" :repo "progfolio/evil-collection"))
+    :ensure (:remotes ("fork" :repo "progfolio/evil-collection"))
     :after (evil)
     :custom
     (evil-collection-elpaca-want-g-filters nil)
@@ -284,8 +284,8 @@ the cursor by ARG lines."
 #+end_src
 *** emacsql
 #+begin_src emacs-lisp
-  (use-package emacsql :elpaca (emacsql :host github :repo "magit/emacsql" :branch "main"))
-  (use-package emacsql-sqlite :elpaca (emacsql-sqlite :host github :repo "magit/emacsql" :branch "main" :files ("emacsql-sqlite.el")))
+  (use-package emacsql :ensure (emacsql :host github :repo "magit/emacsql" :branch "main"))
+  (use-package emacsql-sqlite :ensure (emacsql-sqlite :host github :repo "magit/emacsql" :branch "main" :files ("emacsql-sqlite.el")))
 
 #+end_src
 ** Editor
@@ -773,7 +773,7 @@ Disable the annoying bell
 **** booster
 #+begin_src emacs-lisp
   (use-package eglot-booster
-          :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+          :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
           :after eglot
           :config	(eglot-booster-mode))
 #+end_src
@@ -917,7 +917,7 @@ Disable the annoying bell
 
 **** Org Query Language
 #+begin_src emacs-lisp
-  (use-package org-ql :elpaca (org-ql :host github :repo "alphapapa/org-ql" :files (:defaults (:exclude "helm-org-ql.el"))))
+  (use-package org-ql :ensure (org-ql :host github :repo "alphapapa/org-ql" :files (:defaults (:exclude "helm-org-ql.el"))))
 #+end_src
 **** Getting things done
 
@@ -1264,7 +1264,7 @@ To ensure that heading is aligned with the content, let's use the `org-indent` f
 **** Org Aggregate
 #+begin_src emacs-lisp
   (use-package orgtbl-aggregate
-    :elpaca (orgtbl-aggregate :host github :repo "tbanel/orgaggregate" :ref "366677c0a5792cdcc5157362fd36416c76b9660b" :files (:defaults "*.el")))
+    :ensure (orgtbl-aggregate :host github :repo "tbanel/orgaggregate" :ref "366677c0a5792cdcc5157362fd36416c76b9660b" :files (:defaults "*.el")))
 
 #+end_src
 **** Org Modern
@@ -1648,7 +1648,7 @@ start a temporary Redis server, run the commands, and then stop the server."
 ***** Package
 #+begin_src emacs-lisp
 (use-package org-roam
-  :elpaca (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
+  :ensure (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
   :custom (org-roam-completion-everywhere t)
   (org-roam-directory "~/Documents/org/roam")
   :config
@@ -2009,7 +2009,7 @@ Use links like:
 - audio:
 #+begin_src emacs-lisp
 (use-package org-media-note
-  :elpaca (org-media-note :host github :repo "yuchen-lea/org-media-note")
+  :ensure (org-media-note :host github :repo "yuchen-lea/org-media-note")
   :hook (org-mode .  org-media-note-mode))
 #+end_src
 ***** Org Mpv Notes
@@ -2235,7 +2235,7 @@ This is still work in progress so let's comment it for now.
 (use-package org-gcal
   :defer t
   :after org
-  :elpaca (org-gcal :host github :repo "kidd/org-gcal.el")
+  :ensure (org-gcal :host github :repo "kidd/org-gcal.el")
   :commands (org-gcal-sync org-gcal-fetch)
   :config
   (require 'plstore)
@@ -2269,7 +2269,7 @@ This is still work in progress so let's comment it for now.
 ***** Package
 #+begin_src emacs-lisp
   (use-package org-github-issues
-    :elpaca (org-github-issues :host github :repo "iensu/org-github-issues")
+    :ensure (org-github-issues :host github :repo "iensu/org-github-issues")
     :init
     (defvar my/github-repositories nil "The list of watch repositories by org-github-issues")
     :commands (org-github-issues-sync-all my/org-github-issues-eww-at-point my/org-github-issues-show-open-project-issues my/org-github-issues-show-open-workspace-issues)
@@ -2740,7 +2740,7 @@ So, I rolled my own.
 **** Org Excalidraw
 #+begin_src emacs-lisp
   (use-package org-excalidraw
-  :elpaca (org-excalidraw :host github :repo "wdavew/org-excalidraw")
+  :ensure (org-excalidraw :host github :repo "wdavew/org-excalidraw")
   :custom (org-excalidraw-directory "~/Documents/org/excalidraw"))
 #+end_src
 
@@ -3358,7 +3358,7 @@ The following code is a shell script that takes care of installing eclipse.jdt.l
 **** eglot-java
 #+begin_src emacs-lisp
   (use-package eglot-java
-    :elpaca (eglot-java :host github :repo "iocanel/eglot-java" :files (:defaults "*.el"))
+    :ensure (eglot-java :host github :repo "iocanel/eglot-java" :files (:defaults "*.el"))
     :custom
     (eglot-java-eclipse-jdt-ls-download-url "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.37.0/jdt-language-server-1.37.0-202406271335.tar.gz")
     (eglot-java-server-install-dir (file-name-concat my/local-dir "lsp" "eclipse.jdt.ls"))
@@ -3764,7 +3764,7 @@ Writes the unlocked PDF to a temporary file, then overwrites the original FILE."
 **** Pacakge
 #+begin_src emacs-lisp
 (use-package vertico
-  :elpaca (vertico :host github :repo "minad/vertico" :files (:defaults "extensions/*"))
+  :ensure (vertico :host github :repo "minad/vertico" :files (:defaults "extensions/*"))
   :init
   (vertico-mode)
   :config
@@ -4002,7 +4002,7 @@ These icons can also run on terminal so let's optionally enable them.
 #+end_src
 *** IDEE
 #+begin_src emacs-lisp
-  (use-package idee :elpaca (idee :host github :repo "iocanel/idee" :branch "next" :files (:defaults "*.el"))
+  (use-package idee :ensure (idee :host github :repo "iocanel/idee" :branch "next" :files (:defaults "*.el"))
     :custom ((idee/resources-dir (file-name-concat my/local-dir "idee"))
              (idee/source-dir  (file-name-concat my/local-dir "elpaca/repos/idee")))
     :init
@@ -4024,14 +4024,14 @@ These icons can also run on terminal so let's optionally enable them.
 *** Quickmarks
 #+begin_src emacs-lisp
 (use-package quickmarks
-  :elpaca (quickmarks :host github :repo "iocanel/quickmarks.el" :branch "main" :files (:defaults "*.el"))
+  :ensure (quickmarks :host github :repo "iocanel/quickmarks.el" :branch "main" :files (:defaults "*.el"))
   :custom (quickmarks-snippet-dir (concat my/local-dir "snippets")))
 #+end_src
 ** Term
 *** vterm
 #+begin_src emacs-lisp 
   (use-package vterm
-    :elpaca (vterm :post-build
+    :ensure (vterm :post-build
                    (progn
                      (setq vterm-always-compile-module t)
                      (require 'vterm)
@@ -4630,7 +4630,7 @@ This is not working as expected so let's disable for now.
 #+begin_src emacs-lisp
   (use-package xwwp
     :after xwidget-webkit
-    :elpaca (xwwp :host github :repo "canatella/xwwp" :branch "consult-support")
+    :ensure (xwwp :host github :repo "canatella/xwwp" :branch "consult-support")
     :custom
     (xwwp-follow-link-completion-system 'consult)
     :commands (xwwp-follow-link)
@@ -4866,7 +4866,7 @@ A callback for yt-dlp (see [[Youtube DLP]])
 *** Mpv
 #+begin_src emacs-lisp
 (use-package empv
-  :elpaca (:host github :repo "isamert/empv.el"))
+  :ensure (:host github :repo "isamert/empv.el"))
 #+end_src
 *** Elfeed
 **** Package
@@ -5182,7 +5182,7 @@ A callback for yt-dlp (see [[Youtube DLP]])
 **** Org Babel
 #+begin_src emacs-lisp
 (use-package ob-lilypond
-  :elpaca (ob-lilypond :host github :repo "mjago/ob-lilypond")
+  :ensure (ob-lilypond :host github :repo "mjago/ob-lilypond")
   :init
   (add-to-list 'org-babel-load-languages '(lilypond . t))
   (setq ly-nix-ly-path "/home/iocanel/.nix-profile/bin/lilypond")
@@ -5284,7 +5284,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
 ***** Package
 #+begin_src emacs-lisp
 (use-package gptel
-  :elpaca (gptel :host github :repo "karthink/gptel" :ref "81618f24e2190568ea745dca82ba50267eed321a" )
+  :ensure (gptel :host github :repo "karthink/gptel" :ref "81618f24e2190568ea745dca82ba50267eed321a" )
   :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
   :config
   (defun my/clipboard-to-org-at-point ()
@@ -5431,7 +5431,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
   (use-package copilot
     :ensure t
     :hook (text-mode . copilot-mode)
-    :elpaca (copilot :host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+    :ensure (copilot :host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
     :general (:keymaps 'copilot-completion-map
                        "<RET>" 'copilot-accept-completion
                        "C-<TAB>" 'copilot-next-completion))
@@ -5446,7 +5446,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
     (add-to-list 'completion-at-point-functions #'codeium-completion-at-point))
 
   (use-package codeium
-    :elpaca (codeium :host github :repo "Exafunction/codeium.el")
+    :ensure (codeium :host github :repo "Exafunction/codeium.el")
     :hook (prog-mode . my/codeium-enable)
     :init
     ;; We need to set the api key on init or we might get issues with sudo-edit.
