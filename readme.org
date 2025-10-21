@@ -3980,7 +3980,7 @@ These icons can also run on terminal so let's optionally enable them.
 #+end_src
 **** Code review
 #+begin_src emacs-lisp
-  (use-package closql :elpaca (closql :host github :repo "magit/closql" :tag "v1.2.1")) 
+  (use-package closql)
   (use-package code-review
     :commands (code-review-at-point))
 #+end_src
