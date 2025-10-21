@@ -2234,7 +2234,7 @@ This is still work in progress so let's comment it for now.
 (use-package org-gcal
   :defer t
   :after org
-  :elpaca (org-gcal :host github :repo "kidd/org-gcal")
+  :elpaca (org-gcal :host github :repo "kidd/org-gcal.el")
   :commands (org-gcal-sync org-gcal-fetch)
   :config
   (require 'plstore)
