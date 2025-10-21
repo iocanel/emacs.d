@@ -190,6 +190,7 @@ Since I don't do that often I expect this to be commented out most of the time.
 **** Dired Subtree
 #+begin_src emacs-lisp
 (use-package dired-subtree
+  :ensure t
   :after dired
   :init
   (defun my/dired-expand-all ()
