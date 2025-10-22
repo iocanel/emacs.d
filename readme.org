@@ -3589,6 +3589,7 @@ This section contains snippets to ease the development of planuml diagrams.
   :defer t
   :mode ("\\.tex\\'" . latex-mode)
   :commands (latex-mode plain-tex-mode)
+  :ensure nil  ; Use system package instead of compiling
   :init
   ;; Custom LaTeX classes for Org-mode export
   (setq org-latex-classes
