@@ -284,9 +284,7 @@ the cursor by ARG lines."
 #+end_src
 *** emacsql
 #+begin_src emacs-lisp
-  (use-package emacsql :ensure (emacsql :host github :repo "magit/emacsql" :branch "main"))
-  (use-package emacsql-sqlite :ensure (emacsql-sqlite :host github :repo "magit/emacsql" :branch "main" :files ("emacsql-sqlite.el")))
-
+  (use-package emacsql :ensure t)
 #+end_src
 ** Editor
 *** Autorevert
@@ -1648,12 +1646,15 @@ start a temporary Redis server, run the commands, and then stop the server."
 ***** Package
 #+begin_src emacs-lisp
 (use-package org-roam
-  :ensure (org-roam :host github :repo "org-roam/org-roam" :ref "74422df546a515bc984c2f3d3a681c09d6f43916")
+  :ensure (org-roam :host github :repo "org-roam/org-roam" :ref "v2.3.1")
+  :defer t
   :custom (org-roam-completion-everywhere t)
   (org-roam-directory "~/Documents/org/roam")
   :config
   (require 'org-roam-dailies) ;; Ensure the keymap is available
-  (org-roam-db-autosync-mode)
+  ;; Only enable database sync in interactive mode, not during batch/build
+  (unless noninteractive
+    (org-roam-db-autosync-mode))
   (defun my/org-roam-node-insert-immediate (arg &rest args)
     "Insert a link to a new org-roam node without leaving the current file."
     (interactive "P")
