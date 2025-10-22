@@ -4068,9 +4068,40 @@ In this iteration, I tried to install mu4e via the nixos repository.
 Surprisignly, it works much better, but it still requires some tuning.
 **** Load the package
 #+begin_src emacs-lisp
-  (condition-case nil
-      (require 'mu4e nil)
-    (error nil))
+(defun my/mu4e-elisp-path ()
+  "Find mu4e.el across Ubuntu & NixOS, including ELPA-style dirs."
+  (or
+   (let ((lib (locate-library "mu4e"))) (and lib (file-name-directory lib)))
+   (let ((env (getenv "MU4E_ELISP")))
+     (when (and env (file-exists-p (expand-file-name "mu4e.el" env))) env))
+   (seq-some
+    (lambda (d)
+      (when (and d (file-directory-p d)
+                 (file-exists-p (expand-file-name "mu4e.el" d)))
+        d))
+    (list
+     "/usr/share/emacs/site-lisp/mu4e"
+     "/usr/local/share/emacs/site-lisp/mu4e"
+     "/run/current-system/sw/share/emacs/site-lisp/mu4e"
+     (expand-file-name "~/.nix-profile/share/emacs/site-lisp/mu4e")
+     (format "/etc/profiles/per-user/%s/share/emacs/site-lisp/mu4e" (user-login-name))
+     (format "/nix/var/nix/profiles/per-user/%s/profile/share/emacs/site-lisp/mu4e" (user-login-name))
+     (expand-file-name "~/.local/state/nix/profiles/profile/share/emacs/site-lisp/mu4e")))
+   ;; your current case:
+   (car (append
+         (file-expand-wildcards "~/.nix-profile/share/emacs/site-lisp/elpa/mu4e-*/")
+         (file-expand-wildcards "~/.local/state/nix/profiles/profile/share/emacs/site-lisp/elpa/mu4e-*/")
+         (file-expand-wildcards "/etc/profiles/per-user/*/share/emacs/site-lisp/elpa/mu4e-*/")))
+   (car (file-expand-wildcards "/nix/store/*-mu-*/share/emacs/site-lisp/mu4e/"))))
+
+(let ((mu4e-dir (my/mu4e-elisp-path)))
+  (if (not mu4e-dir)
+      (message "[mu4e] Not found. Install mu/mu4e or set MU4E_ELISP.")
+    (progn
+      (add-to-list 'load-path mu4e-dir)
+      (condition-case nil
+          (require 'mu4e nil)
+        (error nil)))))
 #+end_src
 **** Configuration
 #+begin_src emacs-lisp
