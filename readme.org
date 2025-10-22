@@ -3781,8 +3781,8 @@ times in quick succession."
       ;; Check if the last delete timestamp is set; if not, initialize it
       (if (and my/vertico-last-delete-time
                (< (- current-time my/vertico-last-delete-time) 0.3)) ;; 0.1-second threshold
-          (vertico-directory-delete-word) ;; Rapid call, delete by word
-        (delete-char -1))   ;; Single char delete otherwise
+          (vertico-directory-delete-word 1) ;; Rapid call, delete by word
+        (vertico-directory-delete-char 1))   ;; Single char delete otherwise
       (setq my/vertico-last-delete-time current-time)))
   :general (:keymaps 'vertico-map "DEL"  'my/vertico-directory-delete-dwim))
 #+end_src
