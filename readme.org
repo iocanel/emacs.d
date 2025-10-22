@@ -5784,7 +5784,7 @@ Let's configure here all our keybindings to keep things tidy!
      "sr" '(consult-ripgrep :wk "search rip grep")
      "sb" '(consult-line :wk "search buffer")
      "so" '(:ignore t :wk "search org")
-     "sor" '(org-raom-node-find :wk "search org-roam")
+     "sor" '(org-roam-node-find :wk "search org-roam")
 
      ;;
      ;; Insert
