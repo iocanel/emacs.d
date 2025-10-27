@@ -3409,10 +3409,22 @@ The file below can be added to `.dir-locals.el` at the project roto in order to 
          ;; end of java
         )))))
 #+end_example
+*** Go
+**** go-mode
+#+begin_src emacs-lisp
+(use-package go-mode)
+#+end_src
+
 *** Typescript
 **** typescript-mode
 #+begin_src emacs-lisp
 (use-package typescript-mode)
+#+end_src
+
+*** Rust
+**** rust-mode
+#+begin_src emacs-lisp
+(use-package rust-mode)
 #+end_src
 
 *** YAML

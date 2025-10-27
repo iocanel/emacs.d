@@ -2398,7 +2398,11 @@ Lines never start or end with blank characters."
   (advice-add 'eglot-java--init :after (lambda() (remove-hook 'project-find-functions  #'eglot-java--project-try)))
   :hook (java-mode . eglot-java-mode))
 
+(use-package go-mode)
+
 (use-package typescript-mode)
+
+(use-package rust-mode)
 
 (use-package yaml-mode)
 
