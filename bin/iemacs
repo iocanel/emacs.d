@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Check if current directory is under user's home
+CURRENT_DIR=$(pwd)
+if [[ "$CURRENT_DIR" != "$HOME"* ]]; then
+    echo "Error: This script can only be run from directories under $HOME"
+    exit 1
+fi
+
+# Container configuration
+CONTAINER_IMAGE="iocanel/emacs"
+STATE_DIR=$(mktemp -d --suffix=emacs-state)
+
+# Run container with persistent state and current directory as workdir
+docker run --rm -it --net=host -v "$HOME:$HOME" -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY --user "$(id -u):$(id -g)" -e HOME="$HOME" -w "$CURRENT_DIR" --tmpfs $STATE_DIR -e XDG_STATE_HOME=$STATE_DIR "$CONTAINER_IMAGE" $*

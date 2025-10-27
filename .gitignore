@@ -1,5 +1,26 @@
-*
+# Ignore generated and runtime files
+.local/
+auto-save-list/
+backups/
+elpa/
+eln-cache/
+eshell/
+url/
+transient/
+var/
+network-security.data
+recentf
+bookmarks
+projectile-bookmarks.eld
+*.elc
+
+# Keep configuration files
 !.gitignore
 !init.el
 !early-init.el
-!config.org
+!readme.org
+!readme.el
+!build-packages.el
+!entrypoint.sh
+!Dockerfile
+!CLAUDE.md
