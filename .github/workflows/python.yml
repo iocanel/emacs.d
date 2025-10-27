@@ -1,0 +1,34 @@
+name: Test Python
+
+on:
+  workflow_call:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download container image
+      uses: actions/download-artifact@v4
+      with:
+        name: emacs-container
+
+    - name: Load container image
+      run: docker load < emacs-container.tar
+
+    - name: Test Python
+      run: |
+        set -e
+        make container-test-python
+
+    - name: Upload test artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-logs-python
+        path: |
+          tests/python/
+          *.log
+        retention-days: 7

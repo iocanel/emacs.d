@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  container:
+    uses: ./.github/workflows/container.yml
+
+  test-java:
+    needs: container
+    uses: ./.github/workflows/java.yml
+
+  test-go:
+    needs: container
+    uses: ./.github/workflows/go.yml
+
+  test-python:
+    needs: container
+    uses: ./.github/workflows/python.yml
+
+  test-javascript:
+    needs: container
+    uses: ./.github/workflows/javascript.yml
+
+  test-typescript:
+    needs: container
+    uses: ./.github/workflows/typescript.yml
+
+  test-rust:
+    needs: container
+    uses: ./.github/workflows/rust.yml
+
+  test-c:
+    needs: container
+    uses: ./.github/workflows/c.yml
+
+  # Aggregation job - only runs if all language tests pass
+  all-tests-passed:
+    runs-on: ubuntu-latest
+    needs: [test-java, test-go, test-python, test-javascript, test-typescript, test-rust, test-c]
+    steps:
+    - name: All tests completed successfully
+      run: echo "✅ All language tests passed successfully!"

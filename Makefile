@@ -9,3 +9,26 @@ container-build:
 
 container-shell: container-build
 	$(DOCKER_RUN)
+
+container-test-java: container-build
+	docker run --rm -v $(PWD)/tests/java/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-go: container-build
+	docker run --rm -v $(PWD)/tests/go/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-python: container-build
+	docker run --rm -v $(PWD)/tests/python/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-javascript: container-build
+	docker run --rm -v $(PWD)/tests/javascript/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-typescript: container-build
+	docker run --rm -v $(PWD)/tests/typescript/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-rust: container-build
+	docker run --rm -v $(PWD)/tests/rust/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test-c: container-build
+	docker run --rm -v $(PWD)/tests/c/mode.el:/emacs/.config/emacs/mode.el $(CONTAINER_IMAGE) emacs --batch --load /emacs/.config/emacs/mode.el
+
+container-test: container-test-java container-test-go container-test-python container-test-javascript container-test-typescript container-test-rust container-test-c

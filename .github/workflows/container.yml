@@ -1,0 +1,44 @@
+name: Container
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+    outputs:
+      container-artifact:
+        description: "Name of the container artifact"
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: emacs-container
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build container with cache
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        tags: iocanel/emacs
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Save container image
+      run: docker save iocanel/emacs > emacs-container.tar
+
+    - name: Upload container image
+      uses: actions/upload-artifact@v4
+      with:
+        name: emacs-container
+        path: emacs-container.tar
+        retention-days: 1
