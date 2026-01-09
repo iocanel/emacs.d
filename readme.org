@@ -5364,8 +5364,8 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
 ***** Package
 #+begin_src emacs-lisp
 (use-package gptel
-  :ensure (gptel :host github :repo "karthink/gptel" :ref "81618f24e2190568ea745dca82ba50267eed321a" )
-  :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
+  :ensure (gptel :host github :repo "karthink/gptel" :ref "d0c392bbb0a1f7775d3a1e98220f4bdc043ab63b" )
+  :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show openai.com/iocanel/api-key")))
   :config
   (defun my/clipboard-to-org-at-point ()
     "Paste the clipboard content as an org-mode flashcard."
