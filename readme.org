@@ -2244,8 +2244,8 @@ This is still work in progress so let's comment it for now.
     (add-to-list 'plstore-encrypt-to gpg-key-id))
   (setq
         plstore-cache-passphrase-for-symmetric-encryption t
-        org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/client-id"))
-        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/secret"))
+        org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show apis.google.com/vdirsyncer/iocanel@gmail.com/client_id"))
+        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show apis.google.com/vdirsyncer/iocanel@gmail.com/secret"))
         org-gcal-file-alist '(("iocanel@gmail.com" .  "~/Documents/org/calendars/personal.org")
                               ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org")))
 ;; Fixes: `deferred error : (error "oauth2-auto: Unknown provider: org-gcal")`
@@ -2358,7 +2358,7 @@ This is still work in progress so let's comment it for now.
     (setq jiralib-url "https://issues.redhat.com/"
           jiralib-user-login-name "ikanello1@redhat.com"
           jira-password nil
-          jira-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/redhat.com/ikanello1@redhat.com/token"))
+          jira-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show redhat.com/ikanello1@redhat.com/token"))
           org-jira-working-dir "~/Documents/org/jira/"
           org-jira-projects-list '("ENTSBT" "SB" "QUARKUS"))
     (setq jiralib-token `("Authorization" . ,(concat "Bearer " jira-token)))
@@ -5529,7 +5529,7 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
     :hook (prog-mode . my/codeium-enable)
     :init
     ;; We need to set the api key on init or we might get issues with sudo-edit.
-    (setq codeium/metadata/api_key (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pass show services/codeium/iocanel/api-key-emacs")))
+    (setq codeium/metadata/api_key (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pass show codeium.com/iocanel/api-key-emacs")))
     :config
     (setq use-dialog-box nil) ;; do not use popup boxes
     ;; get codeium status in the modeline
