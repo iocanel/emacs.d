@@ -634,7 +634,7 @@ The default font is good enough so let's not define additonal configuration here
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (with-selected-frame frame
-              (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+              (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 130)
               (set-face-attribute 'variable-pitch nil :font "JetBrains Mono Nerd Font")
               (copy-face 'default 'fixed-pitch)))))
 #+end_src
@@ -682,7 +682,7 @@ The default font is good enough so let's not define additonal configuration here
       (set-face-attribute 'treemacs-root-face nil :height 160)))
 
   (setq my/selected-screen-setup 'my/comf-screen-setup)
-  (my/comf-screen-setup)
+  (my/desktop-screen-setup)
 #+end_src
 
 **** Themes
