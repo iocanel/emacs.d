@@ -4410,6 +4410,40 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
    "Delegate to org-open-at-point"
    (org-open-at-point))
 #+end_src
+***** Learning Setup
+#+begin_src emacs-lisp
+(defun my/learning-setup ()
+  "Set up learning environment with org-roam on left and qutebrowser files on right."
+  (interactive)
+  ;; Close all windows in current frame except one
+  (delete-other-windows)
+
+  ;; Split vertically (left/right)
+  (split-window-right)
+
+  ;; Left window: org directory when current buffer is not already under ~/Documents/org/roam/
+(if (when-let ((file (buffer-file-name (buffer-base-buffer))))
+      (not (string-prefix-p
+            (expand-file-name "~/Documents/org/roam/")
+            (file-truename file))))
+    (find-file (expand-file-name "~/Documents/org/roam/")))
+
+  ;; Move to right window and split horizontally (top/bottom)
+  (other-window 1)
+  (split-window-below)
+
+  ;; Top right: flashcards.org with auto-revert
+  (find-file "~/Documents/org/learning/flashcards.org")
+  (auto-revert-mode 1)
+
+  ;; Bottom right: takeaway.org with auto-revert
+  (other-window 1)
+  (find-file "~/Documents/org/learning/takeaway.org")
+  (auto-revert-mode 1)
+
+  ;; Return focus to left window (org-roam)
+  (other-window 1))
+#+end_src
 ***** Reply to all
 #+begin_src emacs-lisp
 (defun my/mu4e-compose-reply-to-all ()
