@@ -5547,8 +5547,10 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
 #+end_src
 **** Copilot
 #+begin_src emacs-lisp
+  ;; Ensure track-changes is at required version for copilot
+  (use-package track-changes :ensure t)
+
   (use-package copilot
-    :ensure t
     :hook (text-mode . copilot-mode)
     :ensure (copilot :host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
     :general (:keymaps 'copilot-completion-map
