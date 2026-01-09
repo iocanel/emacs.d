@@ -3412,25 +3412,25 @@ The file below can be added to `.dir-locals.el` at the project roto in order to 
 *** Go
 **** go-mode
 #+begin_src emacs-lisp
-(use-package go-mode)
+(use-package go-mode :ensure t)
 #+end_src
 
 *** Typescript
 **** typescript-mode
 #+begin_src emacs-lisp
-(use-package typescript-mode)
+(use-package typescript-mode :ensure t)
 #+end_src
 
 *** Rust
 **** rust-mode
 #+begin_src emacs-lisp
-(use-package rust-mode)
+(use-package rust-mode :ensure t)
 #+end_src
 
 *** YAML
 **** yaml-mode
 #+begin_src emacs-lisp
-(use-package yaml-mode)
+(use-package yaml-mode :ensure t)
 #+end_src
 *** UML
 **** PlantUML
