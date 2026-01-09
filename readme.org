@@ -2336,6 +2336,19 @@ This is still work in progress so let's comment it for now.
     )
 #+end_src
 
+**** Org Asana
+***** Package
+#+begin_src emacs-lisp
+  (use-package asana
+    :ensure (asana :host github :repo "lmartel/emacs-asana")
+    :commands (asana-create-project-buffer asana-sync-tasks)
+    :config
+    (setq asana-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show asana.com/iocanel@cyberranges.com/personal_access_token"))
+          asana-tasks-org-file "~/Documents/org/asana.org"
+          org-asana-my-user-task-list-gid nil  ; Set to your personal task list GID if needed
+          org-asana-default-workspace nil))    ; Set to your default workspace GID if needed
+#+end_src
+
 **** Org Jira
 ***** Package
 #+begin_src emacs-lisp
