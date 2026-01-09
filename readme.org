@@ -4092,6 +4092,7 @@ Surprisignly, it works much better, but it still requires some tuning.
                  (file-exists-p (expand-file-name "mu4e.el" d)))
         d))
     (list
+     "/opt/mu/share/emacs/site-lisp/mu4e"
      "/usr/share/emacs/site-lisp/mu4e"
      "/usr/local/share/emacs/site-lisp/mu4e"
      "/run/current-system/sw/share/emacs/site-lisp/mu4e"
