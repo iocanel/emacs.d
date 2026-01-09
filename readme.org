@@ -132,7 +132,7 @@ Source: https://github.com/progfolio/.emacs.d/blob/master/init.org
     NAME and ARGS are in `use-package'."
   (declare (indent defun))
   `(use-package ,name
-     :ensure nil
+     :elpaca nil
      ,@args))
 #+end_src
 
