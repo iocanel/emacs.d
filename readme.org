@@ -1036,8 +1036,7 @@ I am currently trying it out but it feel less flaky than before.
                            "~/Documents/org/workout.org"
                            "~/Documents/org/calendars/personal.org"
                            "~/Documents/org/calendars/work.org"
-                           "~/Documents/org/roam/Inbox.org")
-                         (directory-files-recursively "~/Documents/org/jira" "\.org$")))
+                           "~/Documents/org/roam/Inbox.org"))
 #+end_src
 ***** Functions
 
@@ -1197,7 +1196,6 @@ Requires:
                                   (:name "Today" :time-grid t :deadline today)
                                   (:name "Habbits" :tag "habit" :todo "TODAY")
                                   (:name "Events" :time-grid t :todo "TODAY")
-                                  (:name "Jira" :tag "jira")
                                   (:name "Email" :tag "email")
                                   (:name "Github pulls" :tag "pull")
                                   (:name "Github issues" :tag "issue"))
@@ -1208,9 +1206,7 @@ Requires:
         org-agenda-start-on-weekday nil
         org-agenda-span 2
         org-agenda-hide-tags-regexp nil
-        org-agenda-files (append
-                          (directory-files-recursively "~/Documents/org/jira" "\.org$")
-                          '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/workout.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org"))
+        org-agenda-files '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/workout.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org")
         ;; Refile
         org-refile-targets '(
                              ;; P.A.R.A
@@ -2347,294 +2343,6 @@ This is still work in progress so let's comment it for now.
           asana-tasks-org-file "~/Documents/org/asana.org"
           org-asana-my-user-task-list-gid nil  ; Set to your personal task list GID if needed
           org-asana-default-workspace nil))    ; Set to your default workspace GID if needed
-#+end_src
-
-**** Org Jira
-***** Package
-#+begin_src emacs-lisp
-  (use-package org-jira
-    :commands (my/org-jira-get-issues my/org-jira-hydra my/org-jira-get-issues)
-    :custom (org-jira-property-overrides '("CUSTOM_ID" "self"))
-    :init
-    ;;
-    ;;  Variables
-    ;;
-    (defvar my/org-jira-selected-board nil)
-    (defvar my/org-jira-selected-sprint nil)
-    (defvar my/org-jira-selected-epic nil)
-
-    (defvar my/org-jira-boards-cache ())
-    (defvar my/org-jira-sprint-by-board-cache ())
-    (defvar my/org-jira-epic-by-board-cache ())
-
-    :config
-    (setq jiralib-url "https://issues.redhat.com/"
-          jiralib-user-login-name "ikanello1@redhat.com"
-          jira-password nil
-          jira-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show redhat.com/ikanello1@redhat.com/token"))
-          org-jira-working-dir "~/Documents/org/jira/"
-          org-jira-projects-list '("ENTSBT" "SB" "QUARKUS"))
-    (setq jiralib-token `("Authorization" . ,(concat "Bearer " jira-token)))
-
-    (defun my/org-jira-get-issues ()
-      "Sync using org-jira and postprocess."
-      (interactive)
-      (org-jira-get-issues (org-jira-get-issue-list org-jira-get-issue-list-callback))
-      (my/org-jira-postprocess))
-
-    (defun my/org-jira-issue-id-at-point ()
-      "Returns the ID of the current issue."
-      (save-excursion
-        (org-previous-visible-heading 1)
-        (org-element-property :ID (org-element-at-point))))
-
-    (defun my/org-jira-update-issue-description()
-      "Move the selected issue to an active sprint."
-      (interactive)
-      (let* ((issue-id (org-jira-parse-issue-id))
-             (filename (buffer-file-name))
-             (org-issue-description (org-trim (org-jira-get-issue-val-from-org 'description)))
-             (update-fields (list (cons 'description org-issue-description))))
-        (jiralib-update-issue issue-id update-fields
-                              (org-jira-with-callback
-                               (message (format "Issue '%s' updated!" issue-id))
-                               (jiralib-get-issue
-                                issue-id
-                                (org-jira-with-callback
-                                 (org-jira-log "Update get issue for refresh callback hit.")
-                                 (-> cb-data list org-jira-get-issues)))))))
-
-
-    (defun my/org-jira-postprocess ()
-      "Postprocess the org-jira project files. It shcedules all jira issues so that they appear on agenda"
-      (interactive)
-      (mapcar (lambda (p)
-                (let ((scheduled (format "%s  SCHEDULED: <%s>\n" (make-string 2 32) (org-read-date nil nil "+0d") ))
-                      (github-project-file (concat (file-name-as-directory org-jira-working-dir) (format "%s.org" p))))
-                  (with-temp-buffer
-                    (insert-file jira-project-file)
-                    (goto-char (point-min))
-                    (while (re-search-forward "^\*\* TODO" nil t)
-                      (let* ((tags (org-get-tags)))
-                        (add-to-list 'tags "jira")
-                        (org-set-tags tags)
-                        (org-set-property "SCHEDULED" scheduled)
-                        (write-file jira-project-file)))))) '("QUARKUS" "SB" "ENTSBT"))))
-#+end_src
-
-***** Boards, Sprints and Epic
-
-When I originally started playing with org-jira the was absolutely no support for any of these (I think).
-So, I rolled my own.
-
-#+begin_src emacs-lisp
-  ;;
-  ;; Boards
-  ;;
-  (defun my/org-jira-get-boards-list()
-    "List all boards."
-    (unless my/org-jira-boards-cache
-      (setq my/org-jira-boards-cache (jiralib--agile-call-sync "/rest/agile/1.0/board" 'values)))
-    my/org-jira-boards-cache)
-
-  (defun my/org-jira-get-board-id()
-    "Select a board if one not already selected."
-    (unless my/org-jira-selected-board
-      (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
-    (cdr (assoc 'id my/org-jira-selected-board)))
-
-  (defun my/org-jira-get-board()
-    "Select a board if one not already selected."
-    (unless my/org-jira-selected-board
-      (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
-    my/org-jira-selected-board)
-
-  (defun my/org-jira-board-completing-read()
-    "Select a board by name."
-    (when (not (file-exists-p (my/org-jira--get-boards-file)))
-      (my/org-jira-get-boards-list))
-
-    (let* ((boards (with-current-buffer (org-jira--get-boards-buffer)
-                     (org-map-entries (lambda()
-                                        `((id . ,(org-entry-get nil "id"))
-                                          (self . ,(org-entry-get nil "url"))
-                                          (name . ,(org-entry-get nil "name")))) t  'file)))
-           (board-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) boards))
-           (board-name (completing-read "Choose board:" board-names)))
-      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) board-name)) boards))))
-
-  (defun my/org-jira-select-board()
-    "Select a board."
-    (interactive)
-    (setq my/org-jira-selected-board (cdr (assoc 'name (my/org-jira-board-completing-read)))))
-
-  ;;
-  ;; Sprint
-  ;;
-  (defun my/org-jira-get-project-boards(project-id)
-    "Find the board of the project.")
-
-  (defun my/org-jira-get-sprints-by-board(board-id &optional filter)
-    "List all sprints by BOARD-ID."
-    (let ((board-sprints-cache (cdr (assoc board-id my/org-jira-sprint-by-board-cache))))
-      (unless board-sprints-cache
-        (setq board-sprints-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/sprint" board-id)'values)))
-
-      (add-to-list 'my/org-jira-sprint-by-board-cache `(,board-id . ,board-sprints-cache))
-      (if filter
-          (seq-filter filter board-sprints-cache)
-        board-sprints-cache)))
-
-  (defun my/org-jira--active-sprint-p(sprint)
-    "Predicate that checks if SPRINT is active."
-    (not (assoc 'completeDate sprint)))
-
-  (defun my/org-jira-sprint-completing-read(board-id)
-    "Select an active sprint by name."
-    (let* ((sprints (my/org-jira-get-sprints-by-board board-id 'my/org-jira--active-sprint-p))
-           (sprint-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) sprints))
-           (sprint-name (completing-read "Choose sprint:" sprint-names)))
-      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) sprint-name)) sprints))))
-
-  (defun my/org-jira-move-issue-to-sprint(issue-id sprint-id)
-    "Move issue with ISSUE-ID to sprint with SPRINT-ID."
-    (jiralib--rest-call-it (format "/rest/agile/1.0/sprint/%s/issue" sprint-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
-
-  (defun my/org-jira-assign-current-issue-to-sprint()
-    "Move the selected issue to an active sprint."
-    (interactive)
-    (let* ((issue-id (my/org-jira-parse-issue-id))
-           (board-id (cdr (assoc 'id (my/org-jira-get-board))))
-           (sprint-id (cdr (assoc 'id (my/org-jira-sprint-completing-read board-id)))))
-
-      (my/org-jira-move-issue-to-sprint issue-id sprint-id)))
-
-  (defun my/org-jira-get-sprint-id()
-    "Select a sprint id if one not already selected."
-    (unless my/org-jira-selected-sprint
-      (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read)))
-    (cdr (assoc 'id my/org-jira-selected-sprint)))
-
-  (defun my/org-jira-get-sprint()
-    "Select a sprint if one not already selected."
-    (unless my/org-jira-selected-sprint
-      (setq my/org-jira-selected-sprint (my/org-jira-select-sprint)))
-    my/org-jira-selected-sprint)
-
-  (defun my/org-jira-select-sprint()
-    "Select a sprint."
-    (interactive)
-    (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read (my/org-jira-get-board-id))))
-
-  ;;
-  ;; Epics
-  ;;
-  (defun my/org-jira-get-epics-by-board(board-id &optional filter)
-    "List all epics by BOARD-ID."
-    (interactive)
-    (let ((board-epics-cache (cdr (assoc board-id my/org-jira-epic-by-board-cache))))
-      (unless board-epics-cache
-        (setq board-epics-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/epic" board-id)'values)))
-
-      (add-to-list 'my/org-jira-epic-by-board-cache `(,board-id . ,board-epics-cache))
-      (if filter
-          (seq-filter filter board-epics-cache)
-        board-epics-cache)))
-
-  (defun my/org-jira--active-epic-p(epic)
-    "Predicate that checks if EPIC is active."
-    (not (equal (assoc 'done epic) 'false)))
-
-
-  (defun my/org-jira-epic-completing-read(board-id)
-    "Select an active epic by name."
-    (let* ((epics (my/org-jira-get-epics-by-board board-id 'my/org-jira--active-epic-p))
-           (epic-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) epics))
-           (epic-name (completing-read "Choose epic:" epic-names)))
-      (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) epic-name)) epics))))
-
-  (defun my/org-jira-move-issue-to-epic(issue-id epic-id)
-    "Move issue with ISSUE-ID to epic with SPRINT-ID."
-    (jiralib--rest-call-it (format "/rest/agile/1.0/epmy/%s/issue" epic-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
-
-  (defun my/org-jira-assign-current-issue-to-epic()
-    "Move the selected issue to an active epic."
-    (interactive)
-    (let* ((issue-id (my/org-jira-parse-issue-id))
-           (board-id (cdr (assoc 'id (my/org-jira-get-board))))
-           (epic-id (cdr (assoc 'id (my/org-jira-epic-completing-read board-id)))))
-
-      (my/org-jira-move-issue-to-epic issue-id epic-id)))
-
-  (defun my/org-jira-get-epic-id()
-    "Select a epic id if one not already selected."
-    (unless my/org-jira-selected-epic
-      (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read)))
-    (cdr (assoc 'id my/org-jira-selected-epic)))
-
-  (defun my/org-jira-get-epic()
-    "Select a epic if one not already selected."
-    (unless my/org-jira-selected-epic
-      (setq my/org-jira-selected-epic (my/org-jira-select-epic)))
-    my/org-jira-selected-epic)
-
-  (defun my/org-jira-select-epic()
-    "Select a epic."
-    (interactive)
-    (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read (my/org-jira-get-board-id))))
-
-  (defun my/org-jira-create-issue-with-defaults()
-    "Create an issue and assign to default sprint and epic."
-    (org-jira-create-issue)
-    (my/org-jira-move-issue-to-epic)
-    (my/org-jira-move-issue-to-sprint))
-
-#+end_src
-
-***** Hydra
-#+begin_src emacs-lisp
-  (defun my/org-jira-hydra ()
-    "Define (if not already defined org-jira hydra and invoke it."
-    (interactive)
-    (unless (boundp 'org-jira-hydra/body)
-      (defhydra org-jira-hydra (:hint none :exit t)
-        ;; The '_' character is not displayed. This affects columns alignment.
-        ;; Remove s many spaces as needed to make up for the '_' deficit.
-        "
-           ^Actions^           ^Issue^              ^Buffer^                         ^Defaults^
-                             ?I?
-           ^^^^^^-----------------------------------------------------------------------------------------------
-            _L_ist issues      _u_pdate issue       _R_efresh issues in buffer       Select _B_oard ?B?
-            _C_reate issue     update _c_omment                                    Select _E_pic ?E?
-                             assign _s_print                                     Select _S_print ?S?
-                             assign _e_print                                     Create issue with _D_efaults
-                             _b_rowse issue
-                             _r_efresh issue
-                             _p_rogress issue
-    [_q_]: quit
-  "
-        ("I" nil (or (my/org-jira-issue-id-at-point) ""))
-        ("L" my/org-jira-get-issues)
-        ("C" org-jira-create-issue)
-
-        ("u" org-jira-update-issue)
-        ("c" org-jira-update-comment)
-        ("b" org-jira-browse-issue)
-        ("s" my/org-jira-assign-current-issue-to-sprint)
-        ("e" my/org-jira-assign-current-issue-to-epic)
-        ("r" org-jira-refresh-issue)
-        ("p" org-jira-progress-issue)
-
-        ("R" org-jira-refresh-issues-in-buffer)
-
-        ("B" my/org-jira-select-board (format "[%s]" (or my/org-jira-selected-board "")) :exit nil)
-        ("E" my/org-jira-select-epic (format "[%s]" (or my/org-jira-selected-epic "")) :exit nil)
-        ("S" my/org-jira-select-sprint (format "[%s]" (or my/org-jira-selected-sprint "")) :exit nil)
-        ("D" my/org-jira-create-with-defaults)
-
-        ("q" nil "quit")))
-    (org-jira-hydra/body))
-
 #+end_src
 
 **** Org Tree Slide
@@ -4166,29 +3874,7 @@ Surprisignly, it works much better, but it still requires some tuning.
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           . t)))
-           ,(make-mu4e-context
-             :name "redhat"
-             :enter-func (lambda () (mu4e-message "Switch to ikanello@redhat.com"))
-             :match-func (lambda (msg)
-                           (when msg
-                             (string-match-p "^/ikanello@redhat.com" (mu4e-message-field msg :maildir))))
-             :vars '((smtpmail-smtp-user               . "ikanello@redhat.com")
-                     (mail-reply-to                    . "ikanello@redhat.com")
-                     (user-mail-address                . "ikanello@redhat.com")
-                     (user-full-name                   . "Ioannis Canellos")
-                     (mu4e-personal-addresses          . ("ikanello@redhat.com"))
-                     (mu4e-drafts-folder               . "/ikanello@redhat.com/Drafts")
-                     (mu4e-refile-folder               . "/ikanello@redhat.com/[Email] Deferred")
-                     (mu4e-trash-folder                . "/ikanello@redhat.com/Trash")
-                     (mu4e-sent-folder                 . "/ikanello@redhat.com/Sent")
-                     (mu4e-compose-complete-addresses  . t)
-                     (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "msmtp")
-                     (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-                     (message-sendmail-f-is-evil       . t)
-                     (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           .  t)))))
+                     (mu4e-compose-signature           . t))))
 
   (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
@@ -4469,7 +4155,7 @@ It seems that `ace-link` tries to use the fucntion below but it does not exist
 ***** Headers
 #+begin_src emacs-lisp
 (defun my/mu4e-hydra-headers ()
-  "Define (if not already defined org-jira hydra and invoke it."
+  "Define mu4e headers hydra and invoke it."
   (interactive)
   (unless (boundp 'my/mu4e-hydra-headers)
     (defhydra my/mu4e-hydra-headers (:color pink :hint nil)
@@ -4498,7 +4184,7 @@ _P_:  prev unread
 ***** View
 #+begin_src emacs-lisp
 (defun my/mu4e-hydra-view ()
-  "Define (if not already defined org-jira hydra and invoke it."
+  "Define mu4e view hydra and invoke it."
   (interactive)
   (unless (boundp 'my/mu4e-hydra-view)
     (defhydra my/mu4e-hydra-view (:color pink :hint nil)
