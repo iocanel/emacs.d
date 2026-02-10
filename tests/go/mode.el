@@ -7,13 +7,20 @@
 (defun test-go-mode-available ()
   "Test that go-mode is available in the container."
   (message "Testing Go mode availability...")
-  (if (fboundp 'go-mode)
+  (add-to-list 'load-path "/emacs/.config/emacs/.local/elpaca/builds/go-mode")
+  (condition-case err
       (progn
-        (message "✅ Go mode test passed")
-        (kill-emacs 0))
-    (progn
-      (message "❌ Go mode not available")
-      (kill-emacs 1))))
+        (require 'go-mode)
+        (if (fboundp 'go-mode)
+            (progn
+              (message "✅ Go mode test passed")
+              (kill-emacs 0))
+          (progn
+            (message "❌ Go mode not available after require")
+            (kill-emacs 1))))
+    (error
+     (message "❌ Go mode not available: %s" err)
+     (kill-emacs 1))))
 
 ;; Run test if loaded in batch mode
 (when noninteractive

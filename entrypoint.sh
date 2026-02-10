@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ensure HOME is set (fallback to /tmp if running as non-standard user)
+# Ensure HOME is set
 if [ -z "${HOME:-}" ]; then
-    export HOME="/tmp"
+    echo "ERROR: HOME environment variable is not set" >&2
+    echo "This is required for proper configuration setup" >&2
+    exit 1
 fi
 
 # Baked-in config/data
@@ -14,14 +16,31 @@ CONFIG_TARGET="$HOME/.config/emacs-docker"
 
 safe_copy() {
   local src="$1" dst="$2"
-  if [ ! -e "$dst" ]; then
-    mkdir -p "$(dirname "$dst")"
-    cp -a "$src" "$dst"
-  fi
+  mkdir -p "$dst"
+  cp -af "$src"/* "$dst"/
 }
 
-# Copy once, then run against the per-user copy
+# Always ensure fresh copy by removing destination first
 safe_copy "$CONFIG_SOURCE"  "$CONFIG_TARGET"
+
+# Verify critical files were copied correctly
+for file in readme.org readme.el; do
+    if [ ! -f "$CONFIG_TARGET/$file" ]; then
+        echo "ERROR: Critical file $file was not copied to $CONFIG_TARGET" >&2
+        exit 1
+    fi
+    if [ ! -f "$CONFIG_SOURCE/$file" ]; then
+        echo "ERROR: Critical file $file missing from source $CONFIG_SOURCE" >&2
+        exit 1
+    fi
+    # Compare file sizes as a basic verification
+    src_size=$(stat -c%s "$CONFIG_SOURCE/$file" 2>/dev/null || echo "0")
+    dst_size=$(stat -c%s "$CONFIG_TARGET/$file" 2>/dev/null || echo "0")
+    if [ "$src_size" != "$dst_size" ]; then
+        echo "ERROR: File size mismatch for $file (source: $src_size, destination: $dst_size)" >&2
+        exit 1
+    fi
+done
 
 export XDG_CONFIG_HOME="$HOME/.config"
 
