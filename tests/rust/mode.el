@@ -5,9 +5,12 @@
 ;;; Code:
 
 (defun test-rust-mode-available ()
-  "Test that rust-mode is available in the container."
+  "Test that rust-mode is available."
   (message "Testing Rust mode availability...")
-  (add-to-list 'load-path "/emacs/.config/emacs/.local/elpaca/builds/rust-mode")
+  (dolist (path '("/emacs/.config/emacs/.local/elpaca/builds/rust-mode"
+                  "~/.emacs.d/.local/elpaca/builds/rust-mode"))
+    (when (file-directory-p (expand-file-name path))
+      (add-to-list 'load-path (expand-file-name path))))
   (condition-case err
       (progn
         (require 'rust-mode)

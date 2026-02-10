@@ -5,9 +5,12 @@
 ;;; Code:
 
 (defun test-go-mode-available ()
-  "Test that go-mode is available in the container."
+  "Test that go-mode is available."
   (message "Testing Go mode availability...")
-  (add-to-list 'load-path "/emacs/.config/emacs/.local/elpaca/builds/go-mode")
+  (dolist (path '("/emacs/.config/emacs/.local/elpaca/builds/go-mode"
+                  "~/.emacs.d/.local/elpaca/builds/go-mode"))
+    (when (file-directory-p (expand-file-name path))
+      (add-to-list 'load-path (expand-file-name path))))
   (condition-case err
       (progn
         (require 'go-mode)

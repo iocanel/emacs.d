@@ -5,9 +5,12 @@
 ;;; Code:
 
 (defun test-typescript-mode-available ()
-  "Test that typescript-mode is available in the container."
+  "Test that typescript-mode is available."
   (message "Testing TypeScript mode availability...")
-  (add-to-list 'load-path "/emacs/.config/emacs/.local/elpaca/builds/typescript-mode")
+  (dolist (path '("/emacs/.config/emacs/.local/elpaca/builds/typescript-mode"
+                  "~/.emacs.d/.local/elpaca/builds/typescript-mode"))
+    (when (file-directory-p (expand-file-name path))
+      (add-to-list 'load-path (expand-file-name path))))
   (condition-case err
       (progn
         (require 'typescript-mode)
