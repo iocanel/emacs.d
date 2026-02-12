@@ -1028,15 +1028,14 @@ I am currently trying it out but it feel less flaky than before.
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
- (setq org-agenda-files (append
-                         '("~/Documents/org/quickmarks.org"
-                           "~/Documents/org/github.org"
-                           "~/Documents/org/habits.org"
-                           "~/Documents/org/nutrition.org"
-                           "~/Documents/org/workout.org"
-                           "~/Documents/org/calendars/personal.org"
-                           "~/Documents/org/calendars/work.org"
-                           "~/Documents/org/roam/Inbox.org"))
+(setq org-agenda-files '("~/Documents/org/quickmarks.org"
+                         "~/Documents/org/github.org"
+                         "~/Documents/org/habits.org"
+                         "~/Documents/org/nutrition.org"
+                         "~/Documents/org/workout.org"
+                         "~/Documents/org/calendars/personal.org"
+                         "~/Documents/org/calendars/work.org"
+                         "~/Documents/org/roam/Inbox.org"))
 #+end_src
 ***** Functions
 
@@ -3874,9 +3873,9 @@ Surprisignly, it works much better, but it still requires some tuning.
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           . t))))
+                     (mu4e-compose-signature           . t)))))
 
-  (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
+(set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
   (with-eval-after-load "mm-decode"
