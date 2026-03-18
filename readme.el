@@ -3012,6 +3012,9 @@ _g_:  goto link [g]
  "C-f" 'my/mu4e-capture-follow-up
  "?" 'my/mu4e-hydra-headers)
 
+;; Load private work email configuration if available
+(load "~/.config/home-manager/private/mu4e-work.el" t)
+
 (defconst my/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
 (defvar my/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The path to the youtube download folder")
 (defvar my/youtube-download-by-id-path "/home/iocanel/Downloads/Youtube/by-id/" "The path to the youtube by-id folder")

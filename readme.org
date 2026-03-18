@@ -4262,6 +4262,9 @@ _g_:  goto link [g]
  "C-r" 'my/mu4e-capture-read-later
  "C-f" 'my/mu4e-capture-follow-up
  "?" 'my/mu4e-hydra-headers)
+
+;; Load private work email configuration if available
+(load "~/.config/home-manager/private/mu4e-work.el" t)
 #+end_src
 *** Youtube DLP
 
