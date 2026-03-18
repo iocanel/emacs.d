@@ -1028,15 +1028,14 @@ I am currently trying it out but it feel less flaky than before.
 **** Agenda
 ***** Configuration
 #+begin_src emacs-lisp
- (setq org-agenda-files (append
-                         '("~/Documents/org/quickmarks.org"
-                           "~/Documents/org/github.org"
-                           "~/Documents/org/habits.org"
-                           "~/Documents/org/nutrition.org"
-                           "~/Documents/org/workout.org"
-                           "~/Documents/org/calendars/personal.org"
-                           "~/Documents/org/calendars/work.org"
-                           "~/Documents/org/roam/Inbox.org"))
+(setq org-agenda-files '("~/Documents/org/quickmarks.org"
+                         "~/Documents/org/github.org"
+                         "~/Documents/org/habits.org"
+                         "~/Documents/org/nutrition.org"
+                         "~/Documents/org/workout.org"
+                         "~/Documents/org/calendars/personal.org"
+                         "~/Documents/org/calendars/work.org"
+                         "~/Documents/org/roam/Inbox.org"))
 #+end_src
 ***** Functions
 
@@ -3874,9 +3873,9 @@ Surprisignly, it works much better, but it still requires some tuning.
                      (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
                      (message-sendmail-f-is-evil       . t)
                      (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           . t))))
+                     (mu4e-compose-signature           . t)))))
 
-  (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
+(set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
   (with-eval-after-load "mm-decode"
@@ -5254,7 +5253,38 @@ Use all the content in thee triple backticks to generate the flashcoard: ```%s``
     :ensure (copilot :host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
     :general (:keymaps 'copilot-completion-map
                        "<RET>" 'copilot-accept-completion
-                       "C-<TAB>" 'copilot-next-completion))
+                       "C-<TAB>" 'copilot-next-completion)
+    :config
+    ;; Workaround: track-changes (required by copilot) conflicts with org-capture.
+    ;; On the second capture, track-changes internal position state becomes stale
+    ;; causing cl-assertion-failed in track-changes--after. Disable copilot during capture.
+    ;; Must disable in both capture buffer AND target buffer to fully prevent the issue.
+    (defvar my/copilot-disabled-buffers nil
+      "List of buffers where copilot was disabled for org-capture.")
+
+    (defun my/copilot-disable-for-capture ()
+      "Disable copilot in capture buffer and target buffer to avoid track-changes conflicts."
+      (setq my/copilot-disabled-buffers nil)
+      (when (bound-and-true-p copilot-mode)
+        (push (current-buffer) my/copilot-disabled-buffers)
+        (copilot-mode -1))
+      (when-let ((target-buf (org-capture-get :buffer)))
+        (with-current-buffer target-buf
+          (when (bound-and-true-p copilot-mode)
+            (push target-buf my/copilot-disabled-buffers)
+            (copilot-mode -1)))))
+
+    (defun my/copilot-restore-after-capture ()
+      "Re-enable copilot in buffers where it was disabled."
+      (dolist (buf my/copilot-disabled-buffers)
+        (when (buffer-live-p buf)
+          (with-current-buffer buf
+            (when (derived-mode-p 'text-mode)
+              (copilot-mode 1)))))
+      (setq my/copilot-disabled-buffers nil))
+
+    (add-hook 'org-capture-mode-hook #'my/copilot-disable-for-capture)
+    (add-hook 'org-capture-after-finalize-hook #'my/copilot-restore-after-capture))
 
 #+end_src
 

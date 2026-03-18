@@ -14,6 +14,24 @@ bookmarks
 projectile-bookmarks.eld
 *.elc
 
+# Sensitive/personal data
+oauth2-auto.plist
+org-roam.db
+.org-id-locations
+.org-generic-id-locations
+history
+tramp
+emacs.log
+.mc-lists.el
+projects
+
+# Runtime caches
+.cache/
+codeium/
+persist/
+request/
+plantuml/
+
 # Keep configuration files
 !.gitignore
 !init.el

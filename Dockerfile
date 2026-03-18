@@ -74,6 +74,27 @@ RUN mkdir -p /emacs/.config/emacs/.local \
 RUN cd /emacs/.config/emacs && HOME=/emacs /opt/emacs/bin/emacs --batch \
       --load build-packages.el
 
+# ---- Add build timestamp for cache detection ----
+RUN { \
+    echo ';;; build-info.el --- Container build information'; \
+    echo ''; \
+    echo ';; Build information for this container'; \
+    echo "(defvar container-build-time \"$(date -u +'%Y-%m-%d %H:%M:%S UTC')\")"; \
+    echo "(defvar container-git-commit \"$(cd /emacs/.config/emacs && git rev-parse --short HEAD 2>/dev/null || echo 'unknown')\")"; \
+    echo ''; \
+    echo ';; Display build info on startup with higher visibility'; \
+    echo '(message "")'; \
+    echo '(message "🐳 ================================================")'; \
+    echo '(message "🐳 Container Build Info:")'; \
+    echo '(message "🐳   Built: %s" container-build-time)'; \
+    echo '(message "🐳   Git Commit: %s" container-git-commit)'; \
+    echo '(message "🐳 ================================================")'; \
+    echo '(message "")'; \
+    echo ''; \
+    echo "(provide 'build-info)"; \
+    echo ';;; build-info.el ends here'; \
+} > /emacs/.config/emacs/build-info.el
+
 # ---- Build Mu from source ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgmime-3.0-dev libxapian-dev meson ninja-build \
