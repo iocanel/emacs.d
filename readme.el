@@ -55,7 +55,7 @@
     NAME and ARGS are in `use-package'."
   (declare (indent defun))
   `(use-package ,name
-     :ensure nil
+     :elpaca nil
      ,@args))
 
 (use-package general
@@ -245,7 +245,7 @@ the cursor by ARG lines."
 
 (setq confirm-kill-emacs 'y-or-n-p)
 
-(setq use-dialog-box 'y-or-n-p)
+(setq use-dialog-box nil)
 (setq use-file-dialog 'y-or-n-p)
 
 (use-feature savehist
@@ -453,7 +453,7 @@ The optional argument NEW-WINDOW is not used."
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (with-selected-frame frame
-              (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+              (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 130)
               (set-face-attribute 'variable-pitch nil :font "JetBrains Mono Nerd Font")
               (copy-face 'default 'fixed-pitch)))))
 
@@ -498,7 +498,7 @@ The optional argument NEW-WINDOW is not used."
     (set-face-attribute 'treemacs-root-face nil :height 160)))
 
 (setq my/selected-screen-setup 'my/comf-screen-setup)
-(my/comf-screen-setup)
+(my/desktop-screen-setup)
 
 (use-package  catppuccin-theme
   :config
@@ -729,16 +729,14 @@ or to the 'Unsorted' when none is matched. Archives are expected to be tagged wi
 
 (electric-indent-mode -1)
 
-(setq org-agenda-files (append
-                        '("~/Documents/org/quickmarks.org"
-                          "~/Documents/org/github.org"
-                          "~/Documents/org/habits.org"
-                          "~/Documents/org/nutrition.org"
-                          "~/Documents/org/workout.org"
-                          "~/Documents/org/calendars/personal.org"
-                          "~/Documents/org/calendars/work.org"
-                          "~/Documents/org/roam/Inbox.org")
-                        (directory-files-recursively "~/Documents/org/jira" "\.org$")))
+(setq org-agenda-files '("~/Documents/org/quickmarks.org"
+                         "~/Documents/org/github.org"
+                         "~/Documents/org/habits.org"
+                         "~/Documents/org/nutrition.org"
+                         "~/Documents/org/workout.org"
+                         "~/Documents/org/calendars/personal.org"
+                         "~/Documents/org/calendars/work.org"
+                         "~/Documents/org/roam/Inbox.org"))
 
 (defun my/org-agenda-archive-at-point ()
   "Archive the url of the specified item."
@@ -866,7 +864,6 @@ or to the 'Unsorted' when none is matched. Archives are expected to be tagged wi
                                   (:name "Today" :time-grid t :deadline today)
                                   (:name "Habbits" :tag "habit" :todo "TODAY")
                                   (:name "Events" :time-grid t :todo "TODAY")
-                                  (:name "Jira" :tag "jira")
                                   (:name "Email" :tag "email")
                                   (:name "Github pulls" :tag "pull")
                                   (:name "Github issues" :tag "issue"))
@@ -877,9 +874,7 @@ or to the 'Unsorted' when none is matched. Archives are expected to be tagged wi
         org-agenda-start-on-weekday nil
         org-agenda-span 2
         org-agenda-hide-tags-regexp nil
-        org-agenda-files (append
-                          (directory-files-recursively "~/Documents/org/jira" "\.org$")
-                          '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/workout.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org"))
+        org-agenda-files '("~/Documents/org/roam/Inbox.org" "~/Documents/org/habits.org" "~/Documents/org/github.org" "~/Documents/org/nutrition.org" "~/Documents/org/workout.org" "~/Documents/org/calendars/personal.org" "~/Documents/org/calendars/work.org")
         ;; Refile
         org-refile-targets '(
                              ;; P.A.R.A
@@ -1758,8 +1753,8 @@ start a temporary Redis server, run the commands, and then stop the server."
     (add-to-list 'plstore-encrypt-to gpg-key-id))
   (setq
         plstore-cache-passphrase-for-symmetric-encryption t
-        org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/client-id"))
-        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/google/vdirsyncer/iocanel@gmail.com/secret"))
+        org-gcal-client-id (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show apis.google.com/vdirsyncer/iocanel@gmail.com/client_id"))
+        org-gcal-client-secret (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show apis.google.com/vdirsyncer/iocanel@gmail.com/secret"))
         org-gcal-file-alist '(("iocanel@gmail.com" .  "~/Documents/org/calendars/personal.org")
                               ("ikanello@redhat.com" . "~/Documents/org/calendars/work.org")))
 ;; Fixes: `deferred error : (error "oauth2-auto: Unknown provider: org-gcal")`
@@ -1846,277 +1841,14 @@ start a temporary Redis server, run the commands, and then stop the server."
         (org-agenda-next-line))))
   )
 
-(use-package org-jira
-  :commands (my/org-jira-get-issues my/org-jira-hydra my/org-jira-get-issues)
-  :custom (org-jira-property-overrides '("CUSTOM_ID" "self"))
-  :init
-  ;;
-  ;;  Variables
-  ;;
-  (defvar my/org-jira-selected-board nil)
-  (defvar my/org-jira-selected-sprint nil)
-  (defvar my/org-jira-selected-epic nil)
-
-  (defvar my/org-jira-boards-cache ())
-  (defvar my/org-jira-sprint-by-board-cache ())
-  (defvar my/org-jira-epic-by-board-cache ())
-
+(use-package asana
+  :ensure (asana :host github :repo "lmartel/emacs-asana")
+  :commands (asana-create-project-buffer asana-sync-tasks)
   :config
-  (setq jiralib-url "https://issues.redhat.com/"
-        jiralib-user-login-name "ikanello1@redhat.com"
-        jira-password nil
-        jira-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show websites/redhat.com/ikanello1@redhat.com/token"))
-        org-jira-working-dir "~/Documents/org/jira/"
-        org-jira-projects-list '("ENTSBT" "SB" "QUARKUS"))
-  (setq jiralib-token `("Authorization" . ,(concat "Bearer " jira-token)))
-
-  (defun my/org-jira-get-issues ()
-    "Sync using org-jira and postprocess."
-    (interactive)
-    (org-jira-get-issues (org-jira-get-issue-list org-jira-get-issue-list-callback))
-    (my/org-jira-postprocess))
-
-  (defun my/org-jira-issue-id-at-point ()
-    "Returns the ID of the current issue."
-    (save-excursion
-      (org-previous-visible-heading 1)
-      (org-element-property :ID (org-element-at-point))))
-
-  (defun my/org-jira-update-issue-description()
-    "Move the selected issue to an active sprint."
-    (interactive)
-    (let* ((issue-id (org-jira-parse-issue-id))
-           (filename (buffer-file-name))
-           (org-issue-description (org-trim (org-jira-get-issue-val-from-org 'description)))
-           (update-fields (list (cons 'description org-issue-description))))
-      (jiralib-update-issue issue-id update-fields
-                            (org-jira-with-callback
-                             (message (format "Issue '%s' updated!" issue-id))
-                             (jiralib-get-issue
-                              issue-id
-                              (org-jira-with-callback
-                               (org-jira-log "Update get issue for refresh callback hit.")
-                               (-> cb-data list org-jira-get-issues)))))))
-
-
-  (defun my/org-jira-postprocess ()
-    "Postprocess the org-jira project files. It shcedules all jira issues so that they appear on agenda"
-    (interactive)
-    (mapcar (lambda (p)
-              (let ((scheduled (format "%s  SCHEDULED: <%s>\n" (make-string 2 32) (org-read-date nil nil "+0d") ))
-                    (github-project-file (concat (file-name-as-directory org-jira-working-dir) (format "%s.org" p))))
-                (with-temp-buffer
-                  (insert-file jira-project-file)
-                  (goto-char (point-min))
-                  (while (re-search-forward "^\*\* TODO" nil t)
-                    (let* ((tags (org-get-tags)))
-                      (add-to-list 'tags "jira")
-                      (org-set-tags tags)
-                      (org-set-property "SCHEDULED" scheduled)
-                      (write-file jira-project-file)))))) '("QUARKUS" "SB" "ENTSBT"))))
-
-;;
-;; Boards
-;;
-(defun my/org-jira-get-boards-list()
-  "List all boards."
-  (unless my/org-jira-boards-cache
-    (setq my/org-jira-boards-cache (jiralib--agile-call-sync "/rest/agile/1.0/board" 'values)))
-  my/org-jira-boards-cache)
-
-(defun my/org-jira-get-board-id()
-  "Select a board if one not already selected."
-  (unless my/org-jira-selected-board
-    (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
-  (cdr (assoc 'id my/org-jira-selected-board)))
-
-(defun my/org-jira-get-board()
-  "Select a board if one not already selected."
-  (unless my/org-jira-selected-board
-    (setq my/org-jira-selected-board (my/org-jira-board-completing-read)))
-  my/org-jira-selected-board)
-
-(defun my/org-jira-board-completing-read()
-  "Select a board by name."
-  (when (not (file-exists-p (my/org-jira--get-boards-file)))
-    (my/org-jira-get-boards-list))
-
-  (let* ((boards (with-current-buffer (org-jira--get-boards-buffer)
-                   (org-map-entries (lambda()
-                                      `((id . ,(org-entry-get nil "id"))
-                                        (self . ,(org-entry-get nil "url"))
-                                        (name . ,(org-entry-get nil "name")))) t  'file)))
-         (board-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) boards))
-         (board-name (completing-read "Choose board:" board-names)))
-    (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) board-name)) boards))))
-
-(defun my/org-jira-select-board()
-  "Select a board."
-  (interactive)
-  (setq my/org-jira-selected-board (cdr (assoc 'name (my/org-jira-board-completing-read)))))
-
-;;
-;; Sprint
-;;
-(defun my/org-jira-get-project-boards(project-id)
-  "Find the board of the project.")
-
-(defun my/org-jira-get-sprints-by-board(board-id &optional filter)
-  "List all sprints by BOARD-ID."
-  (let ((board-sprints-cache (cdr (assoc board-id my/org-jira-sprint-by-board-cache))))
-    (unless board-sprints-cache
-      (setq board-sprints-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/sprint" board-id)'values)))
-
-    (add-to-list 'my/org-jira-sprint-by-board-cache `(,board-id . ,board-sprints-cache))
-    (if filter
-        (seq-filter filter board-sprints-cache)
-      board-sprints-cache)))
-
-(defun my/org-jira--active-sprint-p(sprint)
-  "Predicate that checks if SPRINT is active."
-  (not (assoc 'completeDate sprint)))
-
-(defun my/org-jira-sprint-completing-read(board-id)
-  "Select an active sprint by name."
-  (let* ((sprints (my/org-jira-get-sprints-by-board board-id 'my/org-jira--active-sprint-p))
-         (sprint-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) sprints))
-         (sprint-name (completing-read "Choose sprint:" sprint-names)))
-    (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) sprint-name)) sprints))))
-
-(defun my/org-jira-move-issue-to-sprint(issue-id sprint-id)
-  "Move issue with ISSUE-ID to sprint with SPRINT-ID."
-  (jiralib--rest-call-it (format "/rest/agile/1.0/sprint/%s/issue" sprint-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
-
-(defun my/org-jira-assign-current-issue-to-sprint()
-  "Move the selected issue to an active sprint."
-  (interactive)
-  (let* ((issue-id (my/org-jira-parse-issue-id))
-         (board-id (cdr (assoc 'id (my/org-jira-get-board))))
-         (sprint-id (cdr (assoc 'id (my/org-jira-sprint-completing-read board-id)))))
-
-    (my/org-jira-move-issue-to-sprint issue-id sprint-id)))
-
-(defun my/org-jira-get-sprint-id()
-  "Select a sprint id if one not already selected."
-  (unless my/org-jira-selected-sprint
-    (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read)))
-  (cdr (assoc 'id my/org-jira-selected-sprint)))
-
-(defun my/org-jira-get-sprint()
-  "Select a sprint if one not already selected."
-  (unless my/org-jira-selected-sprint
-    (setq my/org-jira-selected-sprint (my/org-jira-select-sprint)))
-  my/org-jira-selected-sprint)
-
-(defun my/org-jira-select-sprint()
-  "Select a sprint."
-  (interactive)
-  (setq my/org-jira-selected-sprint (my/org-jira-sprint-completing-read (my/org-jira-get-board-id))))
-
-;;
-;; Epics
-;;
-(defun my/org-jira-get-epics-by-board(board-id &optional filter)
-  "List all epics by BOARD-ID."
-  (interactive)
-  (let ((board-epics-cache (cdr (assoc board-id my/org-jira-epic-by-board-cache))))
-    (unless board-epics-cache
-      (setq board-epics-cache (jiralib--agile-call-sync (format "/rest/agile/1.0/board/%s/epic" board-id)'values)))
-
-    (add-to-list 'my/org-jira-epic-by-board-cache `(,board-id . ,board-epics-cache))
-    (if filter
-        (seq-filter filter board-epics-cache)
-      board-epics-cache)))
-
-(defun my/org-jira--active-epic-p(epic)
-  "Predicate that checks if EPIC is active."
-  (not (equal (assoc 'done epic) 'false)))
-
-
-(defun my/org-jira-epic-completing-read(board-id)
-  "Select an active epic by name."
-  (let* ((epics (my/org-jira-get-epics-by-board board-id 'my/org-jira--active-epic-p))
-         (epic-names (mapcar #'(lambda (a) (cdr (assoc 'name a))) epics))
-         (epic-name (completing-read "Choose epic:" epic-names)))
-    (car (seq-filter #'(lambda (a) (equal (cdr (assoc 'name a)) epic-name)) epics))))
-
-(defun my/org-jira-move-issue-to-epic(issue-id epic-id)
-  "Move issue with ISSUE-ID to epic with SPRINT-ID."
-  (jiralib--rest-call-it (format "/rest/agile/1.0/epmy/%s/issue" epic-id) :type "POST" :data (format "{\"issues\": [\"%s\"]}" issue-id)))
-
-(defun my/org-jira-assign-current-issue-to-epic()
-  "Move the selected issue to an active epic."
-  (interactive)
-  (let* ((issue-id (my/org-jira-parse-issue-id))
-         (board-id (cdr (assoc 'id (my/org-jira-get-board))))
-         (epic-id (cdr (assoc 'id (my/org-jira-epic-completing-read board-id)))))
-
-    (my/org-jira-move-issue-to-epic issue-id epic-id)))
-
-(defun my/org-jira-get-epic-id()
-  "Select a epic id if one not already selected."
-  (unless my/org-jira-selected-epic
-    (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read)))
-  (cdr (assoc 'id my/org-jira-selected-epic)))
-
-(defun my/org-jira-get-epic()
-  "Select a epic if one not already selected."
-  (unless my/org-jira-selected-epic
-    (setq my/org-jira-selected-epic (my/org-jira-select-epic)))
-  my/org-jira-selected-epic)
-
-(defun my/org-jira-select-epic()
-  "Select a epic."
-  (interactive)
-  (setq my/org-jira-selected-epic (my/org-jira-epic-completing-read (my/org-jira-get-board-id))))
-
-(defun my/org-jira-create-issue-with-defaults()
-  "Create an issue and assign to default sprint and epic."
-  (org-jira-create-issue)
-  (my/org-jira-move-issue-to-epic)
-  (my/org-jira-move-issue-to-sprint))
-
-(defun my/org-jira-hydra ()
-  "Define (if not already defined org-jira hydra and invoke it."
-  (interactive)
-  (unless (boundp 'org-jira-hydra/body)
-    (defhydra org-jira-hydra (:hint none :exit t)
-      ;; The '_' character is not displayed. This affects columns alignment.
-      ;; Remove s many spaces as needed to make up for the '_' deficit.
-      "
-         ^Actions^           ^Issue^              ^Buffer^                         ^Defaults^
-                           ?I?
-         ^^^^^^-----------------------------------------------------------------------------------------------
-          _L_ist issues      _u_pdate issue       _R_efresh issues in buffer       Select _B_oard ?B?
-          _C_reate issue     update _c_omment                                    Select _E_pic ?E?
-                           assign _s_print                                     Select _S_print ?S?
-                           assign _e_print                                     Create issue with _D_efaults
-                           _b_rowse issue
-                           _r_efresh issue
-                           _p_rogress issue
-  [_q_]: quit
-"
-      ("I" nil (or (my/org-jira-issue-id-at-point) ""))
-      ("L" my/org-jira-get-issues)
-      ("C" org-jira-create-issue)
-
-      ("u" org-jira-update-issue)
-      ("c" org-jira-update-comment)
-      ("b" org-jira-browse-issue)
-      ("s" my/org-jira-assign-current-issue-to-sprint)
-      ("e" my/org-jira-assign-current-issue-to-epic)
-      ("r" org-jira-refresh-issue)
-      ("p" org-jira-progress-issue)
-
-      ("R" org-jira-refresh-issues-in-buffer)
-
-      ("B" my/org-jira-select-board (format "[%s]" (or my/org-jira-selected-board "")) :exit nil)
-      ("E" my/org-jira-select-epic (format "[%s]" (or my/org-jira-selected-epic "")) :exit nil)
-      ("S" my/org-jira-select-sprint (format "[%s]" (or my/org-jira-selected-sprint "")) :exit nil)
-      ("D" my/org-jira-create-with-defaults)
-
-      ("q" nil "quit")))
-  (org-jira-hydra/body))
+  (setq asana-token (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show asana.com/iocanel@cyberranges.com/personal_access_token"))
+        asana-tasks-org-file "~/Documents/org/asana.org"
+        org-asana-my-user-task-list-gid nil  ; Set to your personal task list GID if needed
+        org-asana-default-workspace nil))    ; Set to your default workspace GID if needed
 
 (use-package org-tree-slide
   :defer t
@@ -2398,13 +2130,13 @@ Lines never start or end with blank characters."
   (advice-add 'eglot-java--init :after (lambda() (remove-hook 'project-find-functions  #'eglot-java--project-try)))
   :hook (java-mode . eglot-java-mode))
 
-(use-package go-mode)
+(use-package go-mode :ensure t)
 
-(use-package typescript-mode)
+(use-package typescript-mode :ensure t)
 
-(use-package rust-mode)
+(use-package rust-mode :ensure t)
 
-(use-package yaml-mode)
+(use-package yaml-mode :ensure t)
 
 (use-package plantuml-mode
   :after org
@@ -2877,6 +2609,7 @@ times in quick succession."
                  (file-exists-p (expand-file-name "mu4e.el" d)))
         d))
     (list
+     "/opt/mu/share/emacs/site-lisp/mu4e"
      "/usr/share/emacs/site-lisp/mu4e"
      "/usr/local/share/emacs/site-lisp/mu4e"
      "/run/current-system/sw/share/emacs/site-lisp/mu4e"
@@ -2901,109 +2634,87 @@ times in quick succession."
         (error nil)))))
 
 (setq user-mail-address "iocanel@gmail.com"
-      user-full-name "Ioannis Canellos"
-      mu4e-maildir "~/.mail"
+        user-full-name "Ioannis Canellos"
+        mu4e-maildir "~/.mail"
 
-      ;; Having Error: 102: failed to move message
-      ;; The following block of config is suggested by https://github.com/djcb/mu/issues/2053
-      mu4e-index-lazy-check nil
-      mu4e-change-filenames-when-moving t
+        ;; Having Error: 102: failed to move message
+        ;; The following block of config is suggested by https://github.com/djcb/mu/issues/2053
+        mu4e-index-lazy-check nil
+        mu4e-change-filenames-when-moving t
 
-      mu4e-compose-context-policy 'ask
-      mu4e-context-policy 'ask
-      mu4e-contexts
-      `( ,(make-mu4e-context
-           :name "personal"
-           :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
-           ;; leave-func not defined
-           :match-func (lambda (msg)
-                         (when msg
-                           (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
-           :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
-                   (mail-reply-to                    . "iocanel@gmail.com")
-                   (user-mail-address                . "iocanel@gmail.com")
-                   (user-full-name                   . "Ioannis Canellos")
-                   (mu4e-personal-addresses          . ("iocanel@gmail.com"))
-                   (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
-                   (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
-                   (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
-                   (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
-                   (mu4e-compose-complete-addresses  . t)
+        mu4e-compose-context-policy 'ask
+        mu4e-context-policy 'ask
+        mu4e-contexts
+        `( ,(make-mu4e-context
+             :name "personal"
+             :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
+             ;; leave-func not defined
+             :match-func (lambda (msg)
+                           (when msg
+                             (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
+             :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
+                     (mail-reply-to                    . "iocanel@gmail.com")
+                     (user-mail-address                . "iocanel@gmail.com")
+                     (user-full-name                   . "Ioannis Canellos")
+                     (mu4e-personal-addresses          . ("iocanel@gmail.com"))
+                     (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
+                     (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
+                     (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
+                     (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
+                     (mu4e-compose-complete-addresses  . t)
 
-                   (message-send-mail-function       . message-send-mail-with-sendmail)
-                   (sendmail-program                 . "msmtp")
-                   (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-                   (message-sendmail-f-is-evil       . t)
-                   (mu4e-sent-messages-behavior      . delete)
-                   (mu4e-compose-signature           . t)))
-         ,(make-mu4e-context
-           :name "redhat"
-           :enter-func (lambda () (mu4e-message "Switch to ikanello@redhat.com"))
-           :match-func (lambda (msg)
-                         (when msg
-                           (string-match-p "^/ikanello@redhat.com" (mu4e-message-field msg :maildir))))
-           :vars '((smtpmail-smtp-user               . "ikanello@redhat.com")
-                   (mail-reply-to                    . "ikanello@redhat.com")
-                   (user-mail-address                . "ikanello@redhat.com")
-                   (user-full-name                   . "Ioannis Canellos")
-                   (mu4e-personal-addresses          . ("ikanello@redhat.com"))
-                   (mu4e-drafts-folder               . "/ikanello@redhat.com/Drafts")
-                   (mu4e-refile-folder               . "/ikanello@redhat.com/[Email] Deferred")
-                   (mu4e-trash-folder                . "/ikanello@redhat.com/Trash")
-                   (mu4e-sent-folder                 . "/ikanello@redhat.com/Sent")
-                   (mu4e-compose-complete-addresses  . t)
-                   (message-send-mail-function       . message-send-mail-with-sendmail)
-                   (sendmail-program                 . "msmtp")
-                   (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-                   (message-sendmail-f-is-evil       . t)
-                   (mu4e-sent-messages-behavior      . delete)
-                   (mu4e-compose-signature           .  t)))))
+                     (message-send-mail-function       . message-send-mail-with-sendmail)
+                     (sendmail-program                 . "msmtp")
+                     (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
+                     (message-sendmail-f-is-evil       . t)
+                     (mu4e-sent-messages-behavior      . delete)
+                     (mu4e-compose-signature           . t)))))
 
 (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
-(set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
+  (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
 
-(with-eval-after-load "mm-decode"
-  (add-to-list 'mm-discouraged-alternatives "text/html")
-  (add-to-list 'mm-discouraged-alternatives "text/richtext"))
+  (with-eval-after-load "mm-decode"
+    (add-to-list 'mm-discouraged-alternatives "text/html")
+    (add-to-list 'mm-discouraged-alternatives "text/richtext"))
 
-(setq mu4e-update-interval nil)
-(setq mu4e-get-mail-command "mbsync -a")
-(setq mu4e-headers-results-limit 1000000)
-;; Why would I want to leave my message open after I've sent it?
-(setq message-kill-buffer-on-exit t)
-;; Don't ask for a 'context' upon opening mu4e
-(setq mu4e-context-policy 'pick-first)
-;; Don't ask to quit... why is this the default?
-(setq mu4e-confirm-quit nil)
-(setq mu4e-headers-visible-lines 25)
-;; convert org mode to HTML automatically
+  (setq mu4e-update-interval nil)
+  (setq mu4e-get-mail-command "mbsync -a")
+  (setq mu4e-headers-results-limit 1000000)
+  ;; Why would I want to leave my message open after I've sent it?
+  (setq message-kill-buffer-on-exit t)
+  ;; Don't ask for a 'context' upon opening mu4e
+  (setq mu4e-context-policy 'pick-first)
+  ;; Don't ask to quit... why is this the default?
+  (setq mu4e-confirm-quit nil)
+  (setq mu4e-headers-visible-lines 25)
+  ;; convert org mode to HTML automatically
 
-;; Sending Emails
-(setq message-send-mail-function 'message-send-mail-with-sendmail)
-(setq sendmail-program "msmtp")
-(setq message-sendmail-extra-arguments '("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-(setq message-sendmail-f-is-evil 't)
-(setq message-kill-buffer-on-exit t)
-(setq doom-modeline-mu4e t)
+  ;; Sending Emails
+  (setq message-send-mail-function 'message-send-mail-with-sendmail)
+  (setq sendmail-program "msmtp")
+  (setq message-sendmail-extra-arguments '("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
+  (setq message-sendmail-f-is-evil 't)
+  (setq message-kill-buffer-on-exit t)
+  (setq doom-modeline-mu4e t)
 
-(add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+  (add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
 
-;; Add custom actions for our capture templates
-(add-to-list 'mu4e-headers-actions '("follow up" . my/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-view-actions '("follow up" . my/mu4e-capture-follow-up) t)
-(add-to-list 'mu4e-headers-actions '("read later" . my/mu4e-capture-read-later) t)
-(add-to-list 'mu4e-view-actions '("read later" . my/mu4e-capture-read-later) t)
+  ;; Add custom actions for our capture templates
+  (add-to-list 'mu4e-headers-actions '("follow up" . my/mu4e-capture-follow-up) t)
+  (add-to-list 'mu4e-view-actions '("follow up" . my/mu4e-capture-follow-up) t)
+  (add-to-list 'mu4e-headers-actions '("read later" . my/mu4e-capture-read-later) t)
+  (add-to-list 'mu4e-view-actions '("read later" . my/mu4e-capture-read-later) t)
 
 
-;; Mu4e cusotmization
-(defalias 'org-mail 'org-mu4e-compose-org-mode)
-;; use imagemagick, if available
-(when (fboundp 'imagemagick-register-types)
-  (imagemagick-register-types))
+  ;; Mu4e cusotmization
+  (defalias 'org-mail 'org-mu4e-compose-org-mode)
+  ;; use imagemagick, if available
+  (when (fboundp 'imagemagick-register-types)
+    (imagemagick-register-types))
 
-(defun no-auto-fill ()
-  "Turn off auto-fill-mode."
-  (auto-fill-mode -1))
+  (defun no-auto-fill ()
+    "Turn off auto-fill-mode."
+    (auto-fill-mode -1))
 
 (defun my/mu4e-view-save-attachments ()
   "Save attachements after asking for dir"
@@ -3159,13 +2870,45 @@ times in quick succession."
  "Delegate to org-open-at-point"
  (org-open-at-point))
 
+(defun my/learning-setup ()
+  "Set up learning environment with org-roam on left and qutebrowser files on right."
+  (interactive)
+  ;; Close all windows in current frame except one
+  (delete-other-windows)
+
+  ;; Split vertically (left/right)
+  (split-window-right)
+
+  ;; Left window: org directory when current buffer is not already under ~/Documents/org/roam/
+(if (when-let ((file (buffer-file-name (buffer-base-buffer))))
+      (not (string-prefix-p
+            (expand-file-name "~/Documents/org/roam/")
+            (file-truename file))))
+    (find-file (expand-file-name "~/Documents/org/roam/")))
+
+  ;; Move to right window and split horizontally (top/bottom)
+  (other-window 1)
+  (split-window-below)
+
+  ;; Top right: flashcards.org with auto-revert
+  (find-file "~/Documents/org/learning/flashcards.org")
+  (auto-revert-mode 1)
+
+  ;; Bottom right: takeaway.org with auto-revert
+  (other-window 1)
+  (find-file "~/Documents/org/learning/takeaway.org")
+  (auto-revert-mode 1)
+
+  ;; Return focus to left window (org-roam)
+  (other-window 1))
+
 (defun my/mu4e-compose-reply-to-all ()
      "Reply to All"
      (interactive)
      (mu4e-compose-reply t))
 
 (defun my/mu4e-hydra-headers ()
-  "Define (if not already defined org-jira hydra and invoke it."
+  "Define mu4e headers hydra and invoke it."
   (interactive)
   (unless (boundp 'my/mu4e-hydra-headers)
     (defhydra my/mu4e-hydra-headers (:color pink :hint nil)
@@ -3192,7 +2935,7 @@ _P_:  prev unread
   (my/mu4e-hydra-headers/body))
 
 (defun my/mu4e-hydra-view ()
-  "Define (if not already defined org-jira hydra and invoke it."
+  "Define mu4e view hydra and invoke it."
   (interactive)
   (unless (boundp 'my/mu4e-hydra-view)
     (defhydra my/mu4e-hydra-view (:color pink :hint nil)
@@ -3876,8 +3619,8 @@ _g_:  goto link [g]
         (save-buffer)))))
 
 (use-package gptel
-  :ensure (gptel :host github :repo "karthink/gptel" :ref "81618f24e2190568ea745dca82ba50267eed321a" )
-  :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show services/openai/iocanel/api-key")))
+  :ensure (gptel :host github :repo "karthink/gptel" :ref "d0c392bbb0a1f7775d3a1e98220f4bdc043ab63b" )
+  :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show openai.com/iocanel/api-key")))
   :config
   (defun my/clipboard-to-org-at-point ()
     "Paste the clipboard content as an org-mode flashcard."
@@ -3950,63 +3693,102 @@ _g_:  goto link [g]
   ;;
   ;; Tools
   ;;
-  (gptel-make-tool
-   :name "list_files"
-   :function (lambda ()
-               (let ((default-directory (locate-dominating-file default-directory ".git")))
-                 (string-join
-                  (split-string
-                   (shell-command-to-string "git ls-files") "\n" t)
-                  "\n")))
-   :description "List all source files tracked by Git in the current project directory"
-   :args nil
-   :category "filesystem")
+  (setq gptel-tools (list
+                     (gptel-make-tool
+                      :name "read_file"
+                      :function (lambda (filename &optional start_line end_line)
+                                  (let ((file (expand-file-name filename (locate-dominating-file default-directory ".git"))))
+                                    (if (not (file-readable-p file))
+                                        (format "File not found or unreadable: %s" filename)
+                                      (with-temp-buffer
+                                        (insert-file-contents file)
+                                        (let ((start (if start_line
+                                                         (progn (goto-char (point-min))
+                                                                (forward-line (1- (string-to-number start_line)))
+                                                                (point))
+                                                       (point-min)))
+                                              (end (if end_line
+                                                       (progn (goto-char (point-min))
+                                                              (forward-line (string-to-number end_line))
+                                                              (point))
+                                                     (point-max))))
+                                          (buffer-substring-no-properties start end))))))
+                      :description "Read the contents of a file, optionally specifying a line range"
+                      :args (list '(:name "filename"
+                                          :type string
+                                          :description "The path to the file relative to the project root")
+                                  '(:name "start_line"
+                                          :type integer
+                                          :description "The starting line number (optional)"
+                                          :optional t)
+                                  '(:name "end_line"
+                                          :type integer
+                                          :description "The ending line number (optional)"
+                                          :optional t))
+                      :category "filesystem")
 
-  (gptel-make-tool
-   :name "read_file"
-   :function (lambda (filename &optional start_line end_line)
-               (let ((file (expand-file-name filename (locate-dominating-file default-directory ".git"))))
-                 (if (not (file-readable-p file))
-                     (format "File not found or unreadable: %s" filename)
-                   (with-temp-buffer
-                     (insert-file-contents file)
-                     (let ((start (if start_line
-                                      (progn (goto-char (point-min))
-                                             (forward-line (1- (string-to-number start_line)))
-                                             (point))
-                                    (point-min)))
-                           (end (if end_line
-                                    (progn (goto-char (point-min))
-                                           (forward-line (string-to-number end_line))
-                                           (point))
-                                  (point-max))))
-                       (buffer-substring-no-properties start end))))))
-   :description "Read the contents of a file, optionally specifying a line range"
-   :args (list '(:name "filename"
-                       :type string
-                       :description "The path to the file relative to the project root")
-               '(:name "start_line"
-                       :type integer
-                       :description "The starting line number (optional)"
-                       :optional t)
-               '(:name "end_line"
-                       :type integer
-                       :description "The ending line number (optional)"
-                       :optional t))
-   :category "filesystem")
+                     (gptel-make-tool
+                      :name "write_file"
+                      :function
+                      (lambda (filename content &optional append)
+                        (let* ((project-root (locate-dominating-file default-directory ".git"))
+                               (file (expand-file-name filename project-root)))
+                          (cond
+                           ((not project-root)
+                            (format "No project root found (couldn't locate .git) from: %s" default-directory))
+                           (t
+                            (make-directory (file-name-directory file) t)
+                            (condition-case err
+                                (progn
+                                  (with-temp-buffer
+                                    (insert content)
+                                    (write-region (point-min) (point-max) file append 'silent))
+                                  (format "Wrote %d bytes to %s%s"
+                                          (length content)
+                                          filename
+                                          (if append " (appended)" "")))
+                              (error (format "Failed writing %s: %s" filename (error-message-string err))))))))
+                      :description "Write CONTENT to a file relative to the project root. Creates parent directories. Optionally append."
+                      :args (list '(:name "filename"
+                                          :type string
+                                          :description "The path to the file relative to the project root")
+                                  '(:name "content"
+                                          :type string
+                                          :description "The full content to write to the file")
+                                  '(:name "append"
+                                          :type boolean
+                                          :description "If true, append instead of overwrite"
+                                          :optional t))
+                      :category "filesystem")
 
-  (gptel-make-tool
-   :name "search_files"
-   :function (lambda (pattern)
-               (let ((default-directory (locate-dominating-file default-directory ".git")))
-                 (shell-command-to-string
-                  (format "git grep -n -e %s"
-                          (shell-quote-argument pattern)))))
-   :description "Search for a pattern in all Git-tracked files, returning matches with file and line context"
-   :args (list '(:name "pattern"
-                       :type string
-                       :description "The regex or keyword to search for"))
-   :category "filesystem")
+                     (gptel-make-tool
+                      :name "git-list_files"
+                      :function (lambda ()
+                                  (let ((default-directory (locate-dominating-file default-directory ".git")))
+                                    (string-join
+                                     (split-string
+                                      (shell-command-to-string "git ls-files") "\n" t)
+                                     "\n")))
+                      :description "List all source files tracked by Git in the current project directory"
+                      :args nil
+                      :category "filesystem")
+
+                     (gptel-make-tool
+                      :name "git-search_files"
+                      :function (lambda (pattern)
+                                  (let ((default-directory (locate-dominating-file default-directory ".git")))
+                                    (shell-command-to-string
+                                     (format "git grep -n -e %s"
+                                             (shell-quote-argument pattern)))))
+                      :description "Search for a pattern in all Git-tracked files, returning matches with file and line context"
+                      :args (list '(:name "pattern"
+                                          :type string
+                                          :description "The regex or keyword to search for"))
+                      :category "filesystem")))
+  ;;
+  ;; Presets
+  ;;
+  (gptel-make-preset 'explain :system "Explain what this code does to a novice programmer.")
 
   :general
   ("C-c <RET>" 'gptel-send)
@@ -4017,13 +3799,46 @@ _g_:  goto link [g]
            "c m" 'gptel-menu
            "c t" 'gptel-org-set-topic))
 
+;; Ensure track-changes is at required version for copilot
+(use-package track-changes :ensure t)
+
 (use-package copilot
-  :ensure t
   :hook (text-mode . copilot-mode)
   :ensure (copilot :host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
   :general (:keymaps 'copilot-completion-map
                      "<RET>" 'copilot-accept-completion
-                     "C-<TAB>" 'copilot-next-completion))
+                     "C-<TAB>" 'copilot-next-completion)
+  :config
+  ;; Workaround: track-changes (required by copilot) conflicts with org-capture.
+  ;; On the second capture, track-changes internal position state becomes stale
+  ;; causing cl-assertion-failed in track-changes--after. Disable copilot during capture.
+  ;; Must disable in both capture buffer AND target buffer to fully prevent the issue.
+  (defvar my/copilot-disabled-buffers nil
+    "List of buffers where copilot was disabled for org-capture.")
+
+  (defun my/copilot-disable-for-capture ()
+    "Disable copilot in capture buffer and target buffer to avoid track-changes conflicts."
+    (setq my/copilot-disabled-buffers nil)
+    (when (bound-and-true-p copilot-mode)
+      (push (current-buffer) my/copilot-disabled-buffers)
+      (copilot-mode -1))
+    (when-let ((target-buf (org-capture-get :buffer)))
+      (with-current-buffer target-buf
+        (when (bound-and-true-p copilot-mode)
+          (push target-buf my/copilot-disabled-buffers)
+          (copilot-mode -1)))))
+
+  (defun my/copilot-restore-after-capture ()
+    "Re-enable copilot in buffers where it was disabled."
+    (dolist (buf my/copilot-disabled-buffers)
+      (when (buffer-live-p buf)
+        (with-current-buffer buf
+          (when (derived-mode-p 'text-mode)
+            (copilot-mode 1)))))
+    (setq my/copilot-disabled-buffers nil))
+
+  (add-hook 'org-capture-mode-hook #'my/copilot-disable-for-capture)
+  (add-hook 'org-capture-after-finalize-hook #'my/copilot-restore-after-capture))
 
 (use-package nix-mode :mode "\\.nix\\'"
   :config
