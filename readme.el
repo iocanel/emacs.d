@@ -467,14 +467,14 @@ The optional argument NEW-WINDOW is not used."
 (defun my/desktop-screen-setup()
   "Modify theme for latpop use"
   (interactive)
-  (set-face-attribute 'default nil :height 130)
+  (set-face-attribute 'default nil :height 100)
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 130)))
 
 (defun my/comf-screen-setup()
   "Modify theme for comfortable use"
   (interactive)
-  (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+  (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 120)
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 160)))
 
@@ -3014,6 +3014,20 @@ _g_:  goto link [g]
  "C-r" 'my/mu4e-capture-read-later
  "C-f" 'my/mu4e-capture-follow-up
  "?" 'my/mu4e-hydra-headers)
+
+(use-package org-msg
+  :ensure t
+  :after mu4e
+  :config
+  (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
+        org-msg-startup "hidestars indent inlineimages"
+        org-msg-greeting-fmt nil
+        org-msg-signature nil
+        org-msg-default-alternatives '((new . (html text))
+                                       (reply-to-html . (html text))
+                                       (reply-to-text . (text)))
+        org-msg-convert-citation t)
+  (org-msg-mode))
 
 (defconst my/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
 (defvar my/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The path to the youtube download folder")
