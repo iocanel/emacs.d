@@ -4266,23 +4266,6 @@ _g_:  goto link [g]
  "C-f" 'my/mu4e-capture-follow-up
  "?" 'my/mu4e-hydra-headers)
 #+end_src
-*** HTML Email with org-msg
-Use org-msg for composing HTML emails, which allows the server-injected signature to render properly.
-#+begin_src emacs-lisp
-(use-package org-msg
-  :ensure t
-  :after mu4e
-  :config
-  (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
-        org-msg-startup "hidestars indent inlineimages"
-        org-msg-greeting-fmt nil
-        org-msg-signature nil
-        org-msg-default-alternatives '((new . (html text))
-                                       (reply-to-html . (html text))
-                                       (reply-to-text . (text)))
-        org-msg-convert-citation t)
-  (org-msg-mode))
-#+end_src
 *** Youtube DLP
 
 This section includes custom code for working with yt-dlp to download videos.

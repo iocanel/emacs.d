@@ -3015,20 +3015,6 @@ _g_:  goto link [g]
  "C-f" 'my/mu4e-capture-follow-up
  "?" 'my/mu4e-hydra-headers)
 
-(use-package org-msg
-  :ensure t
-  :after mu4e
-  :config
-  (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
-        org-msg-startup "hidestars indent inlineimages"
-        org-msg-greeting-fmt nil
-        org-msg-signature nil
-        org-msg-default-alternatives '((new . (html text))
-                                       (reply-to-html . (html text))
-                                       (reply-to-text . (text)))
-        org-msg-convert-citation t)
-  (org-msg-mode))
-
 (defconst my/youtube-watch-url-prefix "https://www.youtube.com/watch?v=" "The prefix to the youtube urls")
 (defvar my/youtube-download-path "/home/iocanel/Downloads/Youtube/" "The path to the youtube download folder")
 (defvar my/youtube-download-by-id-path "/home/iocanel/Downloads/Youtube/by-id/" "The path to the youtube by-id folder")
