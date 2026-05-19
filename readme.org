@@ -651,16 +651,23 @@ The default font is good enough so let's not define additonal configuration here
   (defun my/desktop-screen-setup()
     "Modify theme for latpop use"
     (interactive)
-    (set-face-attribute 'default nil :height 130)
+    (set-face-attribute 'default nil :height 100)
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 130)))
 
   (defun my/comf-screen-setup()
     "Modify theme for comfortable use"
     (interactive)
-    (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+    (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 120)
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 160)))
+
+  (defun my/4k-screen-setup()
+    "Modify theme for 4k monitor use"
+    (interactive)
+    (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 180)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 210)))
 
   (defun my/presentation-screen-setup()
     "Modify theme for presentations use"
@@ -681,8 +688,8 @@ The default font is good enough so let's not define additonal configuration here
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 160)))
 
-  (setq my/selected-screen-setup 'my/comf-screen-setup)
-  (my/desktop-screen-setup)
+  (setq my/selected-screen-setup 'my/4k-screen-setup)
+  (my/4k-screen-setup)
 #+end_src
 
 **** Themes
@@ -690,14 +697,14 @@ The default font is good enough so let's not define additonal configuration here
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
-    (load-theme 'doom-one t)(setq mode-line-format nil))
+    (load-theme 'doom-one t))
 #+end_src
 ***** Cattputccin
 #+begin_src emacs-lisp
   (use-package  catppuccin-theme
     :config
     (setq catppuccin-flavor 'mocha)
-    (load-theme 'catppuccin t)(setq mode-line-format nil))
+    (load-theme 'catppuccin t))
 #+end_src
 *** Bell
 Disable the annoying bell
@@ -712,8 +719,24 @@ Disable the annoying bell
   (setq inhibit-startup-message t)
 #+end_src
 
-*** Mode line 
-***** Doom modeline
+*** Mode line
+**** Toggle
+#+begin_src emacs-lisp
+  (defun my/toggle-mode-line ()
+    "Toggle the mode line on and off."
+    (interactive)
+    (if mode-line-format
+        (progn
+          (setq my/saved-mode-line-format mode-line-format)
+          (setq mode-line-format nil)
+          (setq-default mode-line-format nil))
+      (setq mode-line-format my/saved-mode-line-format)
+      (setq-default mode-line-format my/saved-mode-line-format))
+    (force-mode-line-update t))
+
+  (defvar my/saved-mode-line-format nil)
+#+end_src
+**** Doom modeline
 #+begin_src emacs-lisp
   (use-package doom-modeline
     :init
@@ -725,7 +748,10 @@ Disable the annoying bell
           doom-modeline-column-zero-based t)
     :config
     (doom-modeline-mode)
-    (column-number-mode))
+    (column-number-mode)
+    (setq my/saved-mode-line-format mode-line-format)
+    (setq mode-line-format nil)
+    (setq-default mode-line-format nil))
 #+end_src
 
 
@@ -1694,7 +1720,9 @@ If completion does not work just call `org-roam-db-sync`.
                                                                                                      "* Daily Checklist\n"
                                                                                                      "** TODO Log weight\n"
                                                                                                      "** TODO Check emails\n"
-                                                                                                     "** TODO Check github issues / pull requests"
+                                                                                                     "** TODO Check my pending work tasks"
+                                                                                                     "** TODO Check pull / merge requests"
+                                                                                                     "** TODO Prepare for next days meetings"
                                                                                                      )))))
 
 #+end_src
@@ -3838,6 +3866,9 @@ Surprisignly, it works much better, but it still requires some tuning.
 #+end_src
 **** Configuration
 #+begin_src emacs-lisp
+  ;; Load private work email configuration if available (defines my/mu4e-work-context function)
+  (load "~/.config/home-manager/private/mu4e-work.el" t)
+
   (setq user-mail-address "iocanel@gmail.com"
         user-full-name "Ioannis Canellos"
         mu4e-maildir "~/.mail"
@@ -3850,30 +3881,30 @@ Surprisignly, it works much better, but it still requires some tuning.
         mu4e-compose-context-policy 'ask
         mu4e-context-policy 'ask
         mu4e-contexts
-        `( ,(make-mu4e-context
-             :name "personal"
-             :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
-             ;; leave-func not defined
-             :match-func (lambda (msg)
-                           (when msg
-                             (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
-             :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
-                     (mail-reply-to                    . "iocanel@gmail.com")
-                     (user-mail-address                . "iocanel@gmail.com")
-                     (user-full-name                   . "Ioannis Canellos")
-                     (mu4e-personal-addresses          . ("iocanel@gmail.com"))
-                     (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
-                     (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
-                     (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
-                     (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
-                     (mu4e-compose-complete-addresses  . t)
-
-                     (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "msmtp")
-                     (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-                     (message-sendmail-f-is-evil       . t)
-                     (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           . t)))))
+        (append
+         (list (make-mu4e-context
+                :name "personal"
+                :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
+                :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
+                        (mail-reply-to                    . "iocanel@gmail.com")
+                        (user-mail-address                . "iocanel@gmail.com")
+                        (user-full-name                   . "Ioannis Canellos")
+                        (mu4e-personal-addresses          . ("iocanel@gmail.com"))
+                        (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
+                        (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
+                        (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
+                        (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
+                        (mu4e-compose-complete-addresses  . t)
+                        (message-send-mail-function       . message-send-mail-with-sendmail)
+                        (sendmail-program                 . "msmtp")
+                        (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
+                        (message-sendmail-f-is-evil       . t)
+                        (mu4e-sent-messages-behavior      . delete)
+                        (mu4e-compose-signature           . t))))
+         (when (fboundp 'my/mu4e-work-context) (list (my/mu4e-work-context)))))
 
 (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
@@ -3891,7 +3922,7 @@ Surprisignly, it works much better, but it still requires some tuning.
   (setq mu4e-context-policy 'pick-first)
   ;; Don't ask to quit... why is this the default?
   (setq mu4e-confirm-quit nil)
-  (setq mu4e-headers-visible-lines 25)
+  (setq mu4e-headers-visible-lines 10)
   ;; convert org mode to HTML automatically
 
   ;; Sending Emails

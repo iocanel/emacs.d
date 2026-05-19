@@ -467,14 +467,14 @@ The optional argument NEW-WINDOW is not used."
 (defun my/desktop-screen-setup()
   "Modify theme for latpop use"
   (interactive)
-  (set-face-attribute 'default nil :height 130)
+  (set-face-attribute 'default nil :height 100)
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 130)))
 
 (defun my/comf-screen-setup()
   "Modify theme for comfortable use"
   (interactive)
-  (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 170)
+  (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 120)
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 160)))
 
@@ -1284,7 +1284,9 @@ start a temporary Redis server, run the commands, and then stop the server."
                                                                                                    "* Daily Checklist\n"
                                                                                                    "** TODO Log weight\n"
                                                                                                    "** TODO Check emails\n"
-                                                                                                   "** TODO Check github issues / pull requests"
+                                                                                                   "** TODO Check my pending work tasks"
+                                                                                                   "** TODO Check pull / merge requests"
+                                                                                                   "** TODO Prepare for next days meetings"
                                                                                                    )))))
 
 (defun my/org-roam-extract-subtree-and-insert ()
@@ -2633,7 +2635,10 @@ times in quick succession."
           (require 'mu4e nil)
         (error nil)))))
 
-(setq user-mail-address "iocanel@gmail.com"
+;; Load private work email configuration if available (defines my/mu4e-work-context function)
+  (load "~/.config/home-manager/private/mu4e-work.el" t)
+
+  (setq user-mail-address "iocanel@gmail.com"
         user-full-name "Ioannis Canellos"
         mu4e-maildir "~/.mail"
 
@@ -2645,30 +2650,30 @@ times in quick succession."
         mu4e-compose-context-policy 'ask
         mu4e-context-policy 'ask
         mu4e-contexts
-        `( ,(make-mu4e-context
-             :name "personal"
-             :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
-             ;; leave-func not defined
-             :match-func (lambda (msg)
-                           (when msg
-                             (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
-             :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
-                     (mail-reply-to                    . "iocanel@gmail.com")
-                     (user-mail-address                . "iocanel@gmail.com")
-                     (user-full-name                   . "Ioannis Canellos")
-                     (mu4e-personal-addresses          . ("iocanel@gmail.com"))
-                     (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
-                     (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
-                     (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
-                     (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
-                     (mu4e-compose-complete-addresses  . t)
-
-                     (message-send-mail-function       . message-send-mail-with-sendmail)
-                     (sendmail-program                 . "msmtp")
-                     (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
-                     (message-sendmail-f-is-evil       . t)
-                     (mu4e-sent-messages-behavior      . delete)
-                     (mu4e-compose-signature           . t)))))
+        (append
+         (list (make-mu4e-context
+                :name "personal"
+                :enter-func (lambda () (mu4e-message "Switch to iocanel@gmail.com"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (string-match-p "^/iocanel@gmail.com" (mu4e-message-field msg :maildir))))
+                :vars '((smtpmail-smtp-user               . "iocanel@gmail.com")
+                        (mail-reply-to                    . "iocanel@gmail.com")
+                        (user-mail-address                . "iocanel@gmail.com")
+                        (user-full-name                   . "Ioannis Canellos")
+                        (mu4e-personal-addresses          . ("iocanel@gmail.com"))
+                        (mu4e-drafts-folder               . "/iocanel@gmail.com/Drafts")
+                        (mu4e-trash-folder                . "/iocanel@gmail.com/Trash")
+                        (mu4e-sent-folder                 . "/iocanel@gmail.com/Sent")
+                        (mu4e-refile-folder               . "/iocanel@gmail.com/[Email] Deferred")
+                        (mu4e-compose-complete-addresses  . t)
+                        (message-send-mail-function       . message-send-mail-with-sendmail)
+                        (sendmail-program                 . "msmtp")
+                        (message-sendmail-extra-arguments . ("-C" "/home/iocanel/.config/msmtp/config" "--read-envelope-from"))
+                        (message-sendmail-f-is-evil       . t)
+                        (mu4e-sent-messages-behavior      . delete)
+                        (mu4e-compose-signature           . t))))
+         (when (fboundp 'my/mu4e-work-context) (list (my/mu4e-work-context)))))
 
 (set-face-attribute 'mu4e-replied-face nil :inherit 'link :underline nil)
   (set-face-attribute 'mu4e-trashed-face nil :foreground "#555555")
@@ -2686,7 +2691,7 @@ times in quick succession."
   (setq mu4e-context-policy 'pick-first)
   ;; Don't ask to quit... why is this the default?
   (setq mu4e-confirm-quit nil)
-  (setq mu4e-headers-visible-lines 25)
+  (setq mu4e-headers-visible-lines 10)
   ;; convert org mode to HTML automatically
 
   ;; Sending Emails
