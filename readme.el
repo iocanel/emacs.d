@@ -1284,7 +1284,9 @@ start a temporary Redis server, run the commands, and then stop the server."
                                                                                                    "* Daily Checklist\n"
                                                                                                    "** TODO Log weight\n"
                                                                                                    "** TODO Check emails\n"
-                                                                                                   "** TODO Check github issues / pull requests"
+                                                                                                   "** TODO Check my pending work tasks"
+                                                                                                   "** TODO Check pull / merge requests"
+                                                                                                   "** TODO Prepare for next days meetings"
                                                                                                    )))))
 
 (defun my/org-roam-extract-subtree-and-insert ()

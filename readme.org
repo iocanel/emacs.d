@@ -1694,7 +1694,9 @@ If completion does not work just call `org-roam-db-sync`.
                                                                                                      "* Daily Checklist\n"
                                                                                                      "** TODO Log weight\n"
                                                                                                      "** TODO Check emails\n"
-                                                                                                     "** TODO Check github issues / pull requests"
+                                                                                                     "** TODO Check my pending work tasks"
+                                                                                                     "** TODO Check pull / merge requests"
+                                                                                                     "** TODO Prepare for next days meetings"
                                                                                                      )))))
 
 #+end_src
