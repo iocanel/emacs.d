@@ -697,14 +697,14 @@ The default font is good enough so let's not define additonal configuration here
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
-    (load-theme 'doom-one t)(setq mode-line-format nil))
+    (load-theme 'doom-one t))
 #+end_src
 ***** Cattputccin
 #+begin_src emacs-lisp
   (use-package  catppuccin-theme
     :config
     (setq catppuccin-flavor 'mocha)
-    (load-theme 'catppuccin t)(setq mode-line-format nil))
+    (load-theme 'catppuccin t))
 #+end_src
 *** Bell
 Disable the annoying bell
@@ -719,8 +719,24 @@ Disable the annoying bell
   (setq inhibit-startup-message t)
 #+end_src
 
-*** Mode line 
-***** Doom modeline
+*** Mode line
+**** Toggle
+#+begin_src emacs-lisp
+  (defun my/toggle-mode-line ()
+    "Toggle the mode line on and off."
+    (interactive)
+    (if mode-line-format
+        (progn
+          (setq my/saved-mode-line-format mode-line-format)
+          (setq mode-line-format nil)
+          (setq-default mode-line-format nil))
+      (setq mode-line-format my/saved-mode-line-format)
+      (setq-default mode-line-format my/saved-mode-line-format))
+    (force-mode-line-update t))
+
+  (defvar my/saved-mode-line-format nil)
+#+end_src
+**** Doom modeline
 #+begin_src emacs-lisp
   (use-package doom-modeline
     :init
@@ -732,7 +748,10 @@ Disable the annoying bell
           doom-modeline-column-zero-based t)
     :config
     (doom-modeline-mode)
-    (column-number-mode))
+    (column-number-mode)
+    (setq my/saved-mode-line-format mode-line-format)
+    (setq mode-line-format nil)
+    (setq-default mode-line-format nil))
 #+end_src
 
 
