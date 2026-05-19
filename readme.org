@@ -662,6 +662,13 @@ The default font is good enough so let's not define additonal configuration here
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 160)))
 
+  (defun my/4k-screen-setup()
+    "Modify theme for 4k monitor use"
+    (interactive)
+    (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 180)
+    (when (boundp 'treemacs-root-face)
+      (set-face-attribute 'treemacs-root-face nil :height 210)))
+
   (defun my/presentation-screen-setup()
     "Modify theme for presentations use"
     (interactive)
@@ -681,8 +688,8 @@ The default font is good enough so let's not define additonal configuration here
     (when (boundp 'treemacs-root-face)
       (set-face-attribute 'treemacs-root-face nil :height 160)))
 
-  (setq my/selected-screen-setup 'my/comf-screen-setup)
-  (my/desktop-screen-setup)
+  (setq my/selected-screen-setup 'my/4k-screen-setup)
+  (my/4k-screen-setup)
 #+end_src
 
 **** Themes
