@@ -478,6 +478,13 @@ The optional argument NEW-WINDOW is not used."
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 160)))
 
+(defun my/4k-screen-setup()
+  "Modify theme for 4k monitor use"
+  (interactive)
+  (set-face-attribute 'default nil :font "JetBrains Mono Nerd Font Bold" :height 180)
+  (when (boundp 'treemacs-root-face)
+    (set-face-attribute 'treemacs-root-face nil :height 210)))
+
 (defun my/presentation-screen-setup()
   "Modify theme for presentations use"
   (interactive)
@@ -497,19 +504,33 @@ The optional argument NEW-WINDOW is not used."
   (when (boundp 'treemacs-root-face)
     (set-face-attribute 'treemacs-root-face nil :height 160)))
 
-(setq my/selected-screen-setup 'my/comf-screen-setup)
-(my/desktop-screen-setup)
+(setq my/selected-screen-setup 'my/4k-screen-setup)
+(my/4k-screen-setup)
 
 (use-package  catppuccin-theme
   :config
   (setq catppuccin-flavor 'mocha)
-  (load-theme 'catppuccin t)(setq mode-line-format nil))
+  (load-theme 'catppuccin t))
 
 (setq visible-bell nil)
 (setq ring-bell-function 'ignore)
 
 (setq inhibit-message nil) ;; Changing that makes evil-search '/' invisible!
 (setq inhibit-startup-message t)
+
+(defun my/toggle-mode-line ()
+  "Toggle the mode line on and off."
+  (interactive)
+  (if mode-line-format
+      (progn
+        (setq my/saved-mode-line-format mode-line-format)
+        (setq mode-line-format nil)
+        (setq-default mode-line-format nil))
+    (setq mode-line-format my/saved-mode-line-format)
+    (setq-default mode-line-format my/saved-mode-line-format))
+  (force-mode-line-update t))
+
+(defvar my/saved-mode-line-format nil)
 
 (use-package doom-modeline
   :init
@@ -521,7 +542,10 @@ The optional argument NEW-WINDOW is not used."
         doom-modeline-column-zero-based t)
   :config
   (doom-modeline-mode)
-  (column-number-mode))
+  (column-number-mode)
+  (setq my/saved-mode-line-format mode-line-format)
+  (setq mode-line-format nil)
+  (setq-default mode-line-format nil))
 
 (use-package ace-window
   :custom
@@ -2771,6 +2795,10 @@ times in quick succession."
         ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:review_requested AND NOT maildir:\"/Archived\"" "Github (review)" ?r)
         ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:mention AND NOT maildir:\"/Archived\"" "Github (mentions)" ?m)
 
+        ;; Asana
+        ("from:asana.com AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Asana (all)" ?A)
+        ("flag:unread AND from:asana.com AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Asana (unread)" ?a)
+
         ;; Events
         ("mime:text/calendar" "Events (all)" ?E)
         ("flat:unread AND mime:text/calendar" "Events (unread)" ?e)
@@ -2778,6 +2806,10 @@ times in quick succession."
         ;; Period
         ("date:today" "Today's messages" ?t)
         ("date:7d..now" "Last 7 days" ?w)))
+
+;; Append work-specific bookmarks (hosts/addresses kept in private config)
+(when (boundp 'my/mu4e-work-bookmarks)
+  (setq mu4e-bookmarks (append mu4e-bookmarks my/mu4e-work-bookmarks)))
 
 (defun my/mu4e-force-next-unread()
   "View next unread closing the current message if stuck in loading."

@@ -4010,6 +4010,10 @@ Surprisignly, it works much better, but it still requires some tuning.
           ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:review_requested AND NOT maildir:\"/Archived\"" "Github (review)" ?r)
           ("flag:unread AND from:notifications@github.com AND AND NOT flag:trashed AND cc:mention AND NOT maildir:\"/Archived\"" "Github (mentions)" ?m)
 
+          ;; Asana
+          ("from:asana.com AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Asana (all)" ?A)
+          ("flag:unread AND from:asana.com AND NOT flag:trashed AND NOT maildir:\"/Archived\"" "Asana (unread)" ?a)
+
           ;; Events
           ("mime:text/calendar" "Events (all)" ?E)
           ("flat:unread AND mime:text/calendar" "Events (unread)" ?e)
@@ -4017,6 +4021,10 @@ Surprisignly, it works much better, but it still requires some tuning.
           ;; Period
           ("date:today" "Today's messages" ?t)
           ("date:7d..now" "Last 7 days" ?w)))
+
+  ;; Append work-specific bookmarks (hosts/addresses kept in private config)
+  (when (boundp 'my/mu4e-work-bookmarks)
+    (setq mu4e-bookmarks (append mu4e-bookmarks my/mu4e-work-bookmarks)))
 #+end_src
 **** Advanced customization
 This section provides configuration related to:
