@@ -113,6 +113,131 @@
   :ensure (dired-lock :type git :host github :repo "iocanel/dired-lock.el")
   :commands (dired-lock-lock dired-lock-unlock))
 
+(require 'wdired)
+
+(defvar my/numbering-prefix-regexp "\\`[0-9]+ - "
+  "Regexp matching an existing numeric prefix on a filename.")
+
+(defun my/numbering--file-on-line ()
+  "Return the basename of the real file on the current line, or nil.
+Skips the . and .. entries and non-file lines."
+  (let ((name (dired-get-filename 'no-dir t)))
+    (and name (not (member name '("." ".."))) name)))
+
+(defun my/numbering--bare (name)
+  "NAME without its numeric prefix."
+  (and name (replace-regexp-in-string my/numbering-prefix-regexp "" name)))
+
+(defun my/numbering--filename-region ()
+  "Return (BEG . END) buffer positions of the editable filename on this line.
+Returns nil when point is not on a file line."
+  (save-excursion
+    (beginning-of-line)
+    (when (and (my/numbering--file-on-line)
+               (dired-move-to-filename))
+      (cons (point) (line-end-position)))))
+
+(defun my/numbering--set-filename (new)
+  "Replace the filename on the current line with NEW, by region (no search).
+Avoids substring/duplicate collisions that text search would hit."
+  (let ((region (my/numbering--filename-region)))
+    (when region
+      (goto-char (car region))
+      (delete-region (car region) (cdr region))
+      (insert new))))
+
+(defun my/numbering--pad-width ()
+  "Digits needed to number every file line in the current dired buffer."
+  (let ((count 0))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (when (my/numbering--file-on-line) (setq count (1+ count)))
+        (forward-line 1)))
+    (max 2 (length (number-to-string count)))))
+
+(defun my/numbering-renumber ()
+  "Renumber all file lines 1..N by their position in the buffer.
+Only the editable filename part of each wdired line is touched."
+  (interactive)
+  (let ((width (my/numbering--pad-width))
+        (fmt nil) (index 0)
+        (inhibit-field-text-motion t))
+    (setq fmt (format "%%0%dd - %%s" width))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((name (my/numbering--file-on-line)))
+          (when name
+            (setq index (1+ index))
+            (let ((new (format fmt index (my/numbering--bare name))))
+              (unless (string= name new)
+                (my/numbering--set-filename new)))))
+        (forward-line 1)))))
+
+(defun my/numbering--goto-next-file-line (dir)
+  "Move to the next (DIR=1) or previous (DIR=-1) file line.
+Return t on success, nil if there is none."
+  (let ((found nil) (moved t))
+    (while (and (not found) moved)
+      (setq moved (zerop (forward-line dir)))
+      (when (and moved (my/numbering--file-on-line)) (setq found t)))
+    found))
+
+(defun my/numbering--move (dir)
+  "Swap the current file line with the adjacent file line in DIR, then renumber.
+wdired lines carry read-only metadata columns, so we swap the editable
+filenames rather than transposing whole lines. Point follows the moved file.
+Filenames are set by region (not text search) so duplicate or substring
+names cannot collide."
+  (let ((a (my/numbering--bare (my/numbering--file-on-line)))
+        (a-marker (copy-marker (line-beginning-position)))
+        b-marker b)
+    (when a
+      (save-excursion
+        (when (my/numbering--goto-next-file-line dir)
+          (setq b (my/numbering--bare (my/numbering--file-on-line))
+                b-marker (copy-marker (line-beginning-position)))))
+      (when b
+        (goto-char a-marker) (my/numbering--set-filename b)
+        (goto-char b-marker) (my/numbering--set-filename a)
+        (goto-char b-marker)          ;; follow the moved file
+        (set-marker a-marker nil)
+        (set-marker b-marker nil)
+        (my/numbering-renumber)))))
+
+(defun my/numbering-move-line-up ()
+  "Move the current file up one position and renumber."
+  (interactive)
+  (my/numbering--move -1))
+
+(defun my/numbering-move-line-down ()
+  "Move the current file down one position and renumber."
+  (interactive)
+  (my/numbering--move 1))
+
+(defvar my/numbering-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "M-<up>")   #'my/numbering-move-line-up)
+    (define-key map (kbd "M-<down>") #'my/numbering-move-line-down)
+    (define-key map (kbd "C-c C-r")  #'my/numbering-renumber)
+    map)
+  "Keymap for `my/numbering-mode'.")
+
+(define-minor-mode my/numbering-mode
+  "Reorder and auto-number dired files for CD (mp3) track ordering.
+Turns the buffer editable via wdired; commit renames with \\[wdired-finish-edit]
+(C-c C-c) or abort with \\[wdired-abort-changes] (C-c C-k)."
+  :lighter " Num"
+  :keymap my/numbering-mode-map
+  (when my/numbering-mode
+    (unless (derived-mode-p 'dired-mode 'wdired-mode)
+      (setq my/numbering-mode nil)
+      (user-error "numbering-mode only works in dired buffers"))
+    (unless (derived-mode-p 'wdired-mode)
+      (wdired-change-to-wdired-mode))
+    (my/numbering-renumber)))
+
 (use-package evil
   :custom
   (evil-symbol-word-search t "search by symbol with * and #.")
@@ -3634,26 +3759,6 @@ _g_:  goto link [g]
   (setq ly-nix-ly-path "/home/iocanel/.nix-profile/bin/lilypond")
   (setq ly-nix-pdf-path "/home/iocanel/.nix-profile/bin/evince")
   (setq ly-nix-timidity-path "/home/iocanel/.nix-profile/bin/timidity"))
-
-(defun my/qutebroswer-move-takeaway-at-point ()
-  "Move the content of qutebrowser takeaway.org at point"
-  (interactive)
-  (let ((path "~/.local/share/qutebrowser/takeaway.org"))
-    (save-excursion
-      (insert-file-contents path)
-      (with-current-buffer path
-        (delete-region (point-min) (point-max))
-        (save-buffer)))))
-
-(defun my/qutebroswer-move-flashcards-at-point ()
-  "Move the content of qutebrowser falshcards.org at point"
-  (interactive)
-  (let ((path "~/.local/share/qutebrowser/flashcards.org"))
-    (save-excursion
-      (insert-file-contents path)
-      (with-current-buffer path
-        (delete-region (point-min) (point-max))
-        (save-buffer)))))
 
 (use-package gptel
   :ensure (gptel :host github :repo "karthink/gptel" :ref "d0c392bbb0a1f7775d3a1e98220f4bdc043ab63b" )
