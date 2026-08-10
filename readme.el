@@ -3850,6 +3850,26 @@ _g_:  goto link [g]
   (setq ly-nix-pdf-path "/home/iocanel/.nix-profile/bin/evince")
   (setq ly-nix-timidity-path "/home/iocanel/.nix-profile/bin/timidity"))
 
+(defun my/qutebroswer-move-takeaway-at-point ()
+  "Move the content of qutebrowser takeaway.org at point"
+  (interactive)
+  (let ((path "~/.local/share/qutebrowser/takeaway.org"))
+    (save-excursion
+      (insert-file-contents path)
+      (with-current-buffer path
+        (delete-region (point-min) (point-max))
+        (save-buffer)))))
+
+(defun my/qutebroswer-move-flashcards-at-point ()
+  "Move the content of qutebrowser falshcards.org at point"
+  (interactive)
+  (let ((path "~/.local/share/qutebrowser/flashcards.org"))
+    (save-excursion
+      (insert-file-contents path)
+      (with-current-buffer path
+        (delete-region (point-min) (point-max))
+        (save-buffer)))))
+
 (use-package gptel
   :ensure (gptel :host github :repo "karthink/gptel" :ref "d0c392bbb0a1f7775d3a1e98220f4bdc043ab63b" )
   :init (setq gptel-api-key (replace-regexp-in-string "\n\\'" ""  (shell-command-to-string "pass show openai.com/iocanel/api-key")))
