@@ -130,12 +130,16 @@ Skips the . and .. entries and non-file lines."
 
 (defun my/numbering--filename-region ()
   "Return (BEG . END) buffer positions of the editable filename on this line.
-Returns nil when point is not on a file line."
+Returns nil when point is not on a file line.
+END comes from `dired-move-to-end-of-filename' rather than the end of the
+line, so a symlink line (\"name -> target\") does not get its target eaten."
   (save-excursion
     (beginning-of-line)
     (when (and (my/numbering--file-on-line)
                (dired-move-to-filename))
-      (cons (point) (line-end-position)))))
+      (let ((beg (point)))
+        (cons beg (or (ignore-errors (dired-move-to-end-of-filename t) (point))
+                      (line-end-position)))))))
 
 (defun my/numbering--set-filename (new)
   "Replace the filename on the current line with NEW, by region (no search).
@@ -157,23 +161,45 @@ Avoids substring/duplicate collisions that text search would hit."
     (max 2 (length (number-to-string count)))))
 
 (defun my/numbering-renumber ()
-  "Renumber all file lines 1..N by their position in the buffer.
-Only the editable filename part of each wdired line is touched."
+  "Close gaps in the numbering, preserving the order the numbers express.
+
+Files are sorted by their CURRENT number (unnumbered ones last, in buffer
+order) and renumbered 1..N, so a sequence like 01,02,05,09 becomes
+01,02,03,04 without reshuffling anything. Each base name keeps its own file.
+
+This is deliberately NOT \"number by buffer position\": dired lists files in
+its own sort order, so position-based numbering would silently discard the
+ordering you built with \\[my/numbering-move-line-up] and
+\\[my/numbering-move-line-down]."
   (interactive)
   (let ((width (my/numbering--pad-width))
-        (fmt nil) (index 0)
-        (inhibit-field-text-motion t))
-    (setq fmt (format "%%0%dd - %%s" width))
+        (inhibit-field-text-motion t)
+        (lines nil))
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
         (let ((name (my/numbering--file-on-line)))
           (when name
-            (setq index (1+ index))
-            (let ((new (format fmt index (my/numbering--bare name))))
-              (unless (string= name new)
-                (my/numbering--set-filename new)))))
-        (forward-line 1)))))
+            (let ((num (my/numbering--prefix name)))
+              (push (list (if num (string-to-number num) most-positive-fixnum)
+                          (copy-marker (line-beginning-position) nil)
+                          (my/numbering--bare name)
+                          name)
+                    lines))))
+        (forward-line 1)))
+    (setq lines (nreverse lines))
+    ;; stable sort by current number; unnumbered files keep buffer order at the end
+    (setq lines (sort lines (lambda (x y) (< (nth 0 x) (nth 0 y)))))
+    (let ((fmt (format "%%0%dd - %%s" width))
+          (index 0))
+      (save-excursion
+        (dolist (entry lines)
+          (setq index (1+ index))
+          (let ((new (format fmt index (nth 2 entry))))
+            (unless (string= (nth 3 entry) new)
+              (goto-char (nth 1 entry))
+              (my/numbering--set-filename new)))
+          (set-marker (nth 1 entry) nil))))))
 
 (defun my/numbering--goto-next-file-line (dir)
   "Move to the next (DIR=1) or previous (DIR=-1) file line.
@@ -184,27 +210,92 @@ Return t on success, nil if there is none."
       (when (and moved (my/numbering--file-on-line)) (setq found t)))
     found))
 
+(defun my/numbering--prefix (name)
+  "The numeric prefix of NAME (\"03 - \"), or nil when it has none."
+  (and name
+       (string-match my/numbering-prefix-regexp name)
+       (match-string 0 name)))
+
+(defun my/numbering--goto-file (name)
+  "Put point on the file line whose basename is NAME. Return t when found."
+  (let ((found nil))
+    (goto-char (point-min))
+    (while (and (not found) (not (eobp)))
+      (if (equal (my/numbering--file-on-line) name)
+          (setq found t)
+        (forward-line 1)))
+    (when found (dired-move-to-filename) t)))
+
+(defun my/numbering--line-text (pos)
+  "Whole line at POS including its trailing newline, as a string."
+  (save-excursion
+    (goto-char pos)
+    (buffer-substring (line-beginning-position)
+                      (min (point-max) (1+ (line-end-position))))))
+
+(defun my/numbering--transpose-lines (pos-a pos-b)
+  "Exchange the full lines at POS-A and POS-B (POS-A before POS-B).
+wdired lines carry read-only metadata columns, so the whole line travels as
+one unit -- that keeps each filename attached to its own permissions, size
+and date, and to the inode wdired will rename."
+  (let ((inhibit-read-only t)
+        (text-a (my/numbering--line-text pos-a))
+        (text-b (my/numbering--line-text pos-b)))
+    (save-excursion
+      ;; replace the later line first, so the earlier edit cannot shift it
+      (goto-char pos-b)
+      (delete-region (line-beginning-position)
+                     (min (point-max) (1+ (line-end-position))))
+      (insert text-a)
+      (goto-char pos-a)
+      (delete-region (line-beginning-position)
+                     (min (point-max) (1+ (line-end-position))))
+      (insert text-b))))
+
 (defun my/numbering--move (dir)
-  "Swap the current file line with the adjacent file line in DIR, then renumber.
-wdired lines carry read-only metadata columns, so we swap the editable
-filenames rather than transposing whole lines. Point follows the moved file.
-Filenames are set by region (not text search) so duplicate or substring
-names cannot collide."
-  (let ((a (my/numbering--bare (my/numbering--file-on-line)))
-        (a-marker (copy-marker (line-beginning-position)))
-        b-marker b)
-    (when a
+  "Move the file on the current line one position in DIR.
+
+Two things happen, and both matter:
+
+1. The two lines exchange only their numeric PREFIXES. Each base name stays
+   welded to its own file. (Swapping base names instead -- the obvious
+   implementation -- makes wdired rename each file to the other's name, so
+   the audio ends up under the wrong title. That is data corruption, not a
+   cosmetic bug, and it silently scrambled whole album folders.)
+
+2. The two lines are then transposed, so the buffer shows the new order.
+   Without this the file would be renumbered but appear not to move, and the
+   ordering you are building would be invisible."
+  (let* ((a-name (my/numbering--file-on-line))
+         (a-bare (my/numbering--bare a-name))
+         (a-num  (my/numbering--prefix a-name))
+         (a-marker (copy-marker (line-beginning-position) nil))
+         b-name b-bare b-num b-marker)
+    (when (and a-name a-num)
       (save-excursion
         (when (my/numbering--goto-next-file-line dir)
-          (setq b (my/numbering--bare (my/numbering--file-on-line))
-                b-marker (copy-marker (line-beginning-position)))))
-      (when b
-        (goto-char a-marker) (my/numbering--set-filename b)
-        (goto-char b-marker) (my/numbering--set-filename a)
-        (goto-char b-marker)          ;; follow the moved file
+          (setq b-name (my/numbering--file-on-line)
+                b-bare (my/numbering--bare b-name)
+                b-num  (my/numbering--prefix b-name)
+                b-marker (copy-marker (line-beginning-position) nil))))
+      (when (and b-name b-num)
+        ;; 1. each line keeps its own base name and takes the other's number
+        (goto-char b-marker) (my/numbering--set-filename (concat a-num b-bare))
+        (goto-char a-marker) (my/numbering--set-filename (concat b-num a-bare))
+        ;; 2. put the lines in the order the new numbers describe
+        (let ((upper (if (< a-marker b-marker) a-marker b-marker))
+              (lower (if (< a-marker b-marker) b-marker a-marker))
+              ;; the moved file's name AFTER the prefix swap
+              (moved (concat b-num a-bare)))
+          (my/numbering--transpose-lines (marker-position upper)
+                                         (marker-position lower))
+          ;; Point must follow the moved file by NAME: the transpose relocated
+          ;; the line, so the positions captured above no longer identify it,
+          ;; and a stale position would make the next M-up/M-down act on the
+          ;; wrong file.
+          (my/numbering--goto-file moved))
         (set-marker a-marker nil)
-        (set-marker b-marker nil)
-        (my/numbering-renumber)))))
+        (set-marker b-marker nil)))))
 
 (defun my/numbering-move-line-up ()
   "Move the current file up one position and renumber."
@@ -235,8 +326,7 @@ Turns the buffer editable via wdired; commit renames with \\[wdired-finish-edit]
       (setq my/numbering-mode nil)
       (user-error "numbering-mode only works in dired buffers"))
     (unless (derived-mode-p 'wdired-mode)
-      (wdired-change-to-wdired-mode))
-    (my/numbering-renumber)))
+      (wdired-change-to-wdired-mode))))
 
 (use-package evil
   :custom
